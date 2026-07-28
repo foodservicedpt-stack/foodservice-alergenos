@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Service DPT — Sistema de Alérgenos</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+      color: white;
+    }
+    .logo-area {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    .logo-area img {
+      height: 90px;
+      object-fit: contain;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 20px rgba(96,165,250,0.4));
+    }
+    .logo-area .brand {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #f0f9ff;
+      text-shadow: 0 0 30px rgba(96,165,250,0.5);
+    }
+    .logo-area .subtitle {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+    .cards {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 0 20px;
+    }
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 38px 36px;
+      width: 280px;
+      text-align: center;
+      cursor: pointer;
+      text-decoration: none;
+      color: white;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border-radius: 20px;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(255,255,255,0.3);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .card.gestion::before  { background: linear-gradient(135deg, #1d4ed8, #3b82f6); }
+    .card.comedor::before  { background: linear-gradient(135deg, #065f46, #10b981); }
+    .card.desayuno::before { background: linear-gradient(135deg, #92400e, #f59e0b); }
+    .card:hover::before    { opacity: 0.15; }
+    .card .emoji { font-size: 3.2rem; margin-bottom: 18px; display: block; }
+    .card h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .card p {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+    .card .badge {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 6px 18px;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .card.gestion  .badge { background: rgba(59,130,246,0.25); color: #93c5fd; }
+    .card.comedor  .badge { background: rgba(16,185,129,0.25); color: #6ee7b7; }
+    .card.desayuno .badge { background: rgba(245,158,11,0.25); color: #fcd34d; }
+    .footer {
+      margin-top: 60px;
+      font-size: 0.78rem;
+      color: #475569;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo-area">
+    <img src="./img/Encabezado.png" alt="Food Service DPT" onerror="this.style.display='none'">
+    <div class="brand">FOOD SERVICE DPT</div>
+    <div class="subtitle">Sistema de Gestión de Alérgenos</div>
+  </div>
+
+  <div class="cards">
+    <a href="./gestion.html" class="card gestion">
+      <span class="emoji">⚙️</span>
+      <h2>PANEL DE GESTIÓN</h2>
+      <p>Introduce los platos, selecciona los alérgenos y publica el menú en pantalla.</p>
+      <span class="badge">🔑 Acceso restringido</span>
+    </a>
+
+    <a href="./comedor.html" class="card comedor" target="_blank">
+      <span class="emoji">📺</span>
+      <h2>PANTALLA COMEDOR</h2>
+      <p>Vista para pantalla de 70". Se actualiza automáticamente cuando publicas el menú.</p>
+      <span class="badge">🔴 Pantalla en vivo</span>
+    </a>
+
+    <a href="./desayuno.html" class="card desayuno" target="_blank">
+      <span class="emoji">🖨️</span>
+      <h2>IMPRIMIR DESAYUNO</h2>
+      <p>Formato A4 horizontal para imprimir la tabla de alérgenos del desayuno.</p>
+      <span class="badge">📄 A4 Horizontal</span>
+    </a>
+  </div>
+
+  <div class="footer">Food Service DPT &nbsp;·&nbsp; Allergen Management System v2.0</div>
+</body>
+</html>
