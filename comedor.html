@@ -153,10 +153,17 @@
       border-radius: 3vw;
       padding: 5vw 7vw;
       text-align: center;
-      box-shadow: 0 4vw 8vw rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.1);
+      overflow: hidden;                 /* clip the top strip & particles to the card */
+      box-shadow: 0 4vw 8vw rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.12);
       transform: scale(0.85) translateY(3vw);
       transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease;
+      animation: cardGlow 2.5s ease-in-out infinite;
       opacity: 0;
+    }
+    /* Pulsing outer glow via box-shadow (NOT clipped by overflow:hidden) */
+    @keyframes cardGlow {
+      0%, 100% { box-shadow: 0 4vw 8vw rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.12); }
+      50%      { box-shadow: 0 4vw 8vw rgba(0,0,0,0.6), 0 0 0 9px rgba(255,255,255,0.22); }
     }
     #turno-overlay.visible .turno-card-tv { transform: scale(1) translateY(0); opacity: 1; }
 
@@ -233,20 +240,12 @@
     /* Shimmer strip across top */
     .turno-shimmer {
       position: absolute; top: 0; left: 0; right: 0; height: 6px;
-      border-radius: 3vw 3vw 0 0;
+      border-radius: 0;                 /* the card clips it, so it spans the full width */
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
       background-size: 200% 100%;
       animation: shimmer 2s infinite;
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-    /* Pulsing glow ring on the card */
-    .turno-glow {
-      position: absolute; inset: -8px; border-radius: calc(3vw + 8px);
-      border: 3px solid rgba(255,255,255,0.25);
-      animation: glowPulse 2s ease-in-out infinite;
-    }
-    @keyframes glowPulse { 0%,100%{opacity:0.3;transform:scale(1)} 50%{opacity:0.8;transform:scale(1.01)} }
 
     /* Particles background (CSS only, simple) */
     .turno-particles {
@@ -310,7 +309,6 @@
   <div class="turno-scrim" onclick="dismissTurno()"></div>
 
   <div class="turno-card-tv" id="turno-card-tv">
-    <div class="turno-glow"></div>
     <div class="turno-shimmer"></div>
     <div class="turno-particles"></div>
     <button class="turno-dismiss-btn" onclick="dismissTurno()">✕ Cerrar</button>
@@ -321,7 +319,7 @@
     <div class="turno-msg-en" id="turno-msg-en">Thank you! Please clear your table.</div>
 
     <div class="turno-countdown-wrap">
-      <div class="turno-countdown-label" id="turno-countdown-label">Cerrando en 60s</div>
+      <div class="turno-countdown-label" id="turno-countdown-label">Cambio de turno</div>
       <div class="turno-progress-track">
         <div class="turno-progress-bar" id="turno-progress-bar" style="width:100%"></div>
       </div>
@@ -359,6 +357,13 @@ let lastFiredDate    = '';           // reset firedTurnos at midnight
 let turnoCountdown   = null;         // interval
 let turnoRemaining   = 0;
 let turnoTotal       = 60;
+let latestComedorData = null;        // último menú recibido (para reevaluar en el cambio de día)
+
+// Muestra el menú solo si su fecha es HOY (reinicio automático diario)
+function refreshMenuDisplay() {
+  if (latestComedorData && latestComedorData.fecha === todayStr()) renderMenu(latestComedorData);
+  else showNoData();
+}
 
 // ══════════════════════════════════════════════
 //  CLOCK
@@ -371,7 +376,12 @@ function updateClock() {
   document.getElementById('header-time').textContent = `${hh}:${mm}`;
 
   const todayKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  if (lastFiredDate !== todayKey) { lastFiredDate = todayKey; firedTurnos.clear(); }
+  if (lastFiredDate !== todayKey) {
+    lastFiredDate = todayKey;
+    firedTurnos.clear();
+    // Cambio de día: reevalúa el menú para que se "reinicie" solo si el menú ya no es de hoy
+    refreshMenuDisplay();
+  }
 
   // Check turnos only at :00 seconds to avoid double-fire within the minute
   if (ss === '00') checkTurnos(`${hh}:${mm}`);
@@ -382,11 +392,34 @@ updateClock();
 // ══════════════════════════════════════════════
 //  TURNO TRIGGER
 // ══════════════════════════════════════════════
+// Minutos que la cuenta atrás empieza ANTES de la hora del cambio de turno.
+// Compatibilidad hacia atrás: si un turno antiguo solo tiene "duracion" (segundos),
+// se convierte a minutos.
+function getMinutosAntes(t) {
+  if (typeof t.minutosAntes === 'number' && t.minutosAntes > 0) return t.minutosAntes;
+  if (typeof t.duracion === 'number' && t.duracion > 0) return Math.max(1, Math.round(t.duracion / 60));
+  return 5;
+}
+function hhmmToMin(hhmm) { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; }
+function minToHHMM(total) {
+  total = ((total % 1440) + 1440) % 1440;
+  const h = Math.floor(total / 60), m = total % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+function fmtMMSS(sec) {
+  sec = Math.max(0, sec);
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
 function checkTurnos(hhmm) {
   if (!turnosConfig.length) return;
   turnosConfig.forEach(t => {
-    const key = `${t.hora}-${hhmm}`;
-    if (t.activo && t.hora === hhmm && !firedTurnos.has(key)) {
+    if (!t.activo || !t.hora) return;
+    const antes = getMinutosAntes(t);
+    const startHHMM = minToHHMM(hhmmToMin(t.hora) - antes); // hora del cambio menos los minutos de antelación
+    const key = `${t.hora}-${startHHMM}`;
+    if (startHHMM === hhmm && !firedTurnos.has(key)) {
       firedTurnos.add(key);
       showTurno(t);
     }
@@ -412,12 +445,13 @@ function showTurno(t) {
   });
   document.getElementById('turno-progress-bar').style.background = hexToRgbaLight(textColor);
 
-  // Countdown
-  const duration = (t.duracion || 60);
-  turnoTotal     = duration;
-  turnoRemaining = duration;
-  document.getElementById('turno-progress-bar').style.width = '100%';
-  document.getElementById('turno-countdown-label').textContent = `Cerrando en ${duration}s`;
+  // Cuenta atrás HASTA la hora del cambio de turno
+  const hora     = t.hora;
+  const antes    = getMinutosAntes(t);
+  const totalSec = Math.max(1, antes * 60);
+  turnoTotal     = totalSec;
+  turnoRemaining = totalSec;
+  updateCountdownUI(hora);
 
   // Show overlay
   const overlay = document.getElementById('turno-overlay');
@@ -427,11 +461,18 @@ function showTurno(t) {
   clearInterval(turnoCountdown);
   turnoCountdown = setInterval(() => {
     turnoRemaining--;
-    const pct = (turnoRemaining / turnoTotal) * 100;
-    document.getElementById('turno-progress-bar').style.width = Math.max(0, pct) + '%';
-    document.getElementById('turno-countdown-label').textContent = `Cerrando en ${turnoRemaining}s`;
+    updateCountdownUI(hora);
     if (turnoRemaining <= 0) { clearInterval(turnoCountdown); dismissTurno(); }
   }, 1000);
+}
+
+function updateCountdownUI(hora) {
+  const pct = (turnoRemaining / turnoTotal) * 100;
+  document.getElementById('turno-progress-bar').style.width = Math.max(0, pct) + '%';
+  const label = turnoRemaining > 0
+    ? `Cambio de turno a las ${hora} · en ${fmtMMSS(turnoRemaining)}`
+    : `¡Es la hora del cambio de turno!`;
+  document.getElementById('turno-countdown-label').textContent = label;
 }
 
 function dismissTurno() {
@@ -545,10 +586,11 @@ function initFirebase() {
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Menu listener
+    // Menu listener — reinicio automático diario:
+    // solo se muestra el menú si su fecha es la de HOY; si no, se considera "no publicado".
     db.ref('menu/comedor').on('value', snap => {
-      const data = snap.val();
-      if (data) renderMenu(data); else showNoData();
+      latestComedorData = snap.val();
+      refreshMenuDisplay();
     }, err => { console.error(err); showOfflineState(); });
 
     // Turnos listener (updates config in real time)
