@@ -69,10 +69,15 @@
     .dish-info { flex: 1; padding-right: 1vw; min-width: 0; }
     .dish-name-es {
       font-size: var(--dish-name-size); font-weight: 900; color: #0f172a;
-      text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.1;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.08;
+      white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
     }
-    .dish-name-en { font-size: var(--dish-en-size); color: #64748b; font-style: italic; margin-top: 0.3vw; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dish-name-en {
+      font-size: var(--dish-en-size); color: #64748b; font-style: italic; margin-top: 0.3vw; line-height: 1.1;
+      white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    }
 
     /* ─── ALLERGEN ICONS ─── */
     .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.5vw; flex-shrink: 0; width: 42%; max-width: 42%; }
@@ -590,7 +595,7 @@ function renderMenu(data) {
   document.getElementById('header-date').textContent = formatDateEs(data.fecha);
 
   // Ajuste fino: dimensiona los iconos y la leyenda tras el layout para que nada se corte
-  requestAnimationFrame(() => { fitAllergenIcons(); fitLegend(); });
+  requestAnimationFrame(() => { fitAllergenIcons(); fitLegend(); fitDishNames(); });
 }
 
 // ══════════════════════════════════════════════
@@ -639,7 +644,22 @@ function fitLegend() {
   let txt = Math.min(per * 0.30, 22); txt = Math.max(8, txt);
   document.documentElement.style.setProperty('--legend-text', txt + 'px');
 }
-window.addEventListener('resize', () => { fitAllergenIcons(); fitLegend(); });
+// Ajusta el tamaño de fuente de cada nombre para que quepa completo (máx. 2 líneas), sin recortes
+function fitDishNames() {
+  document.querySelectorAll('.dish-name-es, .dish-name-en').forEach(el => {
+    el.style.fontSize = '';                       // vuelve al tamaño base del CSS
+    let fs = parseFloat(getComputedStyle(el).fontSize);
+    if (!fs) return;
+    const minFs = el.classList.contains('dish-name-es') ? 14 : 10;
+    let guard = 0;
+    // si el texto (a 2 líneas máx.) se sale, reduce la fuente hasta que quepa
+    while (el.scrollHeight > el.clientHeight + 1 && fs > minFs && guard++ < 40) {
+      fs *= 0.94;
+      el.style.fontSize = fs + 'px';
+    }
+  });
+}
+window.addEventListener('resize', () => { fitAllergenIcons(); fitLegend(); fitDishNames(); });
 
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
