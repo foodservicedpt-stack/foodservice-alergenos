@@ -193,6 +193,22 @@
       transition: all 0.15s; flex-shrink: 0;
     }
     .btn-remove-dish:hover { background: rgba(239,68,68,0.35); }
+    .btn-hide-dish {
+      padding: 8px 14px; border-radius: 8px;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
+      color: #fff; cursor: pointer; font-size: 0.85rem; font-weight: 700;
+      transition: all 0.15s; flex-shrink: 0; white-space: nowrap;
+    }
+    .btn-hide-dish:hover { background: rgba(255,255,255,0.28); }
+    .btn-hide-dish.is-hidden { background: rgba(245,158,11,0.28); border-color: rgba(245,158,11,0.55); color: #fde68a; }
+    .dish-card.dish-hidden { opacity: 0.6; }
+    .dish-card.dish-hidden .dish-header { filter: grayscale(0.55); }
+    .dish-card.dish-hidden::after {
+      content: '🙈 Este plato está OCULTO en la pantalla del comedor';
+      display: block; background: #fef3c7; color: #92400e;
+      font-size: 0.8rem; font-weight: 700; text-align: center;
+      padding: 8px; letter-spacing: 0.3px;
+    }
 
     /* ─── ALLERGEN SECTION ─── */
     .allergen-body { padding: 18px 20px; }
@@ -671,7 +687,7 @@ function renderCurrentTab() {
 function renderDish(plato, idx) {
   const container = document.getElementById('dish-list');
   const div = document.createElement('div');
-  div.className = 'dish-card';
+  div.className = `dish-card${plato.oculto ? ' dish-hidden' : ''}`;
   div.id = `dish-card-${plato.id}`;
   div.innerHTML = `
     <div class="dish-header">
@@ -685,6 +701,11 @@ function renderDish(plato, idx) {
                value="${escHtml(plato.nombreEn||'')}"
                oninput="updateField('${plato.id}','nombreEn',this.value); markUnsaved()">
       </div>
+      <button class="btn-hide-dish${plato.oculto ? ' is-hidden' : ''}" id="hidebtn-${plato.id}"
+              onclick="toggleDishHidden('${plato.id}')"
+              title="Mostrar u ocultar este plato en la pantalla del comedor">
+        ${plato.oculto ? '🙈 Oculto en TV' : '👁 Visible en TV'}
+      </button>
       <button class="btn-remove-dish" onclick="removeDish('${plato.id}')">🗑 Eliminar</button>
     </div>
     <div class="allergen-body">
@@ -711,7 +732,7 @@ function buildAlgBtn(a, dishId, type, selected, isTrace=false) {
 // ──────── DISH CRUD ────────
 function addDish() {
   const id = `d${Date.now()}`;
-  const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[] };
+  const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[], oculto:false };
   state[currentMenuTab].platos.push(plato);
   const emptyState = document.querySelector('#dish-list .empty-state');
   if (emptyState) emptyState.remove();
@@ -728,6 +749,16 @@ function removeDish(id) {
 }
 function renumberDishes() { document.querySelectorAll('.dish-num').forEach((el,i) => el.textContent=i+1); }
 function updateField(dishId, field, value) { const d = state[currentMenuTab].platos.find(p=>p.id===dishId); if(d){d[field]=value; markUnsaved();} }
+function toggleDishHidden(dishId) {
+  const d = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!d) return;
+  d.oculto = !d.oculto;
+  const card = document.getElementById(`dish-card-${dishId}`);
+  if (card) card.classList.toggle('dish-hidden', d.oculto);
+  const btn = document.getElementById(`hidebtn-${dishId}`);
+  if (btn) { btn.classList.toggle('is-hidden', d.oculto); btn.innerHTML = d.oculto ? '🙈 Oculto en TV' : '👁 Visible en TV'; }
+  showToast(d.oculto ? '🙈 Plato oculto en la pantalla TV' : '👁 Plato visible en la pantalla TV', 'info');
+  markUnsaved();
+}
 function toggleAllergen(dishId, type, algId, btn) {
   const dish = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!dish) return;
   const arr = dish[type]; const idx = arr.indexOf(algId);

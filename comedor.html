@@ -75,8 +75,8 @@
     .dish-name-en { font-size: var(--dish-en-size); color: #64748b; font-style: italic; margin-top: 0.3vw; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ─── ALLERGEN ICONS ─── */
-    .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5vw; flex-shrink: 0; }
-    .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: wrap; justify-content: flex-end; }
+    .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.5vw; flex-shrink: 0; width: 42%; max-width: 42%; }
+    .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; }
     .alg-icon-wrap {
       width: var(--icon-size); height: var(--icon-size); border-radius: 50%; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
@@ -91,12 +91,19 @@
       padding: 0.2vw 0.7vw; letter-spacing: 0.5px; white-space: nowrap;
     }
     .no-allergen {
-      background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 10px;
-      padding: 0.6vw 1.2vw; color: #065f46; font-weight: 800;
-      font-size: calc(var(--dish-en-size) * 1.1);
-      display: flex; flex-direction: column; align-items: center;
+      background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 12px;
+      padding: 0.55vw 1.1vw; color: #065f46; font-weight: 800;
+      font-size: calc(var(--dish-en-size) * 1.05);
+      display: flex; flex-direction: row; align-items: center; gap: 0.7vw;
     }
-    .no-allergen .en { font-style: italic; font-size: 0.85em; opacity: 0.7; }
+    .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
+    .no-allergen .shield-ok svg {
+      width: calc(var(--dish-name-size) * 1.15); height: calc(var(--dish-name-size) * 1.15);
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
+    }
+    .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.1; }
+    .no-allergen-txt .es { white-space: nowrap; }
+    .no-allergen .en { font-style: italic; font-size: 0.82em; opacity: 0.7; font-weight: 600; white-space: nowrap; }
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
@@ -535,11 +542,11 @@ function buildLegend(usedIds) {
 //  RENDER MENU
 // ══════════════════════════════════════════════
 function renderMenu(data) {
-  const platos = data.platos || [];
+  // Se muestran solo los platos NO ocultos (el resto se gestionan pero no salen en TV)
+  const platos = (data.platos || []).filter(p => !p.oculto);
   adjustSizes(platos.length);
-  const usedIds = new Set();
-  platos.forEach(p => { (p.contiene||[]).forEach(id=>usedIds.add(id)); (p.trazas||[]).forEach(id=>usedIds.add(id)); });
-  buildLegend([...usedIds]);
+  // La leyenda muestra SIEMPRE los 14 alérgenos oficiales (referencia completa para el cliente)
+  buildLegend([]);
 
   const col = document.getElementById('main-col');
   col.innerHTML = '';
@@ -554,7 +561,15 @@ function renderMenu(data) {
     const contiene = p.contiene||[], trazas = p.trazas||[];
     let algHtml = '';
     if (!contiene.length && !trazas.length) {
-      algHtml = `<div class="no-allergen"><span>🛡️ SIN ALÉRGENOS DECLARADOS</span><span class="en">No allergens declared</span></div>`;
+      algHtml = `<div class="no-allergen">
+        <span class="shield-ok" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2 L20 5 V11 C20 16.2 16.4 19.8 12 22 C7.6 19.8 4 16.2 4 11 V5 Z" fill="#16a34a"/>
+            <path d="M8.3 12.1 l2.6 2.6 l4.8 -5.4" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="no-allergen-txt"><span class="es">SIN ALÉRGENOS DECLARADOS</span><span class="en">No allergens declared</span></span>
+      </div>`;
     } else {
       if (contiene.length) algHtml += `<div class="allergen-row">${contiene.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap" style="background:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
       if (trazas.length)   algHtml += `<div class="allergen-row"><span class="trace-label">⚠ TRAZAS</span>${trazas.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap trace-icon" style="background:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
@@ -573,7 +588,58 @@ function renderMenu(data) {
   const now = new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
   document.getElementById('footer-updated').textContent = `Actualizado a las ${now}`;
   document.getElementById('header-date').textContent = formatDateEs(data.fecha);
+
+  // Ajuste fino: dimensiona los iconos y la leyenda tras el layout para que nada se corte
+  requestAnimationFrame(() => { fitAllergenIcons(); fitLegend(); });
 }
+
+// ══════════════════════════════════════════════
+//  AJUSTE DINÁMICO — evita que los iconos/leyenda se corten
+// ══════════════════════════════════════════════
+function fitAllergenIcons() {
+  const rows = [...document.querySelectorAll('.dish-row')];
+  if (!rows.length) return;
+  const rowH = rows[0].getBoundingClientRect().height;
+  const rowW = rows[0].getBoundingClientRect().width;
+  if (!rowH || !rowW) return;
+  const gap = Math.max(4, Math.round(rowW * 0.006));
+
+  // Máx. de iconos en una misma fila y máx. de filas de alérgenos por plato
+  let maxIcons = 1, maxRows = 1;
+  rows.forEach(r => {
+    const ars = r.querySelectorAll('.allergen-row');
+    if (ars.length > maxRows) maxRows = ars.length;
+    ars.forEach(ar => {
+      let cnt = ar.querySelectorAll('.alg-icon-wrap').length;
+      if (ar.querySelector('.trace-label')) cnt += 2; // la etiqueta "TRAZAS" ocupa espacio
+      if (cnt > maxIcons) maxIcons = cnt;
+    });
+  });
+
+  // Ancho disponible para la columna de alérgenos (≈42% del ancho de la fila)
+  const allergenW = rowW * 0.42;
+  const byWidth  = (allergenW - gap * (maxIcons - 1)) / maxIcons;
+  const byHeight = (rowH * 0.80 - gap * (maxRows - 1)) / maxRows;
+  let icon = Math.min(byWidth, byHeight);
+  icon = Math.max(24, Math.min(icon, 120));
+  document.documentElement.style.setProperty('--icon-size', icon + 'px');
+  document.documentElement.style.setProperty('--icon-gap', gap + 'px');
+}
+
+function fitLegend() {
+  const list = document.getElementById('legend-list');
+  if (!list) return;
+  const n = list.children.length;
+  if (!n) return;
+  const h = list.getBoundingClientRect().height;
+  if (!h) return;
+  const per = h / n;                 // altura por elemento
+  let ic = Math.min(per * 0.66, 52); ic = Math.max(14, ic);
+  document.documentElement.style.setProperty('--legend-icon', ic + 'px');
+  let txt = Math.min(per * 0.30, 22); txt = Math.max(8, txt);
+  document.documentElement.style.setProperty('--legend-text', txt + 'px');
+}
+window.addEventListener('resize', () => { fitAllergenIcons(); fitLegend(); });
 
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
