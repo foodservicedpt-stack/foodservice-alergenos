@@ -420,22 +420,6 @@
 </head>
 <body>
 
-<!-- ══════════════════════ LOGIN ══════════════════════ -->
-<div id="login-screen">
-  <div class="login-card">
-    <img src="./img/Encabezado.png" alt="Food Service DPT" onerror="this.style.display='none'">
-    <div class="brand">FOOD SERVICE DPT</div>
-    <div class="sub">Panel de Gestión · Allergen Manager</div>
-    <div class="login-error" id="login-error"></div>
-    <div class="pwd-wrap">
-      <input type="password" id="pwd-input" placeholder="Contraseña de acceso"
-             onkeydown="if(event.key==='Enter') doLogin()">
-      <button class="pwd-toggle" onclick="togglePwd()">👁</button>
-    </div>
-    <button class="btn-login" onclick="doLogin()">Acceder al sistema</button>
-  </div>
-</div>
-
 <!-- ══════════════════════ PANEL ══════════════════════ -->
 <div id="panel">
   <div class="topbar">
@@ -443,16 +427,15 @@
     <span class="brand-text">FOOD SERVICE DPT</span>
     <div class="sep"></div>
     <div class="topbar-actions">
+      <a href="./index.html" class="btn-logout">🏠 Inicio</a>
       <a href="./comedor.html" target="_blank" class="btn-tv">📺 Ver pantalla TV</a>
-      <a href="./desayuno.html" target="_blank" class="btn-print">🖨️ Imprimir desayuno</a>
-      <button class="btn-logout link-btn" onclick="doLogout()">🚪 Salir</button>
+      <a href="./desayuno.html" target="_blank" class="btn-print">☕ Gestión desayuno</a>
     </div>
   </div>
 
   <!-- TAB BAR -->
   <div class="tab-bar">
     <button class="tab-btn active"  id="tab-comedor"  onclick="switchMainTab('comedor')">🍽️&nbsp;&nbsp;Menú del Comedor</button>
-    <button class="tab-btn"         id="tab-desayuno" onclick="switchMainTab('desayuno')">☕&nbsp;&nbsp;Desayuno</button>
     <button class="tab-btn tab-turnos" id="tab-turnos" onclick="switchMainTab('turnos')">🔔&nbsp;&nbsp;Avisos de Turno</button>
   </div>
 
@@ -499,7 +482,7 @@
         <div class="turnos-intro-icon">🔔</div>
         <div>
           <h3>Avisos de Cambio de Turno</h3>
-          <p>Configura los mensajes que aparecen automáticamente en la pantalla del comedor al cambiar de turno. Elige la hora, el color, la duración y el mensaje. La traducción al inglés es automática.</p>
+          <p>Configura los mensajes que aparecen automáticamente en la pantalla del comedor. Indica la <strong>hora del cambio de turno</strong> y <strong>cuántos minutos antes</strong> quieres que empiece la cuenta atrás (que termina justo a esa hora). Elige el color y el mensaje. La traducción al inglés es automática.</p>
         </div>
       </div>
       <div id="turno-list"></div>
@@ -552,12 +535,11 @@ const PRESET_COLORS = [
 // ══════════════════════════════════════════════
 //  ESTADO
 // ══════════════════════════════════════════════
-const PASSWORD = 'Foodservice1914';
-let currentMenuTab = 'comedor';  // comedor | desayuno
-let currentMainTab = 'comedor';  // comedor | desayuno | turnos
+// Acceso libre (sin contraseña). El desayuno se gestiona desde desayuno.html.
+let currentMenuTab = 'comedor';  // solo comedor en esta página
+let currentMainTab = 'comedor';  // comedor | turnos
 let state = {
-  comedor:  { fecha: todayStr(), platos: [] },
-  desayuno: { fecha: todayStr(), platos: [] }
+  comedor:  { fecha: todayStr(), platos: [] }
 };
 let turnosState = []; // array of turno objects
 let dishCounter = 0;
@@ -595,29 +577,11 @@ function hexToRgb(hex) {
 }
 
 // ══════════════════════════════════════════════
-//  LOGIN / LOGOUT
-// ══════════════════════════════════════════════
-function doLogin() {
-  if (document.getElementById('pwd-input').value === PASSWORD) {
-    sessionStorage.setItem('fsdpt_auth', '1');
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('panel').classList.add('visible');
-    initPanel();
-  } else {
-    document.getElementById('login-error').textContent = '❌  Contraseña incorrecta.';
-    document.getElementById('pwd-input').value = '';
-    document.getElementById('pwd-input').focus();
-  }
-}
-function doLogout() { sessionStorage.removeItem('fsdpt_auth'); location.reload(); }
-function togglePwd() { const i = document.getElementById('pwd-input'); i.type = i.type === 'password' ? 'text' : 'password'; }
-
-// ══════════════════════════════════════════════
 //  MAIN TABS
 // ══════════════════════════════════════════════
 function switchMainTab(tab) {
   currentMainTab = tab;
-  ['comedor','desayuno','turnos'].forEach(t => {
+  ['comedor','turnos'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
   });
   document.getElementById('tab-content-menu').classList.toggle('active', tab !== 'turnos');
@@ -625,9 +589,9 @@ function switchMainTab(tab) {
   document.getElementById('menu-control-bar').style.display   = tab !== 'turnos' ? 'flex' : 'none';
   document.getElementById('turnos-control-bar').style.display = tab === 'turnos' ? 'flex' : 'none';
 
-  if (tab === 'comedor' || tab === 'desayuno') {
-    currentMenuTab = tab;
-    document.getElementById('date-input').value = state[tab].fecha || todayStr();
+  if (tab === 'comedor') {
+    currentMenuTab = 'comedor';
+    document.getElementById('date-input').value = state.comedor.fecha || todayStr();
     renderCurrentTab();
     if (unsaved) markUnsaved(); else markSaved();
   }
@@ -653,19 +617,25 @@ function initFirebase() {
 function loadFromFirebase() {
   if (!fbReady) return;
   const db = firebase.database();
-  db.ref('menu').once('value').then(snap => {
+  db.ref('menu/comedor').once('value').then(snap => {
     const data = snap.val();
-    if (data) {
-      if (data.comedor)  state.comedor  = data.comedor;
-      if (data.desayuno) state.desayuno = data.desayuno;
+    // Reinicio automático diario: solo se cargan los platos si el menú es de HOY.
+    if (data && data.fecha === todayStr()) {
+      state.comedor = data;
       renderCurrentTab();
       markSaved();
+    } else {
+      // Nuevo día → empezar en limpio (los alérgenos "se borran" solos)
+      state.comedor = { fecha: todayStr(), platos: [] };
+      renderCurrentTab();
+      markUnsaved();
     }
   }).catch(console.warn);
   db.ref('turnos').once('value').then(snap => {
     const data = snap.val();
     if (data && Array.isArray(data)) {
-      turnosState = data;
+      // Normaliza turnos antiguos (duracion en segundos → minutosAntes)
+      turnosState = data.map(t => normalizeTurno(t));
       renderTurnos();
     }
   }).catch(console.warn);
@@ -680,7 +650,7 @@ function initPanel() {
   if (!state[currentMenuTab].platos.length) addDish();
   if (!turnosState.length) {
     // Default: one example turno
-    turnosState.push(newTurnoObj('Turno 1', '13:30', '#1e3a5f', '#ffffff', 60, true, '¡Gracias por venir! Por favor, libera tu mesa.', 'Thank You! Please clear your table.'));
+    turnosState.push(newTurnoObj('Turno 1', '13:30', '#1e3a5f', '#ffffff', 5, true, '¡Gracias por venir! Por favor, libera tu mesa.', 'Thank You! Please clear your table.'));
   }
   renderTurnos();
 }
@@ -785,12 +755,13 @@ function toTitleCase(str) { return str.toLowerCase().replace(/\b\w/g, c=>c.toUpp
 
 // ──────── PUBLISH MENU ────────
 async function publishMenu() {
-  state[currentMenuTab].fecha = document.getElementById('date-input').value;
+  state.comedor.fecha = document.getElementById('date-input').value;
   const btn = document.getElementById('btn-publish');
   btn.disabled = true; btn.textContent = '⏳  Publicando...';
   if (!fbReady) { localStorage.setItem('fsdpt_menu', JSON.stringify(state)); showToast('💾 Guardado localmente (Firebase no configurado)', 'error'); btn.disabled=false; btn.innerHTML='📺 &nbsp;PUBLICAR EN PANTALLA TV'; return; }
   try {
-    await firebase.database().ref('menu').set(state);
+    // Solo se escribe el nodo del comedor para no afectar al desayuno (que se gestiona aparte)
+    await firebase.database().ref('menu/comedor').set(state.comedor);
     markSaved(); showToast('✅ Menú publicado en pantalla TV', 'success');
   } catch(e) { showToast('❌ Error: '+e.message,'error'); }
   finally { btn.disabled=false; btn.innerHTML='📺 &nbsp;PUBLICAR EN PANTALLA TV'; }
@@ -799,8 +770,21 @@ async function publishMenu() {
 // ══════════════════════════════════════════════
 //  TURNOS
 // ══════════════════════════════════════════════
-function newTurnoObj(label='Turno', hora='13:00', bgColor='#1e3a5f', textColor='#ffffff', duracion=60, activo=true, mensajeEs='', mensajeEn='') {
-  return { id:`t${Date.now()}${Math.random().toString(36).slice(2,6)}`, label, hora, bgColor, textColor, duracion, activo, mensajeEs, mensajeEn };
+function newTurnoObj(label='Turno', hora='13:00', bgColor='#1e3a5f', textColor='#ffffff', minutosAntes=5, activo=true, mensajeEs='', mensajeEn='') {
+  return { id:`t${Date.now()}${Math.random().toString(36).slice(2,6)}`, label, hora, bgColor, textColor, minutosAntes, activo, mensajeEs, mensajeEn };
+}
+
+// Convierte turnos antiguos (con "duracion" en segundos) al nuevo modelo "minutosAntes"
+function normalizeTurno(t) {
+  const o = Object.assign({}, t);
+  if (typeof o.minutosAntes !== 'number' || o.minutosAntes <= 0) {
+    o.minutosAntes = (typeof o.duracion === 'number' && o.duracion > 0)
+      ? Math.max(1, Math.round(o.duracion / 60))
+      : 5;
+  }
+  delete o.duracion;
+  if (!o.id) o.id = `t${Date.now()}${Math.random().toString(36).slice(2,6)}`;
+  return o;
 }
 
 function addTurno() {
@@ -836,7 +820,7 @@ function updateTurnoPreview(id) {
   const previewTime = card.querySelector('.preview-time');
   if(previewEs) previewEs.textContent = t.mensajeEs || '¡Gracias! Por favor, libera tu mesa.';
   if(previewEn) previewEn.textContent = t.mensajeEn || '';
-  if(previewTime) previewTime.textContent = `⏰ ${t.hora} · ⏱ ${t.duracion}s`;
+  if(previewTime) previewTime.textContent = `⏰ Cambio a las ${t.hora} · ⏱ cuenta atrás desde ${t.minutosAntes} min antes`;
   // update header
   const header = card.querySelector('.turno-header');
   header.style.background = `linear-gradient(135deg, ${t.bgColor}, ${adjustBrightness(t.bgColor, 20)})`;
@@ -896,14 +880,14 @@ function renderTurnoCard(turno) {
                  oninput="updateTurno('${turno.id}','label',this.value); updateTurnoPreview('${turno.id}')">
         </div>
         <div class="turno-field">
-          <label>⏰ Hora del aviso</label>
+          <label>⏰ Hora del cambio de turno</label>
           <input type="time" value="${turno.hora}"
                  onchange="updateTurno('${turno.id}','hora',this.value); updateTurnoPreview('${turno.id}')">
         </div>
         <div class="turno-field">
-          <label>⏱ Duración (segundos)</label>
-          <input type="number" min="10" max="300" step="5" value="${turno.duracion}"
-                 onchange="updateTurno('${turno.id}','duracion',+this.value); updateTurnoPreview('${turno.id}')">
+          <label>⏱ Empezar cuenta atrás (min antes)</label>
+          <input type="number" min="1" max="60" step="1" value="${turno.minutosAntes}"
+                 onchange="updateTurno('${turno.id}','minutosAntes',Math.max(1,+this.value||1)); updateTurnoPreview('${turno.id}')">
         </div>
       </div>
 
@@ -954,7 +938,7 @@ function renderTurnoCard(turno) {
         <div class="preview-label" style="color:${turno.textColor}">VISTA PREVIA EN TV</div>
         <div class="preview-msg-es">${escHtml(turno.mensajeEs || '¡Gracias! Por favor, libera tu mesa.')}</div>
         <div class="preview-msg-en">${escHtml(turno.mensajeEn || '')}</div>
-        <div class="preview-time" style="color:${turno.textColor}">⏰ ${turno.hora} &nbsp;·&nbsp; ⏱ ${turno.duracion}s</div>
+        <div class="preview-time" style="color:${turno.textColor}">⏰ Cambio a las ${turno.hora} &nbsp;·&nbsp; ⏱ cuenta atrás desde ${turno.minutosAntes} min antes</div>
       </div>
     </div>`;
 
@@ -1027,11 +1011,9 @@ async function publishTurnos() {
 //  INIT
 // ══════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
-  if(sessionStorage.getItem('fsdpt_auth')==='1') {
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('panel').classList.add('visible');
-    initPanel();
-  } else { document.getElementById('pwd-input').focus(); }
+  // Acceso libre: se muestra el panel directamente, sin contraseña.
+  document.getElementById('panel').classList.add('visible');
+  initPanel();
 });
 </script>
 </body>
