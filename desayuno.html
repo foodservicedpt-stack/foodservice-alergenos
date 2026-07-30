@@ -639,11 +639,24 @@ const CORRECTOR_PLATOS = {
   'pa amb tomàquet': 'tomato bread',
 };
 
+const CORRECTOR_INGLES = {
+  'sedans': 'doughnuts',
+  'sedan': 'doughnut',
+  'sedans filled': 'doughnuts filled',
+  'sedan filled': 'doughnut filled',
+};
+
 function correctTranslation(text) {
   if (!text) return text;
   let corrected = text;
   const lower = text.toLowerCase();
   for (const [wrong, right] of Object.entries(CORRECTOR_PLATOS)) {
+    const pattern = new RegExp('\\b' + wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+    if (pattern.test(lower)) {
+      corrected = corrected.replace(pattern, right);
+    }
+  }
+  for (const [wrong, right] of Object.entries(CORRECTOR_INGLES)) {
     const pattern = new RegExp('\\b' + wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
     if (pattern.test(lower)) {
       corrected = corrected.replace(pattern, right);
