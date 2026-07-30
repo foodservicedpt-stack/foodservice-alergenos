@@ -938,7 +938,7 @@ async function manualTranslate(dishId) {
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: `Translate this Spanish dish name to English naturally, as a native English speaker would understand it. Return ONLY the translation, nothing else: ${dish.nombreEs.trim()}` }] }] })
+        body: JSON.stringify({ contents: [{ parts: [{ text: `You are translating Spanish dish names from a school cafeteria menu. Many Spanish food words have double meanings in English (e.g. "berlina" = doughnut, NOT sedan; "croqueta" = croquette, NOT anything else). Always choose the culinary meaning. Return ONLY the translation, nothing else, no explanations: ${dish.nombreEs.trim()}` }] }] })
       });
       const data = await resp.json();
       if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
@@ -1199,7 +1199,7 @@ async function manualTranslateTurno(id) {
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: `Translate this Spanish message to English naturally. Return ONLY the translation, nothing else: ${t.mensajeEs.trim()}` }] }] })
+        body: JSON.stringify({ contents: [{ parts: [{ text: `You are translating Spanish messages for a school cafeteria TV screen. Always choose the culinary/food context when words have double meanings. Return ONLY the translation, nothing else, no explanations: ${t.mensajeEs.trim()}` }] }] })
       });
       const data = await resp.json();
       if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
