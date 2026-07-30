@@ -490,9 +490,6 @@
       <button class="btn-add-dish" onclick="addDish()">
         <span class="plus">＋</span> Añadir plato
       </button>
-      <button class="btn-add-dish" onclick="retranslateAll()" style="margin-top:12px; border-color:#c4b5fd; color:#5b21b6;">
-        <span class="plus">🌐</span> Retraducir todos los platos (traducción natural)
-      </button>
     </div>
 
     <!-- TURNOS TAB CONTENT -->
@@ -610,9 +607,18 @@ function switchMainTab(tab) {
 
   if (tab === 'comedor') {
     currentMenuTab = 'comedor';
-    document.getElementById('date-input').value = state.comedor.fecha || todayStr();
-    renderCurrentTab();
-    if (unsaved) markUnsaved(); else markSaved();
+    const fecha = state.comedor.fecha || todayStr();
+    if (fecha !== todayStr()) {
+      state.comedor = { fecha: todayStr(), platos: [] };
+      document.getElementById('date-input').value = todayStr();
+      renderCurrentTab();
+      markUnsaved();
+      showToast('🔄 Nuevo día — los platos se han reiniciado', 'info');
+    } else {
+      document.getElementById('date-input').value = fecha;
+      renderCurrentTab();
+      if (unsaved) markUnsaved(); else markSaved();
+    }
   }
 }
 
@@ -636,24 +642,21 @@ function initFirebase() {
 function loadFromFirebase() {
   if (!fbReady) return;
   const db = firebase.database();
-  db.ref('menu/comedor').once('value').then(snap => {
+  db.ref('menu/comedor').on('value', snap => {
     const data = snap.val();
-    // Reinicio automático diario: solo se cargan los platos si el menú es de HOY.
     if (data && data.fecha === todayStr()) {
       state.comedor = data;
       renderCurrentTab();
       markSaved();
-    } else {
-      // Nuevo día → empezar en limpio (los alérgenos "se borran" solos)
+    } else if (data && data.fecha !== todayStr()) {
       state.comedor = { fecha: todayStr(), platos: [] };
       renderCurrentTab();
       markUnsaved();
     }
   }).catch(console.warn);
-  db.ref('turnos').once('value').then(snap => {
+  db.ref('turnos').on('value', snap => {
     const data = snap.val();
     if (data && Array.isArray(data)) {
-      // Normaliza turnos antiguos (duracion en segundos → minutosAntes)
       turnosState = data.map(t => normalizeTurno(t));
       renderTurnos();
     }
@@ -770,142 +773,6 @@ function toggleAllergen(dishId, type, algId, btn) {
 }
 
 // ──────── TRANSLATION ────────
-// Glosario culinario ES→EN: traducciones NATURALES (no literales) de platos típicos
-// de comedor escolar. Claves normalizadas (minúsculas, sin acentos, sin dobles espacios).
-const GLOSARIO_PLATOS = {
-  // Primeros / legumbres / arroces / pastas
-  "lentejas":"Lentil stew","lentejas estofadas":"Lentil stew","lentejas guisadas":"Lentil stew",
-  "lentejas con chorizo":"Lentil stew with chorizo","garbanzos":"Chickpea stew","garbanzos guisados":"Chickpea stew",
-  "cocido":"Chickpea and meat stew","cocido madrileno":"Madrid-style chickpea stew","fabada":"Asturian bean stew",
-  "potaje":"Chickpea and spinach stew","judias blancas":"White bean stew","alubias":"Bean stew",
-  "arroz blanco":"White rice","arroz a la cubana":"Rice with tomato sauce and fried egg",
-  "arroz con tomate":"Rice in tomato sauce","paella":"Paella","paella de verduras":"Vegetable paella",
-  "arroz tres delicias":"Egg fried rice","macarrones":"Macaroni","macarrones con tomate":"Macaroni in tomato sauce",
-  "macarrones bolonesa":"Macaroni bolognese","macarrones a la bolonesa":"Macaroni bolognese",
-  "espaguetis":"Spaghetti","espaguetis bolonesa":"Spaghetti bolognese","espaguetis a la bolonesa":"Spaghetti bolognese",
-  "espaguetis con tomate":"Spaghetti in tomato sauce","canelones":"Cannelloni","lasana":"Lasagne","lasagna":"Lasagne",
-  "pasta":"Pasta","fideua":"Seafood noodle paella",
-  // Sopas / cremas / purés
-  "sopa":"Soup","sopa de fideos":"Noodle soup","sopa de picadillo":"Broth with ham and egg",
-  "caldo":"Broth","crema de verduras":"Cream of vegetable soup","crema de calabaza":"Cream of pumpkin soup",
-  "crema de calabacin":"Cream of courgette soup","pure de patata":"Mashed potato","pure de verduras":"Vegetable purée",
-  "gazpacho":"Gazpacho (cold tomato soup)","salmorejo":"Salmorejo (cold tomato soup)",
-  // Verduras
-  "menestra":"Mixed vegetables","menestra de verduras":"Mixed vegetables","verduras":"Vegetables",
-  "verduras salteadas":"Sautéed vegetables","judias verdes":"Green beans","judias verdes con tomate":"Green beans in tomato sauce",
-  "judias verdes rehogadas":"Sautéed green beans","espinacas":"Spinach","acelgas":"Chard","acelgas rehogadas":"Sautéed chard",
-  "guisantes":"Peas","guisantes con jamon":"Peas with ham","pisto":"Ratatouille","pisto de verduras":"Ratatouille",
-  "ensalada":"Salad","ensalada mixta":"Mixed salad","ensalada de pasta":"Pasta salad","patatas":"Potatoes",
-  "patatas asadas":"Roast potatoes","patatas fritas":"Chips","pure":"Purée",
-  // Carnes
-  "pollo asado":"Roast chicken","pollo al horno":"Roast chicken","pollo a la plancha":"Grilled chicken",
-  "muslo de pollo":"Chicken drumstick","pechuga de pollo":"Chicken breast","pollo en salsa":"Chicken in sauce",
-  "pollo empanado":"Breaded chicken","alitas de pollo":"Chicken wings","filete de pollo":"Chicken fillet",
-  "ternera":"Beef","ternera en salsa":"Beef in sauce","ternera guisada":"Beef stew","estofado de ternera":"Beef stew",
-  "carne guisada":"Meat stew","albondigas":"Meatballs","albondigas en salsa":"Meatballs in sauce",
-  "filete de cerdo":"Pork steak","filete aguja de cerdo":"Pork shoulder steak","lomo de cerdo":"Pork loin",
-  "lomo adobado":"Marinated pork loin","cinta de lomo":"Pork loin","chuleta de cerdo":"Pork chop",
-  "salchichas":"Sausages","chorizo":"Chorizo","hamburguesa":"Burger","san jacobo":"Ham and cheese schnitzel",
-  "flamenquin":"Pork and ham roll","escalope":"Escalope","pavo":"Turkey","cordero":"Lamb",
-  // Pescados / huevos
-  "merluza":"Hake","merluza a la romana":"Battered hake","merluza en salsa verde":"Hake in green sauce",
-  "merluza al horno":"Baked hake","bacalao":"Cod","varitas de merluza":"Fish fingers","varitas de pescado":"Fish fingers",
-  "pescado":"Fish","pescado al horno":"Baked fish","pescado a la plancha":"Grilled fish","salmon":"Salmon",
-  "atun":"Tuna","calamares":"Squid","calamares a la romana":"Battered squid rings","gambas":"Prawns",
-  "tortilla":"Omelette","tortilla de patatas":"Spanish potato omelette","tortilla francesa":"Plain omelette",
-  "huevos":"Eggs","huevos fritos":"Fried eggs","revuelto":"Scrambled eggs","croquetas":"Croquettes",
-  "croquetas caseras":"Homemade croquettes","empanadillas":"Small pasties",
-  // Postres / pan / fruta
-  "pan":"Bread","fruta":"Fruit","fruta del tiempo":"Seasonal fruit","fruta de temporada":"Seasonal fruit",
-  "yogur":"Yoghurt","flan":"Crème caramel","natillas":"Custard","arroz con leche":"Rice pudding",
-  "gelatina":"Jelly","helado":"Ice cream","galletas":"Biscuits","bizcocho":"Sponge cake","tarta":"Cake",
-  "eclairs":"Éclairs","platano":"Banana","manzana":"Apple","naranja":"Orange","pera":"Pear","melon":"Melon",
-  "sandia":"Watermelon","pina":"Pineapple","macedonia":"Fruit salad","macedonia de frutas":"Fruit salad",
-  "queso":"Cheese","aceitunas":"Olives","pan integral":"Wholemeal bread"
-};
-
-// Ingredientes / sustantivos (para construir platos compuestos "X con Y")
-const GLOSARIO_TERMINOS = {
-  "pollo":"chicken","cerdo":"pork","ternera":"beef","pavo":"turkey","cordero":"lamb","conejo":"rabbit",
-  "jamon":"ham","chorizo":"chorizo","bacon":"bacon","salchichas":"sausages","carne":"meat",
-  "merluza":"hake","bacalao":"cod","atun":"tuna","salmon":"salmon","gambas":"prawns","calamares":"squid","pescado":"fish",
-  "huevo":"egg","huevos":"eggs","tortilla":"omelette","queso":"cheese",
-  "patata":"potato","patatas":"potatoes","tomate":"tomato","tomates":"tomato","judias verdes":"green beans",
-  "judias":"beans","alubias":"beans","lentejas":"lentils","garbanzos":"chickpeas","guisantes":"peas",
-  "arroz":"rice","pasta":"pasta","macarrones":"macaroni","espaguetis":"spaghetti","fideos":"noodles",
-  "ensalada":"salad","sopa":"soup","crema":"cream soup","pure":"purée","verdura":"vegetables","verduras":"vegetables",
-  "zanahoria":"carrot","zanahorias":"carrots","espinacas":"spinach","acelgas":"chard","calabacin":"courgette",
-  "calabaza":"pumpkin","champinones":"mushrooms","setas":"mushrooms","cebolla":"onion","pimiento":"pepper",
-  "pimientos":"peppers","lechuga":"lettuce","pepino":"cucumber","maiz":"sweetcorn","aceitunas":"olives",
-  "pan":"bread","fruta":"fruit","yogur":"yoghurt","platano":"banana","manzana":"apple","naranja":"orange","pera":"pear"
-};
-
-// Preparaciones multi-palabra (se traducen y se anteponen)
-const GLOSARIO_PREP_MULTI = {
-  "a la plancha":"grilled","al horno":"baked","a la romana":"battered","en salsa verde":"in green sauce",
-  "en salsa":"in sauce","al ajillo":"garlic","a la bolonesa":"bolognese"
-};
-// Preparaciones de una palabra (adjetivo final → se antepone en inglés)
-const GLOSARIO_PREP = {
-  "asado":"roast","asada":"roast","asados":"roast","asadas":"roast","frito":"fried","frita":"fried",
-  "fritos":"fried","fritas":"fried","empanado":"breaded","empanada":"breaded","empanados":"breaded",
-  "rebozado":"battered","rebozada":"battered","guisado":"stewed","guisada":"stewed","estofado":"stewed",
-  "estofada":"stewed","salteado":"sautéed","salteada":"sautéed","salteados":"sautéed","salteadas":"sautéed",
-  "rehogado":"sautéed","rehogada":"sautéed","rehogadas":"sautéed","cocido":"boiled","cocida":"boiled",
-  "bolonesa":"bolognese"
-};
-const _CONECTORES = ['de','del','la','el','los','las','al','a','en','y'];
-
-function _norm(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim(); }
-
-// Traduce un grupo de sustantivos (permite frases de hasta 3 palabras del glosario)
-function _translateNoun(s){
-  s = s.trim(); if(!s) return '';
-  if (GLOSARIO_PLATOS[s]) return GLOSARIO_PLATOS[s].toLowerCase();
-  const words = s.split(' ').filter(Boolean); let i=0; const out=[];
-  while(i<words.length){
-    let matched=false;
-    for(let len=Math.min(3,words.length-i); len>=1; len--){
-      const cand = words.slice(i,i+len).join(' ');
-      if(GLOSARIO_TERMINOS[cand]){ out.push(GLOSARIO_TERMINOS[cand]); i+=len; matched=true; break; }
-    }
-    if(!matched){
-      if(_CONECTORES.includes(words[i])){ i++; continue; }
-      return null; // palabra desconocida → usar API
-    }
-  }
-  return out.join(' ');
-}
-
-// Traduce un segmento (posible plato con preparación)
-function _translateSegment(seg){
-  let s = _norm(seg);
-  if(GLOSARIO_PLATOS[s]) return GLOSARIO_PLATOS[s].toLowerCase();
-  let prep='';
-  for(const k of Object.keys(GLOSARIO_PREP_MULTI)){
-    if(s.includes(k)){ prep = GLOSARIO_PREP_MULTI[k]; s = s.replace(k,'').replace(/\s+/g,' ').trim(); break; }
-  }
-  let toks = s.split(' ').filter(Boolean);
-  if(!prep && toks.length>1 && GLOSARIO_PREP[toks[toks.length-1]]){ prep = GLOSARIO_PREP[toks[toks.length-1]]; toks = toks.slice(0,-1); }
-  const noun = _translateNoun(toks.join(' '));
-  if(noun===null) return null;
-  // "garlic" y "bolognese"/"battered" van pospuestos de forma natural
-  if(prep==='garlic') return (noun+' in garlic').trim();
-  if(prep==='bolognese'||prep==='in sauce'||prep==='in green sauce'||prep==='battered'&&/romana/.test(seg)) return (noun+' '+prep).trim();
-  if(prep.startsWith('in ')) return (noun+' '+prep).trim();
-  return (prep? prep+' ':'')+noun;
-}
-
-// Traducción local del plato completo (null si no se puede → fallback API)
-function translateDishLocal(raw){
-  const norm=_norm(raw);
-  if(GLOSARIO_PLATOS[norm]) return GLOSARIO_PLATOS[norm];
-  const parts = norm.split(' con ');
-  const segs = parts.map(_translateSegment);
-  if(segs.every(x=>x)) return toTitleCaseSmart(segs.join(' with '));
-  return null;
-}
-
 function _applyTranslation(dishId, dish, en){
   dish.nombreEn = en;
   const card = document.getElementById(`dish-card-${dishId}`);
@@ -913,32 +780,26 @@ function _applyTranslation(dishId, dish, en){
   markUnsaved();
 }
 
-// Retraduce todos los platos del menú actual con el glosario natural (y API si hace falta)
-async function retranslateAll() {
-  const platos = (state[currentMenuTab].platos || []).filter(p => p.nombreEs && p.nombreEs.trim());
-  if (!platos.length) { showToast('No hay platos que traducir', 'info'); return; }
-  showToast('🌐 Retraduciendo platos...', 'info');
-  let n = 0;
-  for (const p of platos) {
-    const local = translateDishLocal(p.nombreEs.trim());
-    if (local) { _applyTranslation(p.id, p, local); n++; continue; }
-    try {
-      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(p.nombreEs.trim())}&langpair=es|en`;
-      const json = await (await fetch(url)).json();
-      if (json.responseStatus===200) { _applyTranslation(p.id, p, toTitleCaseSmart(json.responseData.translatedText)); n++; }
-    } catch(e){ console.warn(e); }
-  }
-  showToast(`✅ ${n} plato(s) retraducidos. Recuerda pulsar "PUBLICAR EN PANTALLA TV".`, 'success');
-}
-
 let translateTimers = {};
 function autoTranslate(dishId) { markUnsaved(); clearTimeout(translateTimers[dishId]); translateTimers[dishId] = setTimeout(()=>manualTranslate(dishId), 1400); }
 async function manualTranslate(dishId) {
   const dish = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!dish||!dish.nombreEs.trim()) return;
-  // 1º intentar glosario culinario (traducción natural)
-  const local = translateDishLocal(dish.nombreEs.trim());
-  if(local){ _applyTranslation(dishId, dish, local); return; }
-  // 2º fallback: API MyMemory
+  const geminiKey = firebaseConfig.geminiApiKey;
+  if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: `Translate this Spanish dish name to English naturally, as a native English speaker would understand it. Return ONLY the translation, nothing else: ${dish.nombreEs.trim()}` }] }] })
+      });
+      const data = await resp.json();
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+        const en = data.candidates[0].content.parts[0].text.trim();
+        _applyTranslation(dishId, dish, en);
+        return;
+      }
+    } catch(e){ console.warn('Gemini translation failed:', e); }
+  }
   try {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(dish.nombreEs.trim())}&langpair=es|en`;
     const json = await (await fetch(url)).json();
@@ -1184,12 +1045,29 @@ function autoTranslateTurno(id) {
 }
 async function manualTranslateTurno(id) {
   const t = turnosState.find(t=>t.id===id); if(!t||!t.mensajeEs.trim()) return;
+  const geminiKey = firebaseConfig.geminiApiKey;
+  if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: `Translate this Spanish message to English naturally. Return ONLY the translation, nothing else: ${t.mensajeEs.trim()}` }] }] })
+      });
+      const data = await resp.json();
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+        t.mensajeEn = data.candidates[0].content.parts[0].text.trim();
+        const card = document.getElementById(`turno-card-${id}`);
+        if(card) card.querySelector('.msg-en').value = t.mensajeEn;
+        updateTurnoPreview(id);
+        return;
+      }
+    } catch(e){ console.warn('Gemini translation failed:', e); }
+  }
   try {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(t.mensajeEs.trim())}&langpair=es|en`;
     const json = await (await fetch(url)).json();
     if(json.responseStatus===200) {
       t.mensajeEn = json.responseData.translatedText;
-      // update input field
       const card = document.getElementById(`turno-card-${id}`);
       if(card) card.querySelector('.msg-en').value = t.mensajeEn;
       updateTurnoPreview(id);

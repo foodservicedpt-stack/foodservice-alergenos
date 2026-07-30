@@ -11,13 +11,13 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --dish-name-size: 3.0vw;
-      --dish-en-size:   1.5vw;
-      --icon-size:      4.8vw;
-      --icon-gap:       0.5vw;
-      --dish-pad:       1.4vw;
-      --legend-icon:    2.4vw;
-      --legend-text:    1.1vw;
+      --dish-name-size: 3.5vw;
+      --dish-en-size:   1.8vw;
+      --icon-size:      5.5vw;
+      --icon-gap:       0.6vw;
+      --dish-pad:       1.6vw;
+      --legend-icon:    3.0vw;
+      --legend-text:    1.3vw;
       --header-h:       11vh;
     }
 
@@ -55,12 +55,13 @@
     /* ─── DISH ROW ─── */
     .dish-row {
       background: #ffffff; border-radius: 14px;
-      padding: var(--dish-pad) calc(var(--dish-pad) * 1.5);
+      padding: var(--dish-pad) calc(var(--dish-pad) * 1.2);
       display: flex; align-items: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       flex: 1; min-height: 0;
       border-left: 5px solid transparent;
       animation: slideIn 0.4s ease-out; overflow: hidden;
+      gap: 0.8vw;
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
     .dish-row:nth-child(even) { border-left-color: #10b981; }
@@ -80,7 +81,7 @@
     }
 
     /* ─── ALLERGEN ICONS ─── */
-    .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.5vw; flex-shrink: 0; width: 42%; max-width: 42%; }
+    .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: 36%; max-width: 36%; }
     .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; }
     .alg-icon-wrap {
       width: var(--icon-size); height: var(--icon-size); border-radius: 50%; overflow: hidden;
@@ -129,8 +130,8 @@
 
     /* ─── FOOTER ─── */
     .footer { background: #0b1f3a; padding: 0.5vw 2.5vw; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .footer-brand { color: #475569; font-size: clamp(10px,1vw,14px); letter-spacing: 1px; }
-    .footer-updated { color: #475569; font-size: clamp(9px,0.9vw,13px); }
+    .footer-brand { color: #94a3b8; font-size: clamp(10px,1vw,14px); letter-spacing: 1px; }
+    .footer-updated { color: #94a3b8; font-size: clamp(9px,0.9vw,13px); }
     .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 6px; animation: blink 2s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
     .no-data { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; gap: 16px; }
@@ -226,11 +227,11 @@
       display: flex; flex-direction: column; align-items: center; gap: 0.8vw;
     }
     .turno-countdown-label {
-      font-size: clamp(12px, 1.2vw, 20px); font-weight: 700;
+      font-size: clamp(14px, 1.5vw, 24px); font-weight: 700;
       opacity: 0.65; letter-spacing: 1px; text-transform: uppercase;
     }
     .turno-progress-track {
-      width: 60%; height: 10px; border-radius: 10px;
+      width: 60%; height: 14px; border-radius: 10px;
       background: rgba(255,255,255,0.2); overflow: hidden;
     }
     .turno-progress-bar {
@@ -518,11 +519,11 @@ function todayStr() {
 // ══════════════════════════════════════════════
 function adjustSizes(n) {
   const r = document.documentElement.style;
-  if      (n <= 4)  { r.setProperty('--dish-name-size','3.2vw'); r.setProperty('--dish-en-size','1.6vw'); r.setProperty('--icon-size','5.2vw'); r.setProperty('--icon-gap','0.55vw'); r.setProperty('--dish-pad','1.6vw'); r.setProperty('--legend-icon','2.6vw'); r.setProperty('--legend-text','1.2vw'); }
-  else if (n <= 6)  { r.setProperty('--dish-name-size','2.8vw'); r.setProperty('--dish-en-size','1.4vw'); r.setProperty('--icon-size','4.6vw'); r.setProperty('--icon-gap','0.5vw');  r.setProperty('--dish-pad','1.2vw'); r.setProperty('--legend-icon','2.3vw'); r.setProperty('--legend-text','1.1vw'); }
-  else if (n <= 8)  { r.setProperty('--dish-name-size','2.3vw'); r.setProperty('--dish-en-size','1.2vw'); r.setProperty('--icon-size','3.9vw'); r.setProperty('--icon-gap','0.4vw');  r.setProperty('--dish-pad','0.9vw'); r.setProperty('--legend-icon','2.0vw'); r.setProperty('--legend-text','0.95vw'); }
-  else if (n <= 10) { r.setProperty('--dish-name-size','1.9vw'); r.setProperty('--dish-en-size','1.0vw'); r.setProperty('--icon-size','3.3vw'); r.setProperty('--icon-gap','0.35vw'); r.setProperty('--dish-pad','0.7vw'); r.setProperty('--legend-icon','1.8vw'); r.setProperty('--legend-text','0.85vw'); }
-  else               { r.setProperty('--dish-name-size','1.6vw'); r.setProperty('--dish-en-size','0.9vw'); r.setProperty('--icon-size','2.8vw'); r.setProperty('--icon-gap','0.3vw');  r.setProperty('--dish-pad','0.6vw'); r.setProperty('--legend-icon','1.6vw'); r.setProperty('--legend-text','0.78vw'); }
+  if      (n <= 4)  { r.setProperty('--dish-name-size','3.8vw'); r.setProperty('--dish-en-size','1.9vw'); r.setProperty('--icon-size','5.8vw'); r.setProperty('--icon-gap','0.65vw'); r.setProperty('--dish-pad','1.8vw'); r.setProperty('--legend-icon','3.2vw'); r.setProperty('--legend-text','1.4vw'); }
+  else if (n <= 6)  { r.setProperty('--dish-name-size','3.3vw'); r.setProperty('--dish-en-size','1.7vw'); r.setProperty('--icon-size','5.2vw'); r.setProperty('--icon-gap','0.6vw');  r.setProperty('--dish-pad','1.5vw'); r.setProperty('--legend-icon','2.8vw'); r.setProperty('--legend-text','1.2vw'); }
+  else if (n <= 8)  { r.setProperty('--dish-name-size','2.8vw'); r.setProperty('--dish-en-size','1.4vw'); r.setProperty('--icon-size','4.5vw'); r.setProperty('--icon-gap','0.5vw');  r.setProperty('--dish-pad','1.2vw'); r.setProperty('--legend-icon','2.4vw'); r.setProperty('--legend-text','1.05vw'); }
+  else if (n <= 10) { r.setProperty('--dish-name-size','2.3vw'); r.setProperty('--dish-en-size','1.1vw'); r.setProperty('--icon-size','3.8vw'); r.setProperty('--icon-gap','0.4vw'); r.setProperty('--dish-pad','0.9vw'); r.setProperty('--legend-icon','2.0vw'); r.setProperty('--legend-text','0.9vw'); }
+  else               { r.setProperty('--dish-name-size','1.9vw'); r.setProperty('--dish-en-size','0.95vw'); r.setProperty('--icon-size','3.2vw'); r.setProperty('--icon-gap','0.35vw');  r.setProperty('--dish-pad','0.7vw'); r.setProperty('--legend-icon','1.7vw'); r.setProperty('--legend-text','0.8vw'); }
 }
 
 // ══════════════════════════════════════════════
@@ -689,6 +690,14 @@ function initFirebase() {
         turnosConfig = [];
       }
     });
+
+    // Periodic refresh as fallback to ensure TV updates without button press
+    setInterval(() => {
+      db.ref('menu/comedor').once('value').then(snap => {
+        latestComedorData = snap.val();
+        refreshMenuDisplay();
+      });
+    }, 30000);
 
   } catch(e) { console.error(e); showOfflineState(); }
 }
