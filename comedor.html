@@ -373,10 +373,20 @@ let turnoRemaining   = 0;
 let turnoTotal       = 60;
 let latestComedorData = null;        // último menú recibido (para reevaluar en el cambio de día)
 
+let lastRenderedMenuKey = '';
+
 // Muestra el menú solo si su fecha es HOY (reinicio automático diario)
+// y solo re-renderiza si los datos han cambiado realmente
 function refreshMenuDisplay() {
-  if (latestComedorData && latestComedorData.fecha === todayStr()) renderMenu(latestComedorData);
-  else showNoData();
+  if (!latestComedorData || latestComedorData.fecha !== todayStr()) {
+    showNoData();
+    lastRenderedMenuKey = '';
+    return;
+  }
+  const key = JSON.stringify(latestComedorData);
+  if (key === lastRenderedMenuKey) return;
+  lastRenderedMenuKey = key;
+  renderMenu(latestComedorData);
 }
 
 // ══════════════════════════════════════════════
