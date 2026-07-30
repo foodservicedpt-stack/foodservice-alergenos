@@ -773,6 +773,154 @@ function toggleAllergen(dishId, type, algId, btn) {
 }
 
 // ──────── TRANSLATION ────────
+// Glosario de corrección post-traducción: corrige errores comunes de Gemini
+// cuando confunde términos culinarios con otros significados en inglés
+const CORRECTOR_PLATOS = {
+  'berlina': 'doughnut',
+  'berlinas': 'doughnuts',
+  'donut': 'doughnut',
+  'donuts': 'doughnuts',
+  'sedán': 'sedan',
+  'sedanes': 'sedans',
+  'tortilla española': 'Spanish omelette',
+  'tortilla de patatas': 'Spanish omelette',
+  'croqueta': 'croquette',
+  'croquetas': 'croquettes',
+  'empanadilla': 'pastry',
+  'empanadillas': 'pastries',
+  'alitas de pollo': 'chicken wings',
+  'varita de merluza': 'fish finger',
+  'varitas de merluza': 'fish fingers',
+  'filete': 'steak',
+  'filetes': 'steaks',
+  'hamburguesa': 'burger',
+  'hamburguesas': 'burgers',
+  'sándwich': 'sandwich',
+  'sándwiches': 'sandwiches',
+  'bocadillo': 'sandwich',
+  'bocadillos': 'sandwiches',
+  'ensaladilla': 'salad',
+  'ensaladillas': 'salads',
+  'patata frita': 'fries',
+  'patatas fritas': 'fries',
+  'patatas bravas': 'braised potatoes',
+  'pimientos de padrón': 'padron peppers',
+  'jamón serrano': 'serrano ham',
+  'jamón ibérico': 'iberian ham',
+  'chorizo': 'chorizo',
+  'salchicha': 'sausage',
+  'salchichas': 'sausages',
+  'calamares': 'squid',
+  'calamar': 'squid',
+  'gamba': 'prawn',
+  'gambas': 'prawns',
+  'langostino': 'prawn',
+  'langostinos': 'prawns',
+  'mejillón': 'mussel',
+  'mejillones': 'mussels',
+  'almeja': 'clam',
+  'almejas': 'clams',
+  'ostra': 'oyster',
+  'ostras': 'oysters',
+  'bacalao': 'cod',
+  'merluza': 'hake',
+  'salmonete': 'red mullet',
+  'dorada': 'sea bream',
+  'lubina': 'sea bass',
+  'bacaladilla': 'cod fillet',
+  'boquerón': 'anchovy',
+  'boquerones': 'anchovies',
+  'sardina': 'sardine',
+  'sardinas': 'sardines',
+  'atún': 'tuna',
+  'atunes': 'tunas',
+  'caballa': 'mackerel',
+  'caballas': 'mackerels',
+  'besugo': 'sea bream',
+  'besugos': 'sea breams',
+  'gallo': 'rooster',
+  'gallina': 'hen',
+  'pollo': 'chicken',
+  'pollos': 'chickens',
+  'pavo': 'turkey',
+  'cordero': 'lamb',
+  'cerdo': 'pork',
+  'ternera': 'beef',
+  'conejo': 'rabbit',
+  'conejos': 'rabbits',
+  'pato': 'duck',
+  'patos': 'ducks',
+  'yogur': 'yoghurt',
+  'flan': 'crème caramel',
+  'natilla': 'custard',
+  'arroz con leche': 'rice pudding',
+  'gelatina': 'jelly',
+  'macedonia': 'fruit salad',
+  'macedonia de frutas': 'fruit salad',
+  'bizcocho': 'sponge cake',
+  'bizcochos': 'sponge cakes',
+  'tarta': 'cake',
+  'tortas': 'cakes',
+  'galleta': 'biscuit',
+  'galletas': 'biscuits',
+  'helado': 'ice cream',
+  'helados': 'ice creams',
+  'sorbete': 'sorbet',
+  'sorbetes': 'sorbets',
+  'batido': 'milkshake',
+  'batidos': 'milkshakes',
+  ' zumo': 'juice',
+  'zumo': 'juice',
+  'zumos': 'juices',
+  'refresco': 'soft drink',
+  'refrescos': 'soft drinks',
+  'agua': 'water',
+  'aguas': 'waters',
+  'pan': 'bread',
+  'panes': 'breads',
+  'tostada': 'toast',
+  'tostadas': 'toasts',
+  'croissant': 'croissant',
+  'croissants': 'croissants',
+  'bollería': 'pastry',
+  'bollerías': 'pastries',
+  'brazo de gitano': 'jelly roll',
+  'pionono': 'pionono',
+  'rosquilla': 'doughnut',
+  'rosquillas': 'doughnuts',
+  'churro': 'churro',
+  'churros': 'churros',
+  'buñuelo': 'fritter',
+  'buñuelos': 'fritters',
+  'pancake': 'pancake',
+  'pancakes': 'pancakes',
+  'waffle': 'waffle',
+  'waffles': 'waffles',
+  'bagel': 'bagel',
+  'bagels': 'bagels',
+  'croissant': 'croissant',
+  'croissants': 'croissants',
+  'muffin': 'muffin',
+  'muffins': 'muffins',
+  'tostada con tomate': 'tomato toast',
+  'pan con tomate': 'tomato bread',
+  'pa amb tomàquet': 'tomato bread',
+};
+
+function correctTranslation(text) {
+  if (!text) return text;
+  let corrected = text;
+  const lower = text.toLowerCase();
+  for (const [wrong, right] of Object.entries(CORRECTOR_PLATOS)) {
+    // Match whole words or common phrases
+    const pattern = new RegExp('\\b' + wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+    if (pattern.test(lower)) {
+      corrected = corrected.replace(pattern, right);
+    }
+  }
+  return corrected;
+}
+
 function _applyTranslation(dishId, dish, en){
   dish.nombreEn = en;
   const card = document.getElementById(`dish-card-${dishId}`);
@@ -794,8 +942,8 @@ async function manualTranslate(dishId) {
       });
       const data = await resp.json();
       if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
-        const en = data.candidates[0].content.parts[0].text.trim();
-        _applyTranslation(dishId, dish, en);
+       const en = correctTranslation(data.candidates[0].content.parts[0].text.trim());
+         _applyTranslation(dishId, dish, en);
         return;
       }
     } catch(e){ console.warn('Gemini translation failed:', e); }
@@ -1055,11 +1203,11 @@ async function manualTranslateTurno(id) {
       });
       const data = await resp.json();
       if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
-        t.mensajeEn = data.candidates[0].content.parts[0].text.trim();
-        const card = document.getElementById(`turno-card-${id}`);
-        if(card) card.querySelector('.msg-en').value = t.mensajeEn;
-        updateTurnoPreview(id);
-        return;
+       t.mensajeEn = correctTranslation(data.candidates[0].content.parts[0].text.trim());
+         const card = document.getElementById(`turno-card-${id}`);
+         if(card) card.querySelector('.msg-en').value = t.mensajeEn;
+         updateTurnoPreview(id);
+         return;
       }
     } catch(e){ console.warn('Gemini translation failed:', e); }
   }
@@ -1067,8 +1215,8 @@ async function manualTranslateTurno(id) {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(t.mensajeEs.trim())}&langpair=es|en`;
     const json = await (await fetch(url)).json();
     if(json.responseStatus===200) {
-      t.mensajeEn = json.responseData.translatedText;
-      const card = document.getElementById(`turno-card-${id}`);
+      t.mensajeEn = correctTranslation(json.responseData.translatedText);
+       const card = document.getElementById(`turno-card-${id}`);
       if(card) card.querySelector('.msg-en').value = t.mensajeEn;
       updateTurnoPreview(id);
     }
