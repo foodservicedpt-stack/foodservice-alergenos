@@ -60,7 +60,7 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       flex: 1; min-height: 0;
       border-left: 5px solid transparent;
-      animation: slideIn 0.4s ease-out; overflow: hidden;
+      overflow: hidden;
       gap: 0.8vw;
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
@@ -138,8 +138,8 @@
     .no-data .icon { font-size: 5vw; }
     .no-data p { font-size: 2vw; font-weight: 600; }
     .no-data small { font-size: 1.2vw; opacity: 0.7; }
-    .fade-update { animation: fadeUpdate 0.5s ease-out; }
-    @keyframes fadeUpdate { 0%{opacity:0.3;transform:scale(0.99)} 100%{opacity:1;transform:scale(1)} }
+    .fade-update { animation: none; }
+    @keyframes fadeUpdate { 0%{opacity:1;transform:scale(1)} 100%{opacity:1;transform:scale(1)} }
 
     /* ═══════════════════════════════════════════════════
        TURNO OVERLAY — Pantalla completa espectacular
@@ -561,8 +561,6 @@ function renderMenu(data) {
     col.innerHTML = '<div class="no-data"><span class="icon">🍽️</span><p>Menú no disponible</p><small>Menu not available yet</small></div>';
     return;
   }
-  col.classList.add('fade-update');
-  setTimeout(() => col.classList.remove('fade-update'), 500);
 
   platos.forEach(p => {
     const contiene = p.contiene||[], trazas = p.trazas||[];
