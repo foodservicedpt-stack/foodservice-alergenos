@@ -193,6 +193,15 @@
       transition: all 0.15s; flex-shrink: 0;
     }
     .btn-remove-dish:hover { background: rgba(239,68,68,0.35); }
+    .btn-move {
+      padding: 6px 10px; border-radius: 8px;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
+      color: #fff; cursor: pointer; font-size: 0.9rem; font-weight: 700;
+      transition: all 0.15s; flex-shrink: 0; display:flex; align-items:center; justify-content:center;
+    }
+    .btn-move:hover:not(.disabled) { background: rgba(255,255,255,0.28); }
+    .btn-move.disabled { opacity: 0.3; cursor: not-allowed; }
+    .dish-move { display:flex; gap:4px; }
     .btn-hide-dish {
       padding: 8px 14px; border-radius: 8px;
       background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
@@ -707,6 +716,10 @@ function renderDish(plato, idx) {
                value="${escHtml(plato.nombreEn||'')}"
                oninput="updateField('${plato.id}','nombreEn',this.value); markUnsaved()">
       </div>
+      <div class="dish-move" style="display:flex; gap:4px;">
+        <button class="btn-move${idx === 0 ? ' disabled' : ''}" onclick="moveDish('${plato.id}', 'up')" title="Mover arriba" ${idx === 0 ? 'disabled' : ''}>⬆️</button>
+        <button class="btn-move${idx === platos.length - 1 ? ' disabled' : ''}" onclick="moveDish('${plato.id}', 'down')" title="Mover abajo" ${idx === platos.length - 1 ? 'disabled' : ''}>⬇️</button>
+      </div>
       <button class="btn-hide-dish${plato.oculto ? ' is-hidden' : ''}" id="hidebtn-${plato.id}"
               onclick="toggleDishHidden('${plato.id}')"
               title="Mostrar u ocultar este plato en la pantalla del comedor">
@@ -751,6 +764,18 @@ function removeDish(id) {
   state[currentMenuTab].platos = state[currentMenuTab].platos.filter(p => p.id !== id);
   const card = document.getElementById(`dish-card-${id}`);
   if (card) { card.style.opacity='0'; card.style.transform='translateX(20px)'; card.style.transition='all .25s'; setTimeout(() => { card.remove(); renumberDishes(); if(!state[currentMenuTab].platos.length) document.getElementById('dish-list').innerHTML='<div class="empty-state"><div class="empty-icon">🍽️</div><p>Aún no hay platos.</p></div>'; }, 250); }
+  markUnsaved();
+}
+function moveDish(dishId, direction) {
+  const platos = state[currentMenuTab].platos;
+  const idx = platos.findIndex(p => p.id === dishId);
+  if (idx === -1) return;
+  if (direction === 'up' && idx > 0) {
+    [platos[idx], platos[idx - 1]] = [platos[idx - 1], platos[idx]];
+  } else if (direction === 'down' && idx < platos.length - 1) {
+    [platos[idx], platos[idx + 1]] = [platos[idx + 1], platos[idx]];
+  } else return;
+  renderCurrentTab();
   markUnsaved();
 }
 function renumberDishes() { document.querySelectorAll('.dish-num').forEach((el,i) => el.textContent=i+1); }
