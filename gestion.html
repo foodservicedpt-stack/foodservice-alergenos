@@ -653,14 +653,14 @@ function loadFromFirebase() {
       renderCurrentTab();
       markUnsaved();
     }
-  }).catch(console.warn);
+  }, err => console.warn(err));
   db.ref('turnos').on('value', snap => {
     const data = snap.val();
     if (data && Array.isArray(data)) {
       turnosState = data.map(t => normalizeTurno(t));
       renderTurnos();
     }
-  }).catch(console.warn);
+  }, err => console.warn(err));
 }
 
 // ══════════════════════════════════════════════
