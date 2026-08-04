@@ -523,6 +523,16 @@
           <p>Durante la cuenta atrás del cambio de turno, se mostrarán estos recordatorios con imágenes en la pantalla del comedor (estilo carousel/notificaciones). Añade cuantos quieras: imagen + mensaje. La traducción al inglés es automática.</p>
         </div>
       </div>
+      <div class="turnos-control-bar" style="margin-top:16px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+        <div class="turno-field" style="min-width:180px;">
+          <label>⏱️ Rotación del carousel (segundos)</label>
+          <input type="number" id="carousel-interval" min="5" max="120" step="1" value="15"
+                 onchange="updateCarouselInterval(this.value)"
+                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:100px;">
+        </div>
+        <div class="sep-bar"></div>
+        <span style="color:#64748b; font-size:0.85rem;">Tiempo entre cada slide del carousel (mín 5s, máx 120s)</span>
+      </div>
       <div id="reminder-list"></div>
       <button class="btn-add-turno" onclick="addReminder()" style="margin-top:12px;">
         <span class="plus">📋</span> Añadir recordatorio
@@ -584,6 +594,7 @@ let state = {
 };
 let turnosState = []; // array of turno objects
 let remindersState = []; // array of reminder objects {id, image, mensajeEs, mensajeEn}
+let carouselInterval = 15; // seconds between carousel slides
 let dishCounter = 0;
 let fbReady = false;
 let unsaved = false;
@@ -687,18 +698,28 @@ function loadFromFirebase() {
       renderTurnos();
     }
   }, err => console.warn(err));
-  db.ref('recordatorios').on('value', snap => {
+db.ref('recordatorios').on('value', snap => {
     const data = snap.val();
     if (data && Array.isArray(data)) {
       remindersState = data;
+      renderReminders();
+    } else if (data && typeof data === 'object' && data.reminders) {
+      // New format with carouselInterval
+      remindersState = data.reminders || [];
+      carouselInterval = data.carouselInterval || 15;
+      document.getElementById('carousel-interval').value = carouselInterval;
       renderReminders();
     } else {
       remindersState = [
         { id:`r${Date.now()}`, image:'./img/recordatorio_1.png', mensajeEs:'¡Recoge tu bandeja y vasos!', mensajeEn:'Pick up your tray and glasses!' },
         { id:`r${Date.now()}`, image:'./img/recordatorio_2.png', mensajeEs:'Deja la mesa limpia para el siguiente turno', mensajeEn:'Leave the table clean for the next shift' }
       ];
+      carouselInterval = 15;
+      document.getElementById('carousel-interval').value = carouselInterval;
       renderReminders();
     }
+  }, err => console.warn(err));
+}
   }, err => console.warn(err));
 }
 
@@ -1179,6 +1200,14 @@ function updateReminderImage(id, input) {
   reader.readAsDataURL(file);
 }
 
+function updateCarouselInterval(value) {
+  const seconds = parseInt(value) || 15;
+  carouselInterval = Math.max(5, Math.min(120, seconds));
+  document.getElementById('carousel-interval').value = carouselInterval;
+  markUnsaved();
+  showToast(`⏱️ Rotación del carousel: ${carouselInterval}s`, 'info');
+}
+
 let reminderTranslateTimers = {};
 function autoTranslateReminder(id) {
   clearTimeout(reminderTranslateTimers[id]);
@@ -1446,7 +1475,10 @@ async function publishReminders() {
   btn.disabled=true; btn.textContent='⏳ Guardando...';
   if(!fbReady){ showToast('⚠️ Firebase no configurado', 'error'); btn.disabled=false; btn.innerHTML='📋 &nbsp;GUARDAR RECORDATORIOS'; return; }
   try {
-    await firebase.database().ref('recordatorios').set(remindersState);
+    await firebase.database().ref('recordatorios').set({
+      reminders: remindersState,
+      carouselInterval: carouselInterval
+    });
     showToast('✅ Recordatorios guardados en TV', 'success');
   } catch(e){ showToast('❌ Error: '+e.message, 'error'); }
   finally { btn.disabled=false; btn.innerHTML='📋 &nbsp;GUARDAR RECORDATORIOS'; }

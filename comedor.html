@@ -457,6 +457,7 @@ const ALLERGENS = [
 // ══════════════════════════════════════════════
 let turnosConfig     = [];           // from Firebase
 let remindersConfig  = [];           // from Firebase
+let carouselInterval  = 15;          // seconds between carousel slides
 let firedTurnos      = new Set();    // HH:MM keys fired today to avoid re-triggering
 let lastFiredDate    = '';           // reset firedTurnos at midnight
 let turnoCountdown   = null;         // interval
@@ -688,11 +689,12 @@ function startCarousel() {
   const totalSlides = 1 + remindersConfig.length;
   if (totalSlides <= 1) return;
   
-  // Cambiar cada 15 segundos
+  // Usar el intervalo configurado (en milisegundos)
+  const intervalMs = carouselInterval * 1000;
   carouselTimer = setInterval(() => {
     currentSlideIndex = (currentSlideIndex + 1) % (1 + remindersConfig.length);
     goToSlide(currentSlideIndex);
-  }, 15000);
+  }, intervalMs);
 }
 
 function stopCarousel() {
@@ -913,10 +915,17 @@ function initFirebase() {
     db.ref('recordatorios').on('value', snap => {
       const data = snap.val();
       if (data && Array.isArray(data)) {
+        // Old format: just an array
         remindersConfig = data;
         console.log(`[Recordatorios] ${remindersConfig.length} cargados.`);
+      } else if (data && typeof data === 'object' && data.reminders) {
+        // New format with carouselInterval
+        remindersConfig = data.reminders || [];
+        carouselInterval = data.carouselInterval || 15;
+        console.log(`[Recordatorios] ${remindersConfig.length} cargados, intervalo: ${carouselInterval}s.`);
       } else {
         remindersConfig = [];
+        carouselInterval = 15;
       }
     });
 
