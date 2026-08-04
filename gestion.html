@@ -514,6 +514,22 @@
       <button class="btn-add-turno" onclick="addTurno()">
         <span class="plus">🔔</span> Añadir aviso de turno
       </button>
+
+      <!-- RECORDATORIOS DE CUENTA ATRÁS -->
+      <div class="turnos-intro" style="margin-top:24px;">
+        <div class="turnos-intro-icon">📋</div>
+        <div>
+          <h3>Recordatorios durante la Cuenta Atrás</h3>
+          <p>Durante la cuenta atrás del cambio de turno, se mostrarán estos recordatorios con imágenes en la pantalla del comedor (estilo carousel/notificaciones). Añade cuantos quieras: imagen + mensaje. La traducción al inglés es automática.</p>
+        </div>
+      </div>
+      <div id="reminder-list"></div>
+      <button class="btn-add-turno" onclick="addReminder()" style="margin-top:12px;">
+        <span class="plus">📋</span> Añadir recordatorio
+      </button>
+      <button class="btn-publish-turnos" id="btn-publish-reminders" onclick="publishReminders()" style="margin-top:12px; margin-left:8px;">
+        📋 &nbsp;GUARDAR RECORDATORIOS
+      </button>
     </div>
   </div>
 </div>
@@ -567,6 +583,7 @@ let state = {
   comedor:  { fecha: todayStr(), platos: [] }
 };
 let turnosState = []; // array of turno objects
+let remindersState = []; // array of reminder objects {id, image, mensajeEs, mensajeEn}
 let dishCounter = 0;
 let fbReady = false;
 let unsaved = false;
@@ -670,6 +687,19 @@ function loadFromFirebase() {
       renderTurnos();
     }
   }, err => console.warn(err));
+  db.ref('recordatorios').on('value', snap => {
+    const data = snap.val();
+    if (data && Array.isArray(data)) {
+      remindersState = data;
+      renderReminders();
+    } else {
+      remindersState = [
+        { id:`r${Date.now()}`, image:'./img/recordatorio_1.png', mensajeEs:'¡Recoge tu bandeja y vasos!', mensajeEn:'Pick up your tray and glasses!' },
+        { id:`r${Date.now()}`, image:'./img/recordatorio_2.png', mensajeEs:'Deja la mesa limpia para el siguiente turno', mensajeEn:'Leave the table clean for the next shift' }
+      ];
+      renderReminders();
+    }
+  }, err => console.warn(err));
 }
 
 // ══════════════════════════════════════════════
@@ -684,6 +714,7 @@ function initPanel() {
     turnosState.push(newTurnoObj('Turno 1', '13:30', '#1e3a5f', '#ffffff', 5, true, '¡Gracias por venir! Por favor, libera tu mesa.', 'Thank You! Please clear your table.'));
   }
   renderTurnos();
+  renderReminders();
 }
 
 // ══════════════════════════════════════════════
@@ -1051,6 +1082,141 @@ function renumberTurnos() {
   document.querySelectorAll('.turno-num').forEach((el,i) => el.textContent = i+1);
 }
 
+// ══════════════════════════════════════════════
+//  RECORDATORIOS DE CUENTA ATRÁS
+// ══════════════════════════════════════════════
+function newReminderObj(image='./img/recordatorio_1.png', mensajeEs='', mensajeEn='') {
+  return { id:`r${Date.now()}${Math.random().toString(36).slice(2,6)}`, image, mensajeEs, mensajeEn };
+}
+
+function addReminder() {
+  const reminder = newReminderObj();
+  remindersState.push(reminder);
+  renderReminderCard(reminder);
+  showToast('📋 Nuevo recordatorio añadido', 'info');
+}
+
+function removeReminder(id) {
+  remindersState = remindersState.filter(r=>r.id!==id);
+  const card = document.getElementById(`reminder-card-${id}`);
+  if(card){card.style.opacity='0';card.style.transform='translateX(20px)';card.style.transition='all .25s';setTimeout(()=>{card.remove();},250);}
+  showToast('🗑 Recordatorio eliminado', 'info');
+}
+
+function renderReminders() {
+  document.getElementById('reminder-list').innerHTML = '';
+  remindersState.forEach(r => renderReminderCard(r));
+}
+
+function renderReminderCard(reminder) {
+  const container = document.getElementById('reminder-list');
+  const div = document.createElement('div');
+  div.className = 'turno-card';
+  div.id = `reminder-card-${reminder.id}`;
+  div.innerHTML = `
+    <div class="turno-header" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">
+      <div class="turno-num" style="color:#fff">${remindersState.findIndex(r=>r.id===reminder.id)+1}</div>
+      <div class="turno-header-title" style="color:#fff">
+        <div class="turno-label">Recordatorio ${remindersState.findIndex(r=>r.id===reminder.id)+1}</div>
+        <div class="turno-time-badge" style="color:#fff">📋 Con imagen</div>
+      </div>
+      <div class="turno-toggle-wrap">
+        <span class="turno-toggle-label" style="color:rgba(255,255,255,0.8)"></span>
+      </div>
+      <button class="btn-remove-turno" onclick="removeReminder('${reminder.id}')">🗑 Eliminar</button>
+    </div>
+    <div class="turno-body">
+      <div class="turno-row">
+        <div class="turno-field" style="flex:1;min-width:160px;">
+          <label>🖼️ Imagen</label>
+          <div class="color-picker-wrap" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <img src="${reminder.image}" alt="Preview" style="max-width:200px;max-height:120px;border-radius:8px;border:2px solid #e2e8f0;cursor:pointer;" onclick="document.getElementById('reminder-img-${reminder.id}').click()" id="reminder-img-preview-${reminder.id}">
+            <input type="file" accept="image/*" id="reminder-img-${reminder.id}" style="display:none;" onchange="updateReminderImage('${reminder.id}',this)">
+            <small style="color:#64748b;">Click en la imagen para cambiarla</small>
+          </div>
+        </div>
+      </div>
+      <div class="turno-row">
+        <div class="msg-field">
+          <label>🇪🇸 Mensaje en español</label>
+          <div class="msg-input-wrap">
+            <input class="msg-input" type="text"
+                   value="${escHtml(reminder.mensajeEs)}"
+                   placeholder="Ej: ¡Recoge tu bandeja!"
+                   oninput="updateReminder('${reminder.id}','mensajeEs',this.value); autoTranslateReminder('${reminder.id}')">
+            <button class="msg-translate-btn" onclick="manualTranslateReminder('${reminder.id}')">🌐 Traducir</button>
+          </div>
+        </div>
+        <div class="msg-field">
+          <label>🇬🇧 English message (auto-translated)</label>
+          <input class="msg-input msg-en" type="text"
+                 value="${escHtml(reminder.mensajeEn)}"
+                 placeholder="Auto-translated"
+                 oninput="updateReminder('${reminder.id}','mensajeEn',this.value)">
+        </div>
+      </div>
+    </div>`;
+  container.appendChild(div);
+}
+
+function updateReminder(id, field, value) {
+  const r = remindersState.find(r=>r.id===id);
+  if(r){ r[field]=value; markUnsaved(); }
+}
+
+function updateReminderImage(id, input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const r = remindersState.find(r=>r.id===id);
+    if(r){
+      r.image = e.target.result;
+      document.getElementById(`reminder-img-preview-${id}`).src = e.target.result;
+      markUnsaved();
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+let reminderTranslateTimers = {};
+function autoTranslateReminder(id) {
+  clearTimeout(reminderTranslateTimers[id]);
+  reminderTranslateTimers[id] = setTimeout(() => manualTranslateReminder(id), 1400);
+}
+
+async function manualTranslateReminder(id) {
+  const r = remindersState.find(r=>r.id===id); if(!r||!r.mensajeEs.trim()) return;
+  const geminiKey = firebaseConfig.geminiApiKey;
+  if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: `Translate this Spanish reminder message to English naturally. Return ONLY the translation, nothing else: ${r.mensajeEs.trim()}` }] }] })
+      });
+      const data = await resp.json();
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+        r.mensajeEn = data.candidates[0].content.parts[0].text.trim();
+        const card = document.getElementById(`reminder-card-${id}`);
+        if(card) card.querySelector('.msg-en').value = r.mensajeEn;
+        markUnsaved();
+        return;
+      }
+    } catch(e){ console.warn('Gemini translation failed:', e); }
+  }
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(r.mensajeEs.trim())}&langpair=es|en`;
+    const json = await (await fetch(url)).json();
+    if(json.responseStatus===200) {
+      r.mensajeEn = json.responseData.translatedText;
+      const card = document.getElementById(`reminder-card-${id}`);
+      if(card) card.querySelector('.msg-en').value = r.mensajeEn;
+      markUnsaved();
+    }
+  } catch(e){ console.warn(e); }
+}
+
 function updateTurno(id, field, value) {
   const t = turnosState.find(t=>t.id===id);
   if(t){ t[field]=value; }
@@ -1269,6 +1435,17 @@ async function publishTurnos() {
     showToast('✅ Avisos de turno guardados en TV', 'success');
   } catch(e){ showToast('❌ Error: '+e.message, 'error'); }
   finally { btn.disabled=false; btn.innerHTML='🔔 &nbsp;GUARDAR AVISOS EN TV'; }
+}
+
+async function publishReminders() {
+  const btn = document.getElementById('btn-publish-reminders');
+  btn.disabled=true; btn.textContent='⏳ Guardando...';
+  if(!fbReady){ showToast('⚠️ Firebase no configurado', 'error'); btn.disabled=false; btn.innerHTML='📋 &nbsp;GUARDAR RECORDATORIOS'; return; }
+  try {
+    await firebase.database().ref('recordatorios').set(remindersState);
+    showToast('✅ Recordatorios guardados en TV', 'success');
+  } catch(e){ showToast('❌ Error: '+e.message, 'error'); }
+  finally { btn.disabled=false; btn.innerHTML='📋 &nbsp;GUARDAR RECORDATORIOS'; }
 }
 
 // ══════════════════════════════════════════════

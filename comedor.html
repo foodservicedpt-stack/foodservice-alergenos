@@ -241,6 +241,75 @@
       transition: width 1s linear;
     }
 
+    /* RECORDATORIOS CAROUSEL */
+    .turno-reminders-carousel {
+      position: relative;
+      margin: 2vw 0;
+      padding: 1vw;
+      border-radius: 1.5vw;
+      background: rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+    .reminders-track {
+      display: flex;
+      transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+      will-change: transform;
+    }
+    .reminder-slide {
+      flex: 0 0 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1vw;
+      padding: 1vw;
+    }
+    .reminder-slide img {
+      max-width: 100%;
+      max-height: 40vh;
+      width: auto;
+      height: auto;
+      border-radius: 1vw;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      object-fit: contain;
+    }
+    .reminder-slide .reminder-text-es {
+      font-size: clamp(18px, 3vw, 42px);
+      font-weight: 900;
+      text-transform: uppercase;
+      text-align: center;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      line-height: 1.1;
+      word-break: break-word;
+      max-width: 90%;
+    }
+    .reminder-slide .reminder-text-en {
+      font-size: clamp(14px, 2.2vw, 30px);
+      font-style: italic;
+      opacity: 0.85;
+      text-align: center;
+      line-height: 1.2;
+      max-width: 90%;
+    }
+    .reminders-dots {
+      display: flex;
+      justify-content: center;
+      gap: 0.5vw;
+      margin-top: 1vw;
+    }
+    .reminder-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .reminder-dot.active {
+      background: #fff;
+      transform: scale(1.3);
+    }
+    .reminder-dot:hover { background: rgba(255,255,255,0.6); }
+
     /* Dismiss button (subtle, for manual close) */
     .turno-dismiss-btn {
       position: absolute; top: 2vw; right: 2.5vw;
@@ -332,6 +401,12 @@
     <div class="turno-msg-es" id="turno-msg-es">¡Gracias! Por favor, libera tu mesa.</div>
     <div class="turno-msg-en" id="turno-msg-en">Thank you! Please clear your table.</div>
 
+    <!-- RECORDATORIOS CAROUSEL -->
+    <div class="turno-reminders-carousel" id="turno-reminders-carousel" style="display:none;">
+      <div class="reminders-track" id="reminders-track"></div>
+      <div class="reminders-dots" id="reminders-dots"></div>
+    </div>
+
     <div class="turno-countdown-wrap">
       <div class="turno-countdown-label" id="turno-countdown-label">Cambio de turno</div>
       <div class="turno-progress-track">
@@ -366,6 +441,7 @@ const ALLERGENS = [
 //  ESTADO TURNOS
 // ══════════════════════════════════════════════
 let turnosConfig     = [];           // from Firebase
+let remindersConfig  = [];           // from Firebase
 let firedTurnos      = new Set();    // HH:MM keys fired today to avoid re-triggering
 let lastFiredDate    = '';           // reset firedTurnos at midnight
 let turnoCountdown   = null;         // interval
@@ -374,6 +450,10 @@ let turnoTotal       = 60;
 let latestComedorData = null;        // último menú recibido (para reevaluar en el cambio de día)
 
 let lastRenderedMenuKey = '';
+
+// Carousel state
+let reminderCarouselTimer = null;
+let currentReminderIndex = 0;
 
 // Muestra el menú solo si su fecha es HOY (reinicio automático diario)
 // y solo re-renderiza si los datos han cambiado realmente
@@ -477,9 +557,15 @@ function showTurno(t) {
   turnoRemaining = totalSec;
   updateCountdownUI(hora);
 
+  // Build reminders carousel
+  buildRemindersCarousel();
+
   // Show overlay
   const overlay = document.getElementById('turno-overlay');
   overlay.classList.add('visible');
+
+  // Start carousel auto-advance
+  startRemindersCarousel();
 
   // Countdown interval
   clearInterval(turnoCountdown);
@@ -503,11 +589,80 @@ function dismissTurno() {
   const overlay = document.getElementById('turno-overlay');
   overlay.classList.remove('visible');
   clearInterval(turnoCountdown);
+  stopRemindersCarousel();
 }
 
 function hexToRgbaLight(hex) {
   // returns a lighter version for the progress bar
   return hex === '#ffffff' ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)';
+}
+
+// ══════════════════════════════════════════════
+//  RECORDATORIOS CAROUSEL
+// ══════════════════════════════════════════════
+function buildRemindersCarousel() {
+  const track = document.getElementById('reminders-track');
+  const dots = document.getElementById('reminders-dots');
+  const carousel = document.getElementById('turno-reminders-carousel');
+  
+  if (!remindersConfig.length) {
+    carousel.style.display = 'none';
+    return;
+  }
+  
+  carousel.style.display = 'block';
+  track.innerHTML = '';
+  dots.innerHTML = '';
+  currentReminderIndex = 0;
+  
+  remindersConfig.forEach((r, i) => {
+    // Slide
+    const slide = document.createElement('div');
+    slide.className = 'reminder-slide';
+    slide.innerHTML = `
+      <img src="${r.image}" alt="Recordatorio ${i+1}" onerror="this.style.display='none'">
+      <div class="reminder-text-es">${r.mensajeEs}</div>
+      <div class="reminder-text-en">${r.mensajeEn || ''}</div>
+    `;
+    track.appendChild(slide);
+    
+    // Dot
+    const dot = document.createElement('div');
+    dot.className = 'reminder-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goToReminder(i);
+    document.getElementById('reminders-dots').appendChild(dot);
+  });
+}
+
+function startRemindersCarousel() {
+  stopRemindersCarousel();
+  if (remindersConfig.length <= 1) return;
+  
+  reminderCarouselTimer = setInterval(() => {
+    currentReminderIndex = (currentReminderIndex + 1) % remindersConfig.length;
+    goToReminder(currentReminderIndex);
+  }, 8000); // Cambia cada 8 segundos
+}
+
+function stopRemindersCarousel() {
+  if (reminderCarouselTimer) {
+    clearInterval(reminderCarouselTimer);
+    reminderCarouselTimer = null;
+  }
+}
+
+function goToReminder(index) {
+  const track = document.getElementById('reminders-track');
+  const dots = document.querySelectorAll('.reminder-dot');
+  
+  if (!track) return;
+  
+  currentReminderIndex = index;
+  track.style.transform = `translateX(-${index * 100}%)`;
+  
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('active', i === index);
+  });
 }
 
 // ══════════════════════════════════════════════
@@ -697,6 +852,17 @@ function initFirebase() {
         console.log(`[Turnos] ${turnosConfig.filter(t=>t.activo).length} activos cargados.`);
       } else {
         turnosConfig = [];
+      }
+    });
+
+    // Recordatorios listener
+    db.ref('recordatorios').on('value', snap => {
+      const data = snap.val();
+      if (data && Array.isArray(data)) {
+        remindersConfig = data;
+        console.log(`[Recordatorios] ${remindersConfig.length} cargados.`);
+      } else {
+        remindersConfig = [];
       }
     });
 
