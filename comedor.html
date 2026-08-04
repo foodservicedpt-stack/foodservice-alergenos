@@ -366,14 +366,14 @@
     #cierre-overlay.visible { opacity:1; visibility:visible; }
     .cierre-card { width:min(90vw,1500px); text-align:center; padding:6vw 7vw; border:1px solid rgba(255,255,255,.22); border-radius:3vw; background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.035)); box-shadow:0 3vw 8vw rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.18); position:relative; overflow:hidden; }
     .cierre-card::before { content:''; position:absolute; inset:auto -10% -70% -10%; height:55%; background:radial-gradient(ellipse,rgba(56,189,248,.24),transparent 65%); pointer-events:none; }
-    .cierre-icon { position:relative; font-size:clamp(70px,11vw,190px); line-height:1; margin-bottom:2vw; filter:drop-shadow(0 12px 18px rgba(0,0,0,.25)); }
+    .cierre-logo { position:relative; height:clamp(60px,8vw,130px); object-fit:contain; filter:brightness(1.2) drop-shadow(0 10px 16px rgba(0,0,0,.35)); margin-bottom:2vw; }
     .cierre-kicker { position:relative; color:#7dd3fc; font-size:clamp(15px,1.7vw,28px); font-weight:800; letter-spacing:.25em; text-transform:uppercase; }
     .cierre-title { position:relative; font-size:clamp(48px,8vw,132px); font-weight:950; letter-spacing:.035em; text-transform:uppercase; line-height:1; margin:1.3vw 0; text-shadow:0 5px 24px rgba(0,0,0,.3); }
     .cierre-message-es { position:relative; font-size:clamp(23px,3.3vw,56px); font-weight:750; line-height:1.12; margin:0 auto 1vw; max-width:1000px; }
     .cierre-message-en { position:relative; color:#cbd5e1; font-size:clamp(17px,2.1vw,34px); font-style:italic; line-height:1.2; }
-    .cierre-time-wrap { position:relative; display:inline-flex; flex-direction:column; gap:.5vw; margin-top:3.5vw; padding:1.4vw 4vw 1.8vw; border-top:1px solid rgba(125,211,252,.42); border-bottom:1px solid rgba(125,211,252,.42); }
-    .cierre-time-label { color:#bae6fd; font-size:clamp(14px,1.5vw,24px); font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
-    .cierre-time { color:#fff; font-size:clamp(52px,9vw,150px); font-weight:950; line-height:.95; letter-spacing:.06em; }
+    .cierre-clock-wrap { position:relative; display:inline-flex; flex-direction:column; gap:.5vw; margin-top:3.5vw; padding:1.4vw 4vw 1.8vw; border-top:1px solid rgba(125,211,252,.42); border-bottom:1px solid rgba(125,211,252,.42); }
+    .cierre-clock-label { color:#bae6fd; font-size:clamp(14px,1.5vw,24px); font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
+    .cierre-clock { color:#fff; font-size:clamp(52px,9vw,150px); font-weight:950; line-height:.95; letter-spacing:.06em; font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
@@ -420,14 +420,13 @@
 <!-- ══════════════════════ CIERRE DE COMEDOR ══════════════════════ -->
 <div id="cierre-overlay" aria-live="polite">
   <div class="cierre-card">
-    <div class="cierre-icon">🚪</div>
+    <img src="./img/Encabezado.png" alt="Food Service DPT" class="cierre-logo" onerror="this.style.display='none'">
     <div class="cierre-kicker">Food Service DPT</div>
     <div class="cierre-title">Comedor cerrado</div>
     <div class="cierre-message-es" id="cierre-message-es">El comedor está cerrado</div>
     <div class="cierre-message-en" id="cierre-message-en">The dining room is closed</div>
-    <div class="cierre-time-wrap">
-      <span class="cierre-time-label">Reapertura · Reopening</span>
-      <span class="cierre-time" id="cierre-time">--:--</span>
+    <div class="cierre-clock-wrap">
+      <div class="cierre-clock" id="cierre-clock">--:--:--</div>
     </div>
   </div>
 </div>
@@ -539,9 +538,17 @@ function refreshCierre() {
   if (!active) return;
   document.getElementById('cierre-message-es').textContent = cierreConfig?.mensajeEs || 'El comedor está cerrado';
   document.getElementById('cierre-message-en').textContent = cierreConfig?.mensajeEn || 'The dining room is closed';
-  document.getElementById('cierre-time').textContent = horaReapertura();
+  updateCierreClock();
   // El cierre tiene prioridad sobre los avisos temporales de turno.
   dismissTurno();
+}
+function updateCierreClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  const el = document.getElementById('cierre-clock');
+  if (el) el.textContent = `${hh}:${mm}:${ss}`;
 }
 
 // ══════════════════════════════════════════════
@@ -564,6 +571,7 @@ function updateClock() {
 
   // Check turnos only at :00 seconds to avoid double-fire within the minute
   refreshCierre();
+  if (cierreActivo()) updateCierreClock();
   if (ss === '00' && !cierreActivo()) checkTurnos(`${hh}:${mm}`);
 }
 setInterval(updateClock, 1000);
