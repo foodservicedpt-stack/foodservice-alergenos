@@ -461,7 +461,7 @@
   <!-- TAB BAR -->
   <div class="tab-bar">
     <button class="tab-btn active"  id="tab-comedor"  onclick="switchMainTab('comedor')">🍽️&nbsp;&nbsp;Menú del Comedor</button>
-    <button class="tab-btn tab-turnos" id="tab-turnos" onclick="switchMainTab('turnos')">🔔&nbsp;&nbsp;Avisos de Turno</button>
+    <button class="tab-btn tab-turnos" id="tab-turnos" onclick="switchMainTab('turnos')">⚙️&nbsp;&nbsp;Gestión de Turnos</button>
   </div>
 
   <!-- ─── MENU CONTROL BAR ─── -->
@@ -540,6 +540,61 @@
       <button class="btn-publish-turnos" id="btn-publish-reminders" onclick="publishReminders()" style="margin-top:12px; margin-left:8px;">
         📋 &nbsp;GUARDAR RECORDATORIOS
       </button>
+
+      <!-- CIERRE DE COMEDOR -->
+      <div class="turnos-intro" style="margin-top:24px;">
+        <div class="turnos-intro-icon">🚪</div>
+        <div>
+          <h3>Cierre de Comedor</h3>
+          <p>Configura el cierre del comedor. Cuando esté activo, la pantalla del comedor mostrará "Comedor cerrado" con la hora de reapertura en lugar de los alérgenos. Elige mensajes editables con traducción automática.</p>
+        </div>
+      </div>
+      <div class="turnos-control-bar" style="margin-top:16px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+        <div class="turno-field" style="min-width:180px;">
+          <label>🕐 Hora de cierre</label>
+          <input type="time" id="cierre-hora" onchange="updateCierre('hora', this.value)"
+                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:120px;">
+        </div>
+        <div class="turno-field" style="min-width:180px;">
+          <label>🕐 Hora de reapertura</label>
+          <input type="time" id="cierre-reapertura" onchange="updateCierre('reapertura', this.value)"
+                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:120px;">
+        </div>
+        <div class="sep-bar"></div>
+      </div>
+      <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+        <div class="turno-field" style="flex:1;min-width:200px;">
+          <label>📝 Mensaje de cierre (español)</label>
+          <div class="msg-input-wrap">
+            <input class="msg-input" type="text" id="cierre-mensaje-es"
+                   placeholder="Ej: El comedor está cerrado. Volvemos a las 14:00"
+                   oninput="updateCierre('mensajeEs', this.value); autoTranslateCierre()">
+            <button class="msg-translate-btn" onclick="manualTranslateCierre()">🌐 Traducir</button>
+          </div>
+        </div>
+        <div class="msg-field" style="flex:1;min-width:200px;">
+          <label>🇬🇧 English message (auto)</label>
+          <input class="msg-input msg-en" type="text" id="cierre-mensaje-en"
+                 placeholder="Auto-translated"
+                 oninput="updateCierre('mensajeEn', this.value)">
+        </div>
+      </div>
+      <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+        <div class="turno-field" style="min-width:200px;">
+          <label>⏱️ Duración del cierre (minutos, 0 = manual)</label>
+          <input type="number" id="cierre-duracion" min="0" max="1440" step="1" value="0"
+                 onchange="updateCierre('duracion', this.value)"
+                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:100px;">
+        </div>
+        <div class="sep-bar"></div>
+        <span style="color:#64748b; font-size:0.85rem;">0 = cierre manual (hay que pulsar 'Reabrir'), >0 = reapertura automática tras X minutos</span>
+      </div>
+      <div class="turnos-control-bar" style="margin-top:12px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0; justify-content:center;">
+        <button class="btn-publish-turnos" id="btn-toggle-cierre" onclick="toggleCierre()" style="padding:14px 32px; font-size:1.05rem;">
+          🔒 <span id="cierre-btn-text">ACTIVAR CIERRE</span>
+        </button>
+        <span id="cierre-status" style="color:#64748b; font-weight:700; font-size:0.9rem;"></span>
+      </div>
     </div>
   </div>
 </div>
