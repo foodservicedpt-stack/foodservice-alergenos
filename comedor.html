@@ -241,74 +241,90 @@
       transition: width 1s linear;
     }
 
-    /* RECORDATORIOS CAROUSEL */
-    .turno-reminders-carousel {
+    /* TURNO CAROUSEL (integrado: despedida + recordatorios) */
+    .turno-carousel {
       position: relative;
-      margin: 2vw 0;
+      margin: 1.5vw 0;
       padding: 1vw;
       border-radius: 1.5vw;
-      background: rgba(0,0,0,0.2);
+      background: rgba(0,0,0,0.15);
       backdrop-filter: blur(10px);
       overflow: hidden;
     }
-    .reminders-track {
+    .carousel-track {
       display: flex;
-      transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+      transition: transform 0.8s cubic-bezier(0.4,0,0.2,1);
       will-change: transform;
     }
-    .reminder-slide {
+    .carousel-slide {
       flex: 0 0 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 1vw;
-      padding: 1vw;
+      padding: 1.5vw;
     }
-    .reminder-slide img {
+    .carousel-slide.farewell {
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+      border-radius: 1vw;
+    }
+    .carousel-slide img {
       max-width: 100%;
-      max-height: 40vh;
+      max-height: 45vh;
       width: auto;
       height: auto;
       border-radius: 1vw;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 25px rgba(0,0,0,0.3);
       object-fit: contain;
     }
-    .reminder-slide .reminder-text-es {
-      font-size: clamp(18px, 3vw, 42px);
+    .slide-text-es {
+      font-size: clamp(20px, 3.5vw, 50px);
       font-weight: 900;
       text-transform: uppercase;
       text-align: center;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      text-shadow: 0 3px 15px rgba(0,0,0,0.6);
       line-height: 1.1;
       word-break: break-word;
-      max-width: 90%;
+      max-width: 95%;
+      color: inherit;
     }
-    .reminder-slide .reminder-text-en {
-      font-size: clamp(14px, 2.2vw, 30px);
+    .slide-text-en {
+      font-size: clamp(16px, 2.5vw, 36px);
       font-style: italic;
       opacity: 0.85;
       text-align: center;
       line-height: 1.2;
-      max-width: 90%;
+      max-width: 95%;
+      color: inherit;
     }
-    .reminders-dots {
+    .slide-label {
+      font-size: clamp(12px, 1.8vw, 24px);
+      font-weight: 700;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 0.5vw;
+    }
+    .carousel-dots {
       display: flex;
       justify-content: center;
-      gap: 0.5vw;
+      gap: 0.6vw;
       margin-top: 1vw;
     }
-    .reminder-dot {
-      width: 10px; height: 10px;
+    .carousel-dot {
+      width: 12px; height: 12px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.25);
       cursor: pointer;
       transition: all 0.3s;
+      border: 2px solid transparent;
     }
-    .reminder-dot.active {
+    .carousel-dot.active {
       background: #fff;
-      transform: scale(1.3);
+      transform: scale(1.4);
+      border-color: rgba(255,255,255,0.5);
     }
-    .reminder-dot:hover { background: rgba(255,255,255,0.6); }
+    .carousel-dot:hover { background: rgba(255,255,255,0.5); }
 
     /* Dismiss button (subtle, for manual close) */
     .turno-dismiss-btn {
@@ -398,15 +414,14 @@
 
     <span class="turno-bell" id="turno-bell">🔔</span>
     <div class="turno-title" id="turno-title">CAMBIO DE TURNO · SHIFT CHANGE</div>
-    <div class="turno-msg-es" id="turno-msg-es">¡Gracias! Por favor, libera tu mesa.</div>
-    <div class="turno-msg-en" id="turno-msg-en">Thank you! Please clear your table.</div>
 
-    <!-- RECORDATORIOS CAROUSEL -->
-    <div class="turno-reminders-carousel" id="turno-reminders-carousel" style="display:none;">
-      <div class="reminders-track" id="reminders-track"></div>
-      <div class="reminders-dots" id="reminders-dots"></div>
+    <!-- CAROUSEL INTEGRADO: mensaje de despedida + recordatorios -->
+    <div class="turno-carousel" id="turno-carousel">
+      <div class="carousel-track" id="carousel-track"></div>
+      <div class="carousel-dots" id="carousel-dots"></div>
     </div>
 
+    <!-- CUENTA ATRÁS SIEMPRE VISIBLE (fuera del carousel) -->
     <div class="turno-countdown-wrap">
       <div class="turno-countdown-label" id="turno-countdown-label">Cambio de turno</div>
       <div class="turno-progress-track">
@@ -452,8 +467,8 @@ let latestComedorData = null;        // último menú recibido (para reevaluar e
 let lastRenderedMenuKey = '';
 
 // Carousel state
-let reminderCarouselTimer = null;
-let currentReminderIndex = 0;
+let carouselTimer = null;
+let currentSlideIndex = 0;
 
 // Muestra el menú solo si su fecha es HOY (reinicio automático diario)
 // y solo re-renderiza si los datos han cambiado realmente
@@ -531,11 +546,6 @@ function checkTurnos(hhmm) {
 }
 
 function showTurno(t) {
-  // Populate content
-  document.getElementById('turno-msg-es').textContent  = t.mensajeEs || '¡Gracias! Por favor, libera tu mesa.';
-  document.getElementById('turno-msg-en').textContent  = t.mensajeEn || 'Thank you! Please clear your table.';
-  document.getElementById('turno-title').textContent   = (t.label || 'Cambio de Turno').toUpperCase() + ' · SHIFT CHANGE';
-
   // Apply colors
   const card = document.getElementById('turno-card-tv');
   const bgColor   = t.bgColor   || '#1e3a5f';
@@ -543,8 +553,8 @@ function showTurno(t) {
   card.style.background = bgColor;
   card.style.color      = textColor;
 
-  // Style inner text elements explicitly
-  ['turno-title','turno-msg-es','turno-msg-en','turno-countdown-label'].forEach(id => {
+  document.getElementById('turno-title').textContent = (t.label || 'Cambio de Turno').toUpperCase() + ' · SHIFT CHANGE';
+  ['turno-title','turno-countdown-label'].forEach(id => {
     document.getElementById(id).style.color = textColor;
   });
   document.getElementById('turno-progress-bar').style.background = hexToRgbaLight(textColor);
@@ -557,15 +567,15 @@ function showTurno(t) {
   turnoRemaining = totalSec;
   updateCountdownUI(hora);
 
-  // Build reminders carousel
-  buildRemindersCarousel();
+  // Build carousel (despedida + recordatorios)
+  buildTurnoCarousel(t);
 
   // Show overlay
   const overlay = document.getElementById('turno-overlay');
   overlay.classList.add('visible');
 
-  // Start carousel auto-advance
-  startRemindersCarousel();
+  // Start carousel auto-advance (cada 15 segundos)
+  startCarousel();
 
   // Countdown interval
   clearInterval(turnoCountdown);
@@ -589,7 +599,7 @@ function dismissTurno() {
   const overlay = document.getElementById('turno-overlay');
   overlay.classList.remove('visible');
   clearInterval(turnoCountdown);
-  stopRemindersCarousel();
+  stopCarousel();
 }
 
 function hexToRgbaLight(hex) {
@@ -598,66 +608,110 @@ function hexToRgbaLight(hex) {
 }
 
 // ══════════════════════════════════════════════
-//  RECORDATORIOS CAROUSEL
+//  TURNO CAROUSEL (despedida + recordatorios)
 // ══════════════════════════════════════════════
-function buildRemindersCarousel() {
-  const track = document.getElementById('reminders-track');
-  const dots = document.getElementById('reminders-dots');
-  const carousel = document.getElementById('turno-reminders-carousel');
+function buildTurnoCarousel(t) {
+  const track = document.getElementById('carousel-track');
+  const dots = document.getElementById('carousel-dots');
+  const carousel = document.getElementById('turno-carousel');
   
-  if (!remindersConfig.length) {
+  if (!carousel) return;
+  
+  // Construir slides: primero el mensaje de despedida, luego cada recordatorio
+  const slides = [];
+  
+  // Slide 1: Mensaje de despedida (del turno)
+  slides.push({
+    type: 'farewell',
+    image: null,
+    textEs: t.mensajeEs || '¡Gracias! Por favor, libera tu mesa.',
+    textEn: t.mensajeEn || 'Thank you! Please clear your table.',
+    label: 'CAMBIO DE TURNO'
+  });
+  
+  // Slides siguientes: cada recordatorio
+  remindersConfig.forEach((r, i) => {
+    slides.push({
+      type: 'reminder',
+      image: r.image,
+      textEs: r.mensajeEs,
+      textEn: r.mensajeEn || '',
+      label: `RECORDATORIO ${i + 1}`
+    });
+  });
+  
+  if (slides.length === 0) {
     carousel.style.display = 'none';
     return;
   }
   
   carousel.style.display = 'block';
-  track.innerHTML = '';
-  dots.innerHTML = '';
+  
+  const trackEl = document.getElementById('carousel-track');
+  const dotsEl = document.getElementById('carousel-dots');
+  trackEl.innerHTML = '';
+  dotsEl.innerHTML = '';
   currentReminderIndex = 0;
   
-  remindersConfig.forEach((r, i) => {
-    // Slide
-    const slide = document.createElement('div');
-    slide.className = 'reminder-slide';
-    slide.innerHTML = `
-      <img src="${r.image}" alt="Recordatorio ${i+1}" onerror="this.style.display='none'">
-      <div class="reminder-text-es">${r.mensajeEs}</div>
-      <div class="reminder-text-en">${r.mensajeEn || ''}</div>
-    `;
-    track.appendChild(slide);
+  slides.forEach((slide, i) => {
+    const div = document.createElement('div');
+    div.className = 'carousel-slide' + (slide.type === 'farewell' ? ' farewell' : '');
+    
+    if (slide.image) {
+      div.innerHTML = `
+        <div class="slide-label">${slide.label}</div>
+        <img src="${slide.image}" alt="${slide.label}" onerror="this.style.display='none'">
+        <div class="slide-text-es">${slide.textEs}</div>
+        <div class="slide-text-en">${slide.textEn || ''}</div>
+      `;
+    } else {
+      div.innerHTML = `
+        <div class="slide-label">${slide.label}</div>
+        <div class="slide-text-es">${slide.textEs}</div>
+        <div class="slide-text-en">${slide.textEn || ''}</div>
+      `;
+    }
+    trackEl.appendChild(div);
     
     // Dot
     const dot = document.createElement('div');
-    dot.className = 'reminder-dot' + (i === 0 ? ' active' : '');
-    dot.onclick = () => goToReminder(i);
-    document.getElementById('reminders-dots').appendChild(dot);
+    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goToSlide(i);
+    document.getElementById('carousel-dots').appendChild(dot);
   });
 }
 
-function startRemindersCarousel() {
-  stopRemindersCarousel();
-  if (remindersConfig.length <= 1) return;
+function startCarousel() {
+  stopCarousel();
   
-  reminderCarouselTimer = setInterval(() => {
-    currentReminderIndex = (currentReminderIndex + 1) % remindersConfig.length;
-    goToReminder(currentReminderIndex);
-  }, 8000); // Cambia cada 8 segundos
+  // Contar total slides: 1 despedida + recordatorios
+  const totalSlides = 1 + remindersConfig.length;
+  if (totalSlides <= 1) return;
+  
+  // Cambiar cada 15 segundos
+  carouselTimer = setInterval(() => {
+    currentSlideIndex = (currentSlideIndex + 1) % (1 + remindersConfig.length);
+    goToSlide(currentSlideIndex);
+  }, 15000);
 }
 
-function stopRemindersCarousel() {
-  if (reminderCarouselTimer) {
-    clearInterval(reminderCarouselTimer);
-    reminderCarouselTimer = null;
+function stopCarousel() {
+  if (carouselTimer) {
+    clearInterval(carouselTimer);
+    carouselTimer = null;
   }
 }
 
-function goToReminder(index) {
-  const track = document.getElementById('reminders-track');
-  const dots = document.querySelectorAll('.reminder-dot');
+function goToSlide(index) {
+  const track = document.getElementById('carousel-track');
+  const dots = document.querySelectorAll('.carousel-dot');
   
   if (!track) return;
   
-  currentReminderIndex = index;
+  const totalSlides = 1 + remindersConfig.length;
+  index = ((index % totalSlides) + totalSlides) % totalSlides;
+  currentSlideIndex = index;
+  
   track.style.transform = `translateX(-${index * 100}%)`;
   
   dots.forEach((dot, i) => {

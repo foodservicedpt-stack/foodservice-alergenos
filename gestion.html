@@ -1182,11 +1182,15 @@ function updateReminderImage(id, input) {
 let reminderTranslateTimers = {};
 function autoTranslateReminder(id) {
   clearTimeout(reminderTranslateTimers[id]);
-  reminderTranslateTimers[id] = setTimeout(() => manualTranslateReminder(id), 1400);
+  reminderTranslateTimers[id] = setTimeout(() => {
+    const r = remindersState.find(x => x.id === id);
+    if (r && r.mensajeEs.trim()) manualTranslateReminder(id);
+  }, 1400);
 }
 
 async function manualTranslateReminder(id) {
-  const r = remindersState.find(r=>r.id===id); if(!r||!r.mensajeEs.trim()) return;
+  const r = remindersState.find(x => x.id === id);
+  if (!r || !r.mensajeEs.trim()) return;
   const geminiKey = firebaseConfig.geminiApiKey;
   if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
     try {
