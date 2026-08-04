@@ -473,6 +473,8 @@
       <span id="status-text">Publicado</span>
     </div>
     <div class="sep-bar"></div>
+    <span id="cierre-quick-status" style="font-size:.85rem;font-weight:700;color:#64748b;">Comedor abierto</span>
+    <button class="btn-publish-turnos" id="btn-cierre-quick" onclick="toggleCierre()" style="padding:10px 16px;">🚪 Cerrar comedor</button>
     <button class="btn-publish" onclick="publishMenu()" id="btn-publish">
       📺 &nbsp;PUBLICAR EN PANTALLA TV
     </button>
@@ -561,6 +563,10 @@
                  style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:120px;">
         </div>
         <div class="sep-bar"></div>
+        <label style="display:flex;align-items:center;gap:8px;color:#334155;font-weight:700;font-size:.9rem;cursor:pointer;">
+          <input type="checkbox" id="cierre-programado" onchange="updateCierre('programado', this.checked)">
+          Activar cada día a esta hora
+        </label>
       </div>
       <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
         <div class="turno-field" style="flex:1;min-width:200px;">
@@ -650,6 +656,10 @@ let state = {
 let turnosState = []; // array of turno objects
 let remindersState = []; // array of reminder objects {id, image, mensajeEs, mensajeEn}
 let carouselInterval = 15; // seconds between carousel slides
+let cierreState = {
+  activo: false, programado: false, hora: '', reapertura: '', duracion: 0,
+  mensajeEs: 'El comedor está cerrado', mensajeEn: 'The dining room is closed'
+};
 let dishCounter = 0;
 let fbReady = false;
 let unsaved = false;
@@ -774,6 +784,91 @@ db.ref('recordatorios').on('value', snap => {
       renderReminders();
     }
   }, err => console.warn(err));
+  db.ref('cierreComedor').on('value', snap => {
+    cierreState = normalizeCierre(snap.val());
+    syncCierreUI();
+  }, err => console.warn(err));
+}
+
+// ══════════════════════════════════════════════
+//  CIERRE DE COMEDOR
+// ══════════════════════════════════════════════
+function normalizeCierre(data) {
+  return Object.assign({
+    activo:false, programado:false, hora:'', reapertura:'', duracion:0,
+    mensajeEs:'El comedor está cerrado', mensajeEn:'The dining room is closed'
+  }, data || {}, { duracion: Math.max(0, Number((data || {}).duracion) || 0) });
+}
+function isCierreProgramadoAhora() {
+  if (!cierreState.programado || !cierreState.hora || !cierreState.duracion) return false;
+  const [h, m] = cierreState.hora.split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
+  const now = new Date();
+  const start = new Date(now); start.setHours(h, m, 0, 0);
+  const end = new Date(start.getTime() + cierreState.duracion * 60000);
+  return now >= start && now < end;
+}
+function cierreEstaActivo() { return !!cierreState.activo || isCierreProgramadoAhora(); }
+function syncCierreUI() {
+  const fields = {
+    'cierre-hora': cierreState.hora,
+    'cierre-reapertura': cierreState.reapertura,
+    'cierre-mensaje-es': cierreState.mensajeEs,
+    'cierre-mensaje-en': cierreState.mensajeEn,
+    'cierre-duracion': cierreState.duracion
+  };
+  Object.entries(fields).forEach(([id, value]) => { const el=document.getElementById(id); if(el) el.value=value || ''; });
+  const scheduled = document.getElementById('cierre-programado');
+  if (scheduled) scheduled.checked = !!cierreState.programado;
+  const active = cierreEstaActivo();
+  const buttonText = document.getElementById('cierre-btn-text');
+  if (buttonText) buttonText.textContent = active ? 'REABRIR COMEDOR' : 'ACTIVAR CIERRE AHORA';
+  const status = document.getElementById('cierre-status');
+  if (status) status.textContent = active ? `● Cerrado${cierreState.reapertura ? ` · reapertura ${cierreState.reapertura}` : ''}` : (cierreState.programado ? `Programado a las ${cierreState.hora || '--:--'}` : 'Comedor abierto');
+  const quickStatus = document.getElementById('cierre-quick-status');
+  const quickButton = document.getElementById('btn-cierre-quick');
+  if (quickStatus) { quickStatus.textContent = active ? '● Comedor cerrado' : '● Comedor abierto'; quickStatus.style.color = active ? '#dc2626' : '#059669'; }
+  if (quickButton) { quickButton.textContent = active ? '✓ Mostrar alérgenos' : '🚪 Cerrar comedor'; }
+}
+async function saveCierre({toast=false}={}) {
+  if (!fbReady) { if(toast) showToast('⚠️ Firebase no configurado', 'error'); return false; }
+  try { await firebase.database().ref('cierreComedor').set(cierreState); if(toast) showToast('✅ Configuración del cierre guardada', 'success'); return true; }
+  catch(e) { showToast('❌ Error: '+e.message, 'error'); return false; }
+}
+function updateCierre(field, value) {
+  cierreState[field] = field === 'duracion' ? Math.max(0, Math.min(1440, Number(value) || 0)) : value;
+  if (field === 'duracion' && cierreState.programado && cierreState.hora && !cierreState.reapertura) {
+    const [h,m] = cierreState.hora.split(':').map(Number);
+    if(Number.isFinite(h) && Number.isFinite(m)) {
+      const total = (h * 60 + m + cierreState.duracion) % 1440;
+      cierreState.reapertura = `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+    }
+  }
+  syncCierreUI();
+  saveCierre();
+}
+async function toggleCierre() {
+  cierreState.activo = !cierreEstaActivo();
+  // Si se reabre manualmente, también se pausa la programación para evitar que la TV se cierre de nuevo inmediatamente.
+  if (!cierreState.activo) cierreState.programado = false;
+  await saveCierre({toast:true});
+  syncCierreUI();
+}
+let cierreTranslateTimer;
+function autoTranslateCierre() { clearTimeout(cierreTranslateTimer); cierreTranslateTimer=setTimeout(manualTranslateCierre, 1400); }
+async function manualTranslateCierre() {
+  if (!cierreState.mensajeEs.trim()) return;
+  const geminiKey = firebaseConfig.geminiApiKey;
+  try {
+    let translated = '';
+    if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contents:[{parts:[{text:`Translate this Spanish dining-room closure message to natural English. Return ONLY the translation: ${cierreState.mensajeEs.trim()}`}]}]}) });
+      const data = await resp.json();
+      translated = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    }
+    if (!translated) { const json = await (await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(cierreState.mensajeEs.trim())}&langpair=es|en`)).json(); translated = json.responseStatus===200 ? json.responseData.translatedText : ''; }
+    if (translated) { cierreState.mensajeEn = translated; syncCierreUI(); saveCierre(); }
+  } catch(e) { console.warn('Closure translation:', e); }
 }
 
 // ══════════════════════════════════════════════
