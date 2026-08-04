@@ -776,8 +776,8 @@ db.ref('recordatorios').on('value', snap => {
       renderReminders();
     } else {
       remindersState = [
-        { id:`r${Date.now()}`, image:'./img/recordatorio_1.png', mensajeEs:'¡Recoge tu bandeja y vasos!', mensajeEn:'Pick up your tray and glasses!' },
-        { id:`r${Date.now()}`, image:'./img/recordatorio_2.png', mensajeEs:'Deja la mesa limpia para el siguiente turno', mensajeEn:'Leave the table clean for the next shift' }
+        { id:`r${Date.now()}-${Math.random().toString(36).slice(2,6)}`, image:'./img/recordatorio_1.png', mensajeEs:'¡Recoge tu bandeja y vasos!', mensajeEn:'Pick up your tray and glasses!' },
+        { id:`r${Date.now()}-${Math.random().toString(36).slice(2,6)}`, image:'./img/recordatorio_2.png', mensajeEs:'Deja la mesa limpia para el siguiente turno', mensajeEn:'Leave the table clean for the next shift' }
       ];
       carouselInterval = 15;
       document.getElementById('carousel-interval').value = carouselInterval;
