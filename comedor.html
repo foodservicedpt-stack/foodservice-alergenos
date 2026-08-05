@@ -64,10 +64,10 @@
       padding: var(--dish-pad) calc(var(--dish-pad) * 1.2);
       display: flex; align-items: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      flex: 1; min-height: 0;
       border-left: 5px solid transparent;
       overflow: hidden;
       gap: 0.5vw;
+      min-height: 6vw;
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
     .dish-row:nth-child(even) { border-left-color: #10b981; }
@@ -888,7 +888,7 @@ function renderMenu(data) {
   document.getElementById('header-date').textContent = formatDateEs(data.fecha);
 
   // Ajuste fino: dimensiona los iconos y la leyenda tras el layout para que nada se corte
-  requestAnimationFrame(() => { fitAllergenIcons(); fitLegend(); fitDishNames(); });
+  requestAnimationFrame(() => { fitAllergenIcons(); fitLegend(); });
 }
 
 // ══════════════════════════════════════════════
@@ -937,22 +937,7 @@ function fitLegend() {
   let txt = Math.min(per * 0.30, 22); txt = Math.max(8, txt);
   document.documentElement.style.setProperty('--legend-text', txt + 'px');
 }
-// Ajusta el tamaño de fuente de cada nombre para que quepa completo (máx. 2 líneas), sin recortes
-function fitDishNames() {
-  document.querySelectorAll('.dish-name-es, .dish-name-en').forEach(el => {
-    el.style.fontSize = '';                       // vuelve al tamaño base del CSS
-    let fs = parseFloat(getComputedStyle(el).fontSize);
-    if (!fs) return;
-    const minFs = el.classList.contains('dish-name-es') ? 14 : 10;
-    let guard = 0;
-    // si el texto (a 2 líneas máx.) se sale, reduce la fuente hasta que quepa
-    while (el.scrollHeight > el.clientHeight + 1 && fs > minFs && guard++ < 40) {
-      fs *= 0.94;
-      el.style.fontSize = fs + 'px';
-    }
-  });
-}
-window.addEventListener('resize', () => { fitAllergenIcons(); fitLegend(); fitDishNames(); });
+window.addEventListener('resize', () => { fitAllergenIcons(); fitLegend(); });
 
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
