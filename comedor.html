@@ -11,13 +11,13 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --dish-name-size: 11vw;
-      --dish-en-size: 4.2vw;
-      --icon-size: 6.5vw;
-      --icon-gap: 0.7vw;
+      --dish-name-size: 13vw;
+      --dish-en-size: 5vw;
+      --icon-size: 7vw;
+      --icon-gap: 0.8vw;
       --dish-pad: 1.6vw;
-      --legend-icon: 4vw;
-      --legend-text: 1.8vw;
+      --legend-icon: 4.5vw;
+      --legend-text: 2.1vw;
       --header-h: 11vh;
       --turno-title-size: 2.4vw;
       --turno-msg-es-size: 3.5vw;
@@ -813,11 +813,11 @@ function todayStr() {
 // ══════════════════════════════════════════════
 function adjustSizes(n) {
   const r = document.documentElement.style;
-  if      (n <= 4)  { r.setProperty('--dish-name-size','4.8vw'); r.setProperty('--dish-en-size','2.0vw'); r.setProperty('--icon-size','5.8vw'); r.setProperty('--icon-gap','0.65vw'); r.setProperty('--dish-pad','1.8vw'); r.setProperty('--legend-icon','3.2vw'); r.setProperty('--legend-text','1.4vw'); }
-  else if (n <= 6)  { r.setProperty('--dish-name-size','4.2vw'); r.setProperty('--dish-en-size','1.8vw'); r.setProperty('--icon-size','5.2vw'); r.setProperty('--icon-gap','0.6vw');  r.setProperty('--dish-pad','1.5vw'); r.setProperty('--legend-icon','2.8vw'); r.setProperty('--legend-text','1.2vw'); }
-  else if (n <= 8)  { r.setProperty('--dish-name-size','3.6vw'); r.setProperty('--dish-en-size','1.5vw'); r.setProperty('--icon-size','4.5vw'); r.setProperty('--icon-gap','0.5vw');  r.setProperty('--dish-pad','1.2vw'); r.setProperty('--legend-icon','2.4vw'); r.setProperty('--legend-text','1.05vw'); }
-  else if (n <= 10) { r.setProperty('--dish-name-size','3.0vw'); r.setProperty('--dish-en-size','1.2vw'); r.setProperty('--icon-size','3.8vw'); r.setProperty('--icon-gap','0.4vw');  r.setProperty('--dish-pad','0.9vw'); r.setProperty('--legend-icon','2.0vw'); r.setProperty('--legend-text','0.9vw'); }
-  else               { r.setProperty('--dish-name-size','2.5vw'); r.setProperty('--dish-en-size','1.0vw'); r.setProperty('--icon-size','3.2vw'); r.setProperty('--icon-gap','0.35vw'); r.setProperty('--dish-pad','0.7vw'); r.setProperty('--legend-icon','1.7vw'); r.setProperty('--legend-text','0.8vw'); }
+  if      (n <= 4)  { r.setProperty('--dish-name-size','5.5vw'); r.setProperty('--dish-en-size','2.4vw'); r.setProperty('--icon-size','6.5vw'); r.setProperty('--icon-gap','0.75vw'); r.setProperty('--dish-pad','2.0vw'); r.setProperty('--legend-icon','4.5vw'); r.setProperty('--legend-text','2.1vw'); }
+  else if (n <= 6)  { r.setProperty('--dish-name-size','4.8vw'); r.setProperty('--dish-en-size','2.1vw'); r.setProperty('--icon-size','5.8vw'); r.setProperty('--icon-gap','0.7vw');  r.setProperty('--dish-pad','1.8vw'); r.setProperty('--legend-icon','4.0vw'); r.setProperty('--legend-text','1.9vw'); }
+  else if (n <= 8)  { r.setProperty('--dish-name-size','4.2vw'); r.setProperty('--dish-en-size','1.8vw'); r.setProperty('--icon-size','5.0vw'); r.setProperty('--icon-gap','0.6vw');  r.setProperty('--dish-pad','1.6vw'); r.setProperty('--legend-icon','3.5vw'); r.setProperty('--legend-text','1.7vw'); }
+  else if (n <= 10) { r.setProperty('--dish-name-size','3.6vw'); r.setProperty('--dish-en-size','1.5vw'); r.setProperty('--icon-size','4.2vw'); r.setProperty('--icon-gap','0.5vw');  r.setProperty('--dish-pad','1.4vw'); r.setProperty('--legend-icon','3.0vw'); r.setProperty('--legend-text','1.5vw'); }
+  else               { r.setProperty('--dish-name-size','3.0vw'); r.setProperty('--dish-en-size','1.2vw'); r.setProperty('--icon-size','3.6vw'); r.setProperty('--icon-gap','0.45vw'); r.setProperty('--dish-pad','1.2vw'); r.setProperty('--legend-icon','2.6vw'); r.setProperty('--legend-text','1.3vw'); }
 }
 
 // ══════════════════════════════════════════════
