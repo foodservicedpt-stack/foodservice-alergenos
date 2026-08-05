@@ -16,8 +16,8 @@
       --icon-size: 7vw;
       --icon-gap: 0.8vw;
       --dish-pad: 1.6vw;
-      --legend-icon: 4.5vw;
-      --legend-text: 2.1vw;
+      --legend-icon: 5vw;
+      --legend-text: 2.4vw;
       --header-h: 11vh;
       --turno-title-size: 2.4vw;
       --turno-msg-es-size: 3.5vw;
@@ -932,9 +932,9 @@ function fitLegend() {
   const h = list.getBoundingClientRect().height;
   if (!h) return;
   const per = h / n;                 // altura por elemento
-  let ic = Math.min(per * 0.66, 52); ic = Math.max(14, ic);
+  let ic = Math.min(per * 0.70, 70); ic = Math.max(18, ic);
   document.documentElement.style.setProperty('--legend-icon', ic + 'px');
-  let txt = Math.min(per * 0.30, 22); txt = Math.max(8, txt);
+  let txt = Math.min(per * 0.38, 32); txt = Math.max(12, txt);
   document.documentElement.style.setProperty('--legend-text', txt + 'px');
 }
 window.addEventListener('resize', () => { fitAllergenIcons(); fitLegend(); });
