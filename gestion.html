@@ -775,13 +775,15 @@ function hexToRgb(hex) {
 // ══════════════════════════════════════════════
 function switchMainTab(tab) {
   currentMainTab = tab;
-  ['comedor','turnos'].forEach(t => {
+  ['comedor','turnos','ajustes'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
   });
-  document.getElementById('tab-content-menu').classList.toggle('active', tab !== 'turnos');
+  document.getElementById('tab-content-menu').classList.toggle('active', tab === 'comedor');
   document.getElementById('tab-content-turnos').classList.toggle('active', tab === 'turnos');
+  document.getElementById('tab-content-ajustes').classList.toggle('active', tab === 'ajustes');
   document.getElementById('menu-control-bar').style.display   = tab !== 'turnos' ? 'flex' : 'none';
   document.getElementById('turnos-control-bar').style.display = tab === 'turnos' ? 'flex' : 'none';
+  document.getElementById('ajustes-config').style.display     = tab === 'ajustes' ? 'block' : 'none';
 
   if (tab === 'comedor') {
     currentMenuTab = 'comedor';
@@ -1717,7 +1719,69 @@ window.addEventListener('DOMContentLoaded', () => {
   const panel = document.getElementById('panel');
   if (panel) panel.classList.add('visible');
   initPanel();
+  initSizeControls();
 });
+
+// Initialize size control sliders
+function initSizeControls() {
+  // Load current values from document.documentElement
+  document.querySelectorAll('.size-control').forEach(ctrl => {
+    const target = ctrl.dataset.target;
+    const unit = ctrl.dataset.unit || '';
+    const currentValue = getComputedStyle(document.documentElement).getPropertyValue(target).trim();
+    const numericValue = parseFloat(currentValue) || 0;
+    ctrl.value = numericValue;
+    // Update display
+    const displayCtrl = document.querySelector(`.size-display[data-display="${target}"]`);
+    if (displayCtrl) displayCtrl.value = numericValue;
+  });
+
+  // Handle slider changes
+  document.querySelectorAll('.size-control').forEach(ctrl => {
+    ctrl.addEventListener('input', handleSizeChange);
+  });
+
+  // Handle number input changes
+  document.querySelectorAll('.size-display').forEach(input => {
+    input.addEventListener('input', handleSizeChange);
+  });
+}
+
+function handleSizeChange(e) {
+  const ctrl = e.target;
+  const target = ctrl.dataset.target || ctrl.closest('.ajuste-row').querySelector('.size-control').dataset.target;
+  let value = parseFloat(ctrl.value) || 0;
+  const unit = ctrl.dataset.unit || '';
+  
+  // Ensure minimum values
+  if (ctrl.classList.contains('size-control')) {
+    value = Math.max(0.1, Math.min(30, value));
+    ctrl.value = value;
+    // Sync display
+    const displayCtrl = document.querySelector(`.size-display[data-display="${target}"]`);
+    if (displayCtrl) displayCtrl.value = value;
+  } else {
+    value = Math.max(0.1, Math.min(30, value));
+    // Sync slider
+    const sliderCtrl = document.querySelector(`.size-control[data-target="${target}"]`);
+    if (sliderCtrl) sliderCtrl.value = value;
+  }
+  
+  // Apply to CSS
+  document.documentElement.style.setProperty(target, `${value}${unit}`);
+}
+
+function applySizeToTV() {
+  // Dispatch custom event to notify comedor.html preview (if open)
+  window.dispatchEvent(new CustomEvent('sizesUpdated', {
+    detail: {
+      dishNameSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size').trim(),
+      dishEnSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size').trim(),
+      turnoTitleSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-title-size').trim(),
+      carouselTextSize: getComputedStyle(document.documentElement).getPropertyValue('--carousel-text-size').trim()
+    }
+  }));
+}
 (function ensurePanelVisible() {
   const panel = document.getElementById('panel');
   if (panel && !panel.classList.contains('visible')) panel.classList.add('visible');
