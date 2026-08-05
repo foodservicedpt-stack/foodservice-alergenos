@@ -196,47 +196,46 @@
     }
 
     .turno-title {
-      font-size: clamp(18px, 2.2vw, 38px);
+      font-size: clamp(28px, 4vw, 64px);
       font-weight: 900; letter-spacing: 4px;
       text-transform: uppercase; opacity: 0.75;
-      margin-bottom: 1.5vw;
+      margin-bottom: 2vw;
     }
 
     .turno-msg-es {
-      font-size: clamp(28px, 5.5vw, 96px);
+      font-size: clamp(42px, 8vw, 140px);
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.03em;
       line-height: 1.05;
-      margin-bottom: 1.5vw;
+      margin-bottom: 2vw;
       text-shadow: 0 4px 20px rgba(0,0,0,0.25);
-      /* text wraps if too long */
       word-break: break-word;
     }
 
     .turno-msg-en {
-      font-size: clamp(16px, 2.6vw, 46px);
+      font-size: clamp(28px, 4.5vw, 72px);
       font-style: italic;
       opacity: 0.78;
-      margin-bottom: 3vw;
+      margin-bottom: 4vw;
       line-height: 1.2;
     }
 
     /* Countdown bar */
     .turno-countdown-wrap {
-      display: flex; flex-direction: column; align-items: center; gap: 0.8vw;
+      display: flex; flex-direction: column; align-items: center; gap: 1vw;
     }
     .turno-countdown-label {
-      font-size: clamp(20px, 3vw, 48px); font-weight: 900;
+      font-size: clamp(28px, 4.5vw, 72px); font-weight: 900;
       opacity: 0.85; letter-spacing: 2px; text-transform: uppercase;
       text-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
     .turno-progress-track {
-      width: 70%; height: 18px; border-radius: 10px;
+      width: 80%; height: 28px; border-radius: 14px;
       background: rgba(255,255,255,0.2); overflow: hidden;
     }
     .turno-progress-bar {
-      height: 100%; border-radius: 10px;
+      height: 100%; border-radius: 14px;
       background: rgba(255,255,255,0.9);
       transition: width 1s linear;
     }
@@ -244,12 +243,13 @@
     /* TURNO CAROUSEL (integrado: despedida + recordatorios) */
     .turno-carousel {
       position: relative;
-      margin: 1.5vw 0;
-      padding: 1vw;
-      border-radius: 1.5vw;
+      margin: 3vw 0;
+      padding: 2vw;
+      border-radius: 2vw;
       background: rgba(0,0,0,0.15);
       backdrop-filter: blur(10px);
       overflow: hidden;
+      min-height: 35vh;
     }
     .carousel-track {
       display: flex;
@@ -261,24 +261,24 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1vw;
-      padding: 1.5vw;
+      gap: 2vw;
+      padding: 3vw;
     }
     .carousel-slide.farewell {
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-      border-radius: 1vw;
+      border-radius: 1.5vw;
     }
     .carousel-slide img {
       max-width: 100%;
-      max-height: 45vh;
+      max-height: 50vh;
       width: auto;
       height: auto;
-      border-radius: 1vw;
+      border-radius: 1.5vw;
       box-shadow: 0 4px 25px rgba(0,0,0,0.3);
       object-fit: contain;
     }
     .slide-text-es {
-      font-size: clamp(26px, 5vw, 80px);
+      font-size: clamp(36px, 7vw, 120px);
       font-weight: 900;
       text-transform: uppercase;
       text-align: center;
@@ -289,7 +289,7 @@
       color: inherit;
     }
     .slide-text-en {
-      font-size: clamp(20px, 3.2vw, 50px);
+      font-size: clamp(26px, 4.5vw, 70px);
       font-style: italic;
       opacity: 0.85;
       text-align: center;
