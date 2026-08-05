@@ -119,13 +119,13 @@
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
-      width: 19vw; background: white; border-radius: 14px;
+      width: 22vw; background: white; border-radius: 14px;
       padding: 1.2vw 1vw; display: flex; flex-direction: column;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06); overflow: hidden;
     }
     .legend-title { font-size: var(--legend-text); font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.6vw; margin-bottom: 0.8vw; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
-    .legend-list { display: flex; flex-direction: column; justify-content: space-between; flex: 1; }
+    .legend-list { display: flex; flex-direction: column; justify-content: space-between; flex: 1; overflow: hidden; }
     .legend-item { display: flex; align-items: center; gap: 0.6vw; }
     .legend-circle { width: var(--legend-icon); height: var(--legend-icon); border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
     .legend-circle img { width: 70%; height: 70%; object-fit: contain; }
@@ -830,7 +830,7 @@ function adjustSizes(rowsCount, rowHeight) {
   const enFs = Math.max(12, nameFs * 0.38);
   const iconSize = Math.max(24, Math.min(dishH * 0.55, availW * 0.06));
   const legendIcon = Math.max(18, Math.min(iconSize, 70));
-  const legendText = Math.max(12, legendIcon * 0.48);
+  const legendText = Math.max(12, legendIcon * 0.42);
 
   root.setProperty('--dish-name-size', nameFs + 'px');
   root.setProperty('--dish-en-size', enFs + 'px');
@@ -967,14 +967,35 @@ function fitAllergenIcons() {
 function fitLegend() {
   const list = document.getElementById('legend-list');
   if (!list) return;
-  const n = list.children.length;
-  if (!n) return;
-  const h = list.getBoundingClientRect().height;
-  if (!h) return;
-  const per = h / n;                 // altura por elemento
-  let ic = Math.min(per * 0.70, 70); ic = Math.max(18, ic);
+  const items = list.querySelectorAll('.legend-item');
+  if (!items.length) return;
+
+  const containerW = list.getBoundingClientRect().width;
+  const containerH = list.getBoundingClientRect().height;
+  if (!containerW || !containerH) return;
+
+  const per = containerH / items.length;
+  let ic = Math.min(per * 0.55, 52); ic = Math.max(14, ic);
   document.documentElement.style.setProperty('--legend-icon', ic + 'px');
-  let txt = Math.min(per * 0.38, 32); txt = Math.max(12, txt);
+
+  let txt = Math.min(per * 0.32, 20); txt = Math.max(10, txt);
+
+  items.forEach(item => {
+    const wrap = item.querySelector('.legend-text-wrap');
+    if (!wrap) return;
+    const esEl = wrap.querySelector('.legend-es');
+    if (!esEl) return;
+    let fs = txt;
+    esEl.style.fontSize = fs + 'px';
+    const enEl = wrap.querySelector('.legend-en');
+    if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
+    let guard = 0;
+    while (wrap.scrollWidth > containerW - 40 && fs > 9 && guard++ < 20) {
+      fs *= 0.92;
+      esEl.style.fontSize = fs + 'px';
+      if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
+    }
+  });
   document.documentElement.style.setProperty('--legend-text', txt + 'px');
 }
 window.addEventListener('resize', () => { fitAllergenIcons(); fitLegend(); });
