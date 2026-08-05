@@ -11,20 +11,20 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --dish-name-size: 9vw;
-      --dish-en-size: 3.4vw;
-      --icon-size: 6.5vw;
-      --icon-gap: 0.7vw;
-      --dish-pad: 1.6vw;
-      --legend-icon: 4vw;
-      --legend-text: 1.9vw;
+      --dish-name-size: 6vw;
+      --dish-en-size: 2.2vw;
+      --icon-size: 5.5vw;
+      --icon-gap: 0.6vw;
+      --dish-pad: 1.4vw;
+      --legend-icon: 3vw;
+      --legend-text: 1.4vw;
       --header-h: 11vh;
-      --turno-title-size: 2.4vw;
-      --turno-msg-es-size: 3.5vw;
-      --turno-msg-en-size: 2.2vw;
-      --turno-countdown-size: 2.2vw;
-      --carousel-es-size: 3vw;
-      --carousel-en-size: 2vw;
+      --turno-title-size: 2.2vw;
+      --turno-msg-es-size: 3.2vw;
+      --turno-msg-en-size: 2vw;
+      --turno-countdown-size: 2vw;
+      --carousel-es-size: 2.8vw;
+      --carousel-en-size: 1.8vw;
     }
 
     html, body {
@@ -812,39 +812,46 @@ function todayStr() {
 //  AUTO-SIZING
 // ══════════════════════════════════════════════
 let sizeResizeObserver = null;
-function adjustSizes(n) {
-  const r = document.documentElement.style;
-  if      (n <= 4)  { r.setProperty('--dish-name-size','9vw'); r.setProperty('--dish-en-size','3.4vw'); r.setProperty('--icon-size','6.5vw'); r.setProperty('--icon-gap','0.7vw'); r.setProperty('--dish-pad','1.6vw'); r.setProperty('--legend-icon','4vw'); r.setProperty('--legend-text','1.9vw'); }
-  else if (n <= 6)  { r.setProperty('--dish-name-size','8vw'); r.setProperty('--dish-en-size','3vw'); r.setProperty('--icon-size','6vw'); r.setProperty('--icon-gap','0.65vw'); r.setProperty('--dish-pad','1.5vw'); r.setProperty('--legend-icon','3.5vw'); r.setProperty('--legend-text','1.7vw'); }
-  else if (n <= 8)  { r.setProperty('--dish-name-size','7vw'); r.setProperty('--dish-en-size','2.6vw'); r.setProperty('--icon-size','5.5vw'); r.setProperty('--icon-gap','0.6vw'); r.setProperty('--dish-pad','1.4vw'); r.setProperty('--legend-icon','3.2vw'); r.setProperty('--legend-text','1.5vw'); }
-  else if (n <= 10) { r.setProperty('--dish-name-size','6vw'); r.setProperty('--dish-en-size','2.2vw'); r.setProperty('--icon-size','5vw'); r.setProperty('--icon-gap','0.55vw'); r.setProperty('--dish-pad','1.3vw'); r.setProperty('--legend-icon','2.8vw'); r.setProperty('--legend-text','1.3vw'); }
-  else               { r.setProperty('--dish-name-size','5vw'); r.setProperty('--dish-en-size','1.9vw'); r.setProperty('--icon-size','4.5vw'); r.setProperty('--icon-gap','0.5vw'); r.setProperty('--dish-pad','1.2vw'); r.setProperty('--legend-icon','2.5vw'); r.setProperty('--legend-text','1.2vw'); }
-}
-function startSizeAutoAdjust() {
-  stopSizeAutoAdjust();
-  const mainCol = document.getElementById('main-col');
-  if (!mainCol) return;
-  sizeResizeObserver = new ResizeObserver(() => {
-    const rows = mainCol.querySelectorAll('.dish-row');
-    adjustSizes(rows.length);
-  });
-  sizeResizeObserver.observe(mainCol);
-}
-function stopSizeAutoAdjust() {
-  if (sizeResizeObserver) {
-    sizeResizeObserver.disconnect();
-    sizeResizeObserver = null;
+function adjustSizes(rowsCount, rowHeight) {
+  const root = document.documentElement.style;
+  const headerH = document.querySelector('.header')?.getBoundingClientRect().height || window.innerHeight * 0.11;
+  const sidebarW = document.querySelector('.sidebar')?.getBoundingClientRect().width || window.innerWidth * 0.19;
+  const availH = Math.max(100, window.innerHeight - headerH - 40);
+  const availW = Math.max(200, window.innerWidth - sidebarW - 40);
+
+  let dishH = availH;
+  if (typeof rowHeight === 'number' && rowHeight > 0) {
+    dishH = Math.min(availH / Math.max(1, rowsCount), rowHeight * 2.2);
+  } else if (rowsCount > 0) {
+    dishH = Math.max(60, availH / rowsCount);
   }
+
+  const nameFs = Math.max(16, Math.min(dishH * 0.55, availW * 0.045));
+  const enFs = Math.max(12, nameFs * 0.38);
+  const iconSize = Math.max(24, Math.min(dishH * 0.55, availW * 0.06));
+  const legendIcon = Math.max(18, Math.min(iconSize, 70));
+  const legendText = Math.max(12, legendIcon * 0.48);
+
+  root.setProperty('--dish-name-size', nameFs + 'px');
+  root.setProperty('--dish-en-size', enFs + 'px');
+  root.setProperty('--icon-size', iconSize + 'px');
+  root.setProperty('--icon-gap', Math.max(4, iconSize * 0.12) + 'px');
+  root.setProperty('--dish-pad', Math.max(8, dishH * 0.18) + 'px');
+  root.setProperty('--legend-icon', legendIcon + 'px');
+  root.setProperty('--legend-text', legendText + 'px');
 }
 function startSizeAutoAdjust() {
   stopSizeAutoAdjust();
   const mainCol = document.getElementById('main-col');
   if (!mainCol) return;
-  sizeResizeObserver = new ResizeObserver(() => {
+  const ro = new ResizeObserver(() => {
     const rows = mainCol.querySelectorAll('.dish-row');
-    adjustSizes(rows.length);
+    const first = rows[0];
+    const h = first ? first.getBoundingClientRect().height : 0;
+    adjustSizes(rows.length, h);
   });
-  sizeResizeObserver.observe(mainCol);
+  ro.observe(mainCol);
+  sizeResizeObserver = ro;
 }
 function stopSizeAutoAdjust() {
   if (sizeResizeObserver) {
