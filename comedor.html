@@ -19,6 +19,13 @@
       --legend-icon:    3.0vw;
       --legend-text:    1.3vw;
       --header-h:       11vh;
+      /* Turnos y carousel - usados por gestion.html */
+      --turno-title-size: 3vw;
+      --turno-msg-es-size: 4vw;
+      --turno-msg-en-size: 2.5vw;
+      --turno-countdown-size: 2.5vw;
+      --carousel-es-size: 3vw;
+      --carousel-en-size: 2vw;
     }
 
     html, body {
@@ -196,14 +203,14 @@
     }
 
     .turno-title {
-      font-size: clamp(20px, 3vw, 40px);
+      font-size: var(--turno-title-size);
       font-weight: 900; letter-spacing: 4px;
       text-transform: uppercase; opacity: 0.75;
       margin-bottom: 2vw;
     }
 
     .turno-msg-es {
-      font-size: clamp(24px, 4vw, 80px);
+      font-size: var(--turno-msg-es-size);
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.03em;
@@ -214,7 +221,7 @@
     }
 
     .turno-msg-en {
-      font-size: clamp(28px, 4.5vw, 72px);
+      font-size: var(--turno-msg-en-size);
       font-style: italic;
       opacity: 0.78;
       margin-bottom: 4vw;
@@ -226,7 +233,7 @@
       display: flex; flex-direction: column; align-items: center; gap: 1vw;
     }
     .turno-countdown-label {
-      font-size: clamp(28px, 4.5vw, 72px); font-weight: 900;
+      font-size: var(--turno-countdown-size); font-weight: 900;
       opacity: 0.85; letter-spacing: 2px; text-transform: uppercase;
       text-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
@@ -277,8 +284,8 @@
       box-shadow: 0 4px 25px rgba(0,0,0,0.3);
       object-fit: contain;
     }
-    .slide-text-es {
-      font-size: clamp(20px, 3vw, 60px);
+.slide-text-es {
+      font-size: var(--carousel-es-size);
       font-weight: 900;
       text-transform: uppercase;
       text-align: center;
@@ -288,8 +295,8 @@
       max-width: 95%;
       color: inherit;
     }
-    .slide-text-en {
-      font-size: clamp(16px, 2vw, 40px);
+.slide-text-en {
+      font-size: var(--carousel-en-size);
       font-style: italic;
       opacity: 0.85;
       text-align: center;
@@ -1025,10 +1032,33 @@ function showOfflineState() {
 //  INIT
 // ══════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
+  applyTVSettingsFromStorage();
   buildLegend([]);
   initFirebase();
   updateClock();
 });
+
+// ══════════════════════════════════════════════
+//  TV SETTINGS — Real-time size adjustments from gestión panel
+// ══════════════════════════════════════════════
+function applyTVSettingsFromStorage() {
+  const settings = JSON.parse(localStorage.getItem('tvSettings') || '{}');
+  const root = document.documentElement.style;
+  if (settings.dishNameSize) root.setProperty('--dish-name-size', settings.dishNameSize);
+  if (settings.dishEnSize) root.setProperty('--dish-en-size', settings.dishEnSize);
+  if (settings.turnoTitleSize) root.setProperty('--turno-title-size', settings.turnoTitleSize);
+  if (settings.turnoMsgEsSize) root.setProperty('--turno-msg-es-size', settings.turnoMsgEsSize);
+  if (settings.turnoMsgEnSize) root.setProperty('--turno-msg-en-size', settings.turnoMsgEnSize);
+  if (settings.turnoCountdownSize) root.setProperty('--turno-countdown-size', settings.turnoCountdownSize);
+  if (settings.carouselEsSize) root.setProperty('--carousel-es-size', settings.carouselEsSize);
+  if (settings.carouselEnSize) root.setProperty('--carousel-en-size', settings.carouselEnSize);
+}
+window.addEventListener('storage', (e) => {
+  if (e.key === 'tvSettings') {
+    setTimeout(applyTVSettingsFromStorage, 50);
+  }
+});
+setInterval(applyTVSettingsFromStorage, 1000);
 </script>
 </body>
 </html>

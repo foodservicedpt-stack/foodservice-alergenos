@@ -1769,6 +1769,23 @@ function handleSizeChange(e) {
   
   // Apply to CSS
   document.documentElement.style.setProperty(target, `${value}${unit}`);
+  
+  // Save to localStorage for comedor.html
+  saveTVSettings();
+}
+
+function saveTVSettings() {
+  const settings = {
+    dishNameSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size').trim(),
+    dishEnSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size').trim(),
+    turnoTitleSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-title-size').trim(),
+    turnoMsgEsSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-msg-es-size').trim(),
+    turnoMsgEnSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-msg-en-size').trim(),
+    turnoCountdownSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-countdown-size').trim(),
+    carouselEsSize: getComputedStyle(document.documentElement).getPropertyValue('--carousel-es-size').trim(),
+    carouselEnSize: getComputedStyle(document.documentElement).getPropertyValue('--carousel-en-size').trim()
+  };
+  localStorage.setItem('tvSettings', JSON.stringify(settings));
 }
 
 function applySizeToTV() {
