@@ -974,6 +974,7 @@ function initPanel() {
 //  RENDER DISHES
 // ══════════════════════════════════════════════
 function renderCurrentTab() {
+  console.log('renderCurrentTab called, platos:', state[currentMenuTab]?.platos?.length);
   const container = document.getElementById('dish-list');
   const platos = state[currentMenuTab].platos || [];
   container.innerHTML = '';
@@ -1055,6 +1056,8 @@ function buildAlgBtn(a, dishId, type, selected, isTrace=false) {
 
 // ──────── DISH CRUD ────────
 function addDish() {
+  console.log('addDish called');
+  // alert('addDish called'); // Uncomment for debugging
   const id = `d${Date.now()}`;
   const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[], oculto:false };
   state[currentMenuTab].platos.push(plato);
