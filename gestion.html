@@ -1058,17 +1058,14 @@ function addDish() {
   const id = `d${Date.now()}`;
   const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[], oculto:false };
   state[currentMenuTab].platos.push(plato);
-  const emptyState = document.querySelector('#dish-list .empty-state');
-  if (emptyState) emptyState.remove();
-  renderDish(plato, state[currentMenuTab].platos.length - 1);
-  renumberDishes();
+  renderCurrentTab();
   markUnsaved();
   setTimeout(() => document.getElementById(`dish-card-${id}`)?.querySelector('.input-es')?.focus(), 50);
 }
 function removeDish(id) {
   state[currentMenuTab].platos = state[currentMenuTab].platos.filter(p => p.id !== id);
   const card = document.getElementById(`dish-card-${id}`);
-  if (card) { card.style.opacity='0'; card.style.transform='translateX(20px)'; card.style.transition='all .25s'; setTimeout(() => { card.remove(); renumberDishes(); if(!state[currentMenuTab].platos.length) document.getElementById('dish-list').innerHTML='<div class="empty-state"><div class="empty-icon">🍽️</div><p>Aún no hay platos.</p></div>'; }, 250); }
+  if (card) { card.style.opacity='0'; card.style.transform='translateX(20px)'; card.style.transition='all .25s'; setTimeout(() => { card.remove(); renderCurrentTab(); }, 250); }
   markUnsaved();
 }
 function moveDish(dishId, direction) {
