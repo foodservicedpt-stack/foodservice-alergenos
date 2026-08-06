@@ -1740,12 +1740,18 @@ async function publishReminders() {
 // ══════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   const panel = document.getElementById('panel');
   if (panel) panel.classList.add('visible');
   initPanel();
   initSizeControls();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 // Initialize size control sliders
 function initSizeControls() {
