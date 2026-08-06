@@ -534,9 +534,6 @@
     <!-- MENÚ TAB CONTENT -->
     <div id="tab-content-menu" class="active">
       <div id="dish-list"></div>
-      <button class="btn-add-dish" onclick="addDish()">
-        <span class="plus">＋</span> Añadir plato
-      </button>
     </div>
 
     <!-- TURNOS TAB CONTENT -->
@@ -978,14 +975,34 @@ function initPanel() {
 // ══════════════════════════════════════════════
 function renderCurrentTab() {
   const container = document.getElementById('dish-list');
-  container.innerHTML = '';
   const platos = state[currentMenuTab].platos || [];
+  container.innerHTML = '';
+  
   if (!platos.length) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><p>Aún no hay platos. Pulsa "Añadir plato".</p></div>';
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🍽️</div>
+        <p>Aún no hay platos. Pulsa "Añadir plato".</p>
+      </div>
+    `;
+    // Re-add the button after empty state
+    const btn = document.createElement('button');
+    btn.className = 'btn-add-dish';
+    btn.onclick = addDish;
+    btn.innerHTML = '<span class="plus">＋</span> Añadir plato';
+    container.appendChild(btn);
     return;
   }
+  
   const total = platos.length;
   platos.forEach((p, idx) => renderDish(p, idx, total));
+  
+  // Add the "Añadir plato" button at the end
+  const btn = document.createElement('button');
+  btn.className = 'btn-add-dish';
+  btn.onclick = addDish;
+  btn.innerHTML = '<span class="plus">＋</span> Añadir plato';
+  container.appendChild(btn);
 }
 function renderDish(plato, idx, total) {
   const container = document.getElementById('dish-list');
