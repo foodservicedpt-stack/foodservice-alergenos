@@ -169,7 +169,7 @@
       position: relative; z-index: 1;
       width: 92vw; max-width: 1600px;
       border-radius: 2.5vw;
-      padding: 3vw 5vw;
+      padding: clamp(20px, 3vw, 48px) clamp(24px, 5vw, 80px);
       text-align: center;
       overflow: hidden;
       box-shadow: 0 3vw 6vw rgba(0,0,0,0.6), 0 0 0 3px rgba(255,255,255,0.12);
@@ -187,7 +187,7 @@
 
     /* Bell pulse animation */
     .turno-bell {
-      font-size: 7vw; line-height: 1;
+      font-size: clamp(34px, 7vw, 112px); line-height: 1;
       display: block; margin-bottom: 1vw;
       animation: bellRing 0.6s ease-in-out 0.3s 3;
       transform-origin: top center;
@@ -201,14 +201,14 @@
     }
 
     .turno-title {
-      font-size: var(--turno-title-size);
+      font-size: clamp(16px, var(--turno-title-size), 36px);
       font-weight: 900; letter-spacing: 4px;
       text-transform: uppercase; opacity: 0.75;
       margin-bottom: 1vw;
     }
 
     .turno-msg-es {
-      font-size: var(--turno-msg-es-size);
+      font-size: clamp(20px, var(--turno-msg-es-size), 52px);
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.03em;
@@ -219,7 +219,7 @@
     }
 
     .turno-msg-en {
-      font-size: var(--turno-msg-en-size);
+      font-size: clamp(14px, var(--turno-msg-en-size), 30px);
       font-style: italic;
       opacity: 0.78;
       margin-bottom: 1.5vw;
@@ -231,12 +231,12 @@
       display: flex; flex-direction: column; align-items: center; gap: 0.6vw;
     }
     .turno-countdown-label {
-      font-size: var(--turno-countdown-size); font-weight: 900;
+      font-size: clamp(13px, var(--turno-countdown-size), 30px); font-weight: 900;
       opacity: 0.85; letter-spacing: 2px; text-transform: uppercase;
       text-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
     .turno-progress-track {
-      width: 65%; height: 20px; border-radius: 10px;
+      width: min(65%, 900px); height: clamp(10px, 1.3vw, 20px); border-radius: 10px;
       background: rgba(255,255,255,0.2); overflow: hidden;
     }
     .turno-progress-bar {
@@ -647,6 +647,9 @@ function showTurno(t) {
   const overlay = document.getElementById('turno-overlay');
   overlay.classList.add('visible');
 
+  // Ajustar el contenido después de que el overlay tenga sus dimensiones reales.
+  requestAnimationFrame(fitTurnoOverlay);
+
   // Start carousel auto-advance (cada 15 segundos)
   startCarousel();
 
@@ -657,6 +660,38 @@ function showTurno(t) {
     updateCountdownUI(hora);
     if (turnoRemaining <= 0) { clearInterval(turnoCountdown); dismissTurno(); }
   }, 1000);
+}
+
+// Autoajuste del aviso de turno, siguiendo el mismo principio usado por
+// el menú, los iconos y la leyenda. Evita que el texto o la cuenta atrás
+// se salgan de la tarjeta en pantallas pequeñas o con mucha altura reducida.
+function fitTurnoOverlay() {
+  const card = document.getElementById('turno-card-tv');
+  if (!card || !card.classList) return;
+
+  const root = document.documentElement.style;
+  const availableW = Math.max(260, card.clientWidth - 48);
+  const availableH = Math.max(180, window.innerHeight * 0.92);
+  const scale = Math.min(1, availableW / 1100, availableH / 760);
+
+  root.setProperty('--turno-title-size', Math.max(14, Math.min(36, 34 * scale)) + 'px');
+  root.setProperty('--turno-msg-es-size', Math.max(18, Math.min(52, 48 * scale)) + 'px');
+  root.setProperty('--turno-msg-en-size', Math.max(13, Math.min(30, 28 * scale)) + 'px');
+  root.setProperty('--turno-countdown-size', Math.max(12, Math.min(30, 26 * scale)) + 'px');
+  root.setProperty('--carousel-es-size', Math.max(16, Math.min(42, 38 * scale)) + 'px');
+  root.setProperty('--carousel-en-size', Math.max(12, Math.min(26, 24 * scale)) + 'px');
+
+  // Si el carrusel crece demasiado, reducirlo gradualmente hasta que la
+  // tarjeta quepa en el área visible del televisor.
+  let guard = 0;
+  while (card.scrollHeight > window.innerHeight * 0.94 && guard++ < 8) {
+    const current = parseFloat(getComputedStyle(document.documentElement)
+      .getPropertyValue('--turno-countdown-size')) || 20;
+    const next = Math.max(12, current * 0.9);
+    root.setProperty('--turno-countdown-size', next + 'px');
+    root.setProperty('--carousel-es-size', Math.max(15, next * 1.35) + 'px');
+    root.setProperty('--carousel-en-size', Math.max(11, next * 0.82) + 'px');
+  }
 }
 
 function updateCountdownUI(hora) {
@@ -996,7 +1031,13 @@ function fitLegend() {
   });
   document.documentElement.style.setProperty('--legend-text', txt + 'px');
 }
-window.addEventListener('resize', () => { fitAllergenIcons(); fitLegend(); });
+window.addEventListener('resize', () => {
+  fitAllergenIcons();
+  fitLegend();
+  if (document.getElementById('turno-overlay')?.classList.contains('visible')) {
+    requestAnimationFrame(fitTurnoOverlay);
+  }
+});
 
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
