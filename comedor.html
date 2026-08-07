@@ -1068,7 +1068,7 @@ window.addEventListener('resize', () => {
   }
 });
 
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ══════════════════════════════════════════════
 //  FIREBASE
@@ -1120,6 +1120,19 @@ function initFirebase() {
       refreshCierre();
     }, err => console.error(err));
 
+    // Ajustes de tamaño de texto configurados desde el panel de gestión.
+    // Antes esto se leía de localStorage con un sondeo cada segundo, lo
+    // cual solo funcionaba si gestión y TV compartían el mismo navegador.
+    // Con un listener de Firebase llega en tiempo real desde cualquier
+    // dispositivo, que es el caso normal de uso (PC de gestión + TV aparte).
+    db.ref('tvSettings').on('value', snap => {
+      const settings = snap.val();
+      if (settings) {
+        applyTVSettings(settings);
+        localStorage.setItem('tvSettings', JSON.stringify(settings));
+      }
+    }, err => console.warn('tvSettings:', err));
+
     // Periodic refresh as fallback to ensure TV updates without button press
     setInterval(() => {
       db.ref('menu/comedor').once('value').then(snap => {
@@ -1153,10 +1166,10 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ══════════════════════════════════════════════
-//  TV SETTINGS — Real-time size adjustments from gestión panel
+//  TV SETTINGS — tamaños configurados desde el panel de gestión
 // ══════════════════════════════════════════════
-function applyTVSettingsFromStorage() {
-  const settings = JSON.parse(localStorage.getItem('tvSettings') || '{}');
+function applyTVSettings(settings) {
+  if (!settings) return;
   const root = document.documentElement.style;
   if (settings.dishNameSize) root.setProperty('--dish-name-size', settings.dishNameSize);
   if (settings.dishEnSize) root.setProperty('--dish-en-size', settings.dishEnSize);
@@ -1167,12 +1180,12 @@ function applyTVSettingsFromStorage() {
   if (settings.carouselEsSize) root.setProperty('--carousel-es-size', settings.carouselEsSize);
   if (settings.carouselEnSize) root.setProperty('--carousel-en-size', settings.carouselEnSize);
 }
-window.addEventListener('storage', (e) => {
-  if (e.key === 'tvSettings') {
-    setTimeout(applyTVSettingsFromStorage, 50);
-  }
-});
-setInterval(applyTVSettingsFromStorage, 1000);
+// Aplicación inmediata al cargar la página (por si Firebase tarda un
+// instante en conectar, o como único origen si no está configurado).
+function applyTVSettingsFromStorage() {
+  try { applyTVSettings(JSON.parse(localStorage.getItem('tvSettings') || '{}')); }
+  catch (e) { /* localStorage corrupto o inaccesible: se ignora */ }
+}
 </script>
 </body>
 </html>
