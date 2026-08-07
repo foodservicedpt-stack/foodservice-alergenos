@@ -1,1 +1,304 @@
-<! -- snippet replaced by actual file content in branch commit -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Service DPT — Gestión de Alérgenos</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="./firebase-config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #1d4ed8;
+      --primary-light: #3b82f6;
+      --surface: #ffffff;
+      --bg: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --shadow: 0 4px 16px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ─── LOGIN ─── */
+    #login-screen {
+      position: fixed; inset: 0; z-index: 1000;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #login-screen.hidden { display: none; }
+    .login-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      padding: 52px 48px;
+      width: 420px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    }
+    .login-card img { height: 72px; object-fit: contain; margin-bottom: 20px; filter: drop-shadow(0 0 16px rgba(96,165,250,0.4)); }
+    .login-card .brand { font-size: 1.5rem; font-weight: 800; color: #f0f9ff; letter-spacing: 2px; }
+    .login-card .sub { font-size: 0.82rem; color: #94a3b8; letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; margin-bottom: 36px; }
+    .pwd-wrap { position: relative; margin-bottom: 16px; }
+    .pwd-wrap input {
+      width: 100%; padding: 16px 50px 16px 20px;
+      border: 2px solid rgba(255,255,255,0.15); border-radius: 12px;
+      background: rgba(255,255,255,0.07); color: white;
+      font-size: 1.05rem; outline: none; transition: border 0.2s;
+    }
+    .pwd-wrap input::placeholder { color: #64748b; }
+    .pwd-wrap input:focus { border-color: #3b82f6; }
+    .pwd-toggle { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1.2rem; }
+    .login-error { color: #fca5a5; font-size: 0.85rem; margin-bottom: 12px; min-height: 20px; }
+    .btn-login {
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+      color: white; border: none; border-radius: 12px;
+      font-size: 1rem; font-weight: 700; letter-spacing: 1.5px; cursor: pointer;
+      text-transform: uppercase; transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.4);
+    }
+    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.5); }
+
+    /* ─── PANEL ─── */
+    #panel { display: none; flex-direction: column; min-height: 100vh; }
+    #panel.visible { display: flex; }
+
+    /* ─── TOPBAR ─── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: #0f172a; padding: 12px 32px;
+      display: flex; align-items: center; gap: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+    .topbar img { height: 44px; object-fit: contain; filter: brightness(1.1); }
+    .topbar .brand-text { color: white; font-weight: 800; font-size: 1.1rem; letter-spacing: 1.5px; }
+    .topbar .sep { flex: 1; }
+    .topbar-actions { display: flex; gap: 10px; align-items: center; }
+    .topbar a, .topbar button.link-btn {
+      padding: 8px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; text-decoration: none; border: none; transition: all 0.15s; letter-spacing: 0.5px;
+    }
+    .btn-tv   { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3) !important; }
+    .btn-tv:hover { background: rgba(16,185,129,0.3) !important; }
+    .btn-print { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3) !important; }
+    .btn-print:hover { background: rgba(245,158,11,0.3) !important; }
+    .btn-logout { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25) !important; }
+    .btn-logout:hover { background: rgba(239,68,68,0.25) !important; }
+
+    /* ─── TAB BAR ─── */
+    .tab-bar {
+      background: white; border-bottom: 2px solid var(--border);
+      padding: 0 32px; display: flex; gap: 0;
+    }
+    .tab-btn {
+      padding: 18px 32px; border: none; background: none; cursor: pointer;
+      font-size: 0.95rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--muted);
+      border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s;
+    }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+    .tab-btn.tab-turnos.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+    .tab-btn.tab-turnos:hover:not(.active) { color: #7c3aed; }
+
+    /* ─── CONTROL BAR ─── */
+    .control-bar {
+      background: white; padding: 18px 32px;
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+    .date-label { font-size: 0.85rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .date-input { padding: 10px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 0.95rem; color: var(--text); outline: none; cursor: pointer; transition: border 0.2s; }
+    .date-input:focus { border-color: var(--primary-light); }
+    .status-badge { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 50px; font-size: 0.82rem; font-weight: 700; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    @keyframes pulse-green { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .sep-bar { flex: 1; }
+    .btn-publish {
+      padding: 12px 32px;
+      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+      color: white; border: none; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 700; letter-spacing: 1px;
+      cursor: pointer; text-transform: uppercase; transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(59,130,246,0.35);
+    }
+    .btn-publish:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59,130,246,0.45); }
+    .btn-publish:active { transform: translateY(0); }
+    .btn-publish:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-publish-turnos {
+      padding: 12px 32px;
+      background: linear-gradient(135deg, #5b21b6, #7c3aed);
+      color: white; border: none; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 700; letter-spacing: 1px;
+      cursor: pointer; text-transform: uppercase; transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(124,58,237,0.35);
+    }
+    .btn-publish-turnos:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(124,58,237,0.45); }
+    .btn-publish-turnos:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ─── CONTENT ─── */
+    .content { padding: 28px 32px; flex: 1; }
+
+    /* ─── DISH CARD ─── */
+    .dish-card {
+      background: white; border-radius: var(--radius);
+      box-shadow: var(--shadow); margin-bottom: 20px;
+      border: 2px solid transparent; transition: border-color 0.2s, box-shadow 0.2s; overflow: hidden;
+    }
+    .dish-card:hover { border-color: #bfdbfe; box-shadow: 0 8px 24px rgba(59,130,246,0.12); }
+    .dish-header {
+      background: linear-gradient(90deg, #1e3a5f, #1d4ed8);
+      padding: 14px 20px; display: flex; align-items: center; gap: 14px;
+    }
+    .dish-num {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(255,255,255,0.2); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; font-weight: 800; flex-shrink: 0;
+    }
+    .dish-names-row { display: flex; gap: 14px; flex: 1; flex-wrap: wrap; }
+... (file continues unchanged)
+
+<!-- INSERTED NORMALIZATION SNIPPET -->
+<script>
+(function(){
+  // --- Utilidades de normalización ---
+  function ensureArray(value){
+    if (Array.isArray(value)) return value;
+    if (value == null) return [];
+    if (typeof value === 'object') return Object.values(value);
+    return [];
+  }
+  function normalizeMenu(menu){
+    const m = (menu && typeof menu === 'object') ? Object.assign({}, menu) : { fecha: (typeof todayStr === 'function' ? todayStr() : ''), platos: [] };
+    m.platos = ensureArray(m.platos);
+    // cada plato también normalizado
+    m.platos = m.platos.map(p => ({
+      id: p && p.id ? p.id : `d${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+      nombreEs: (p && p.nombreEs) || '',
+      nombreEn: (p && p.nombreEn) || '',
+      contiene: ensureArray(p && p.contiene),
+      trazas: ensureArray(p && p.trazas),
+      oculto: !!(p && p.oculto)
+    }));
+    return m;
+  }
+
+  // --- Asegurar estado inicial ---
+  if (typeof state === 'undefined' || !state) window.state = { comedor: { fecha: (typeof todayStr === 'function' ? todayStr() : ''), platos: [] } };
+  state.comedor = normalizeMenu(state.comedor);
+
+  // --- Envolver / redefinir renderCurrentTab para normalizar antes de dibujar ---
+  const originalRender = window.renderCurrentTab;
+  window.renderCurrentTab = function(){
+    try { state.comedor = normalizeMenu(state.comedor); } catch(e){ console.warn('normalizing before render', e); }
+    if (typeof originalRender === 'function') {
+      try { return originalRender(); } catch(e){ console.warn('original renderCurrentTab failed', e); }
+    }
+    // fallback minimal render if original no existe
+    const container = document.getElementById('dish-list');
+    if (!container) return;
+    container.innerHTML = '';
+    const platos = ensureArray(state.comedor.platos);
+    if (platos.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><p>No hay platos — añade uno</p></div>';
+      return;
+    }
+    platos.forEach((p, i) => {
+      const html = `<div class="dish-card"><div class="dish-header"><div class="dish-num">${i+1}</div><div style="flex:1;padding-left:12px;"><strong>${p.nombreEs||'Sin nombre'}</strong></div></div></div>`;
+      container.insertAdjacentHTML('beforeend', html);
+    });
+  };
+
+  // --- Funciones seguras para manipular platos ---
+  window.addDish = window.addDish || function(newDish){
+    try {
+      state.comedor = normalizeMenu(state.comedor);
+      const dish = Object.assign({
+        id: `d${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+        nombreEs: '',
+        nombreEn: '',
+        contiene: [],
+        trazas: [],
+        oculto: false
+      }, newDish || {});
+      state.comedor.platos.push(dish);
+      try { localStorage.setItem('menuDraft', JSON.stringify(state.comedor)); } catch(e){}
+      if (typeof window.saveMenuToLocalAndFirebase === 'function') {
+        try { window.saveMenuToLocalAndFirebase(state.comedor); } catch(e){ console.warn('saveMenuToLocalAndFirebase failed', e); }
+      }
+      if (typeof window.renderCurrentTab === 'function') renderCurrentTab();
+      return dish;
+    } catch(e){ console.error('addDish error', e); }
+  };
+
+  window.removeDish = window.removeDish || function(dishId){
+    try {
+      state.comedor = normalizeMenu(state.comedor);
+      state.comedor.platos = ensureArray(state.comedor.platos).filter(d => d.id !== dishId);
+      try { localStorage.setItem('menuDraft', JSON.stringify(state.comedor)); } catch(e){}
+      if (typeof window.saveMenuToLocalAndFirebase === 'function') {
+        try { window.saveMenuToLocalAndFirebase(state.comedor); } catch(e){ console.warn('saveMenuToLocalAndFirebase failed', e); }
+      }
+      if (typeof window.renderCurrentTab === 'function') renderCurrentTab();
+    } catch(e){ console.error('removeDish error', e); }
+  };
+
+  // toggleAllergen(dishId, allergen, type='contiene') -> añade / quita alérgeno en plato
+  window.toggleAllergen = window.toggleAllergen || function(dishId, allergen, type){
+    try {
+      const field = type || 'contiene';
+      state.comedor = normalizeMenu(state.comedor);
+      const platos = ensureArray(state.comedor.platos);
+      const dish = platos.find(d => d.id === dishId);
+      if (!dish) return;
+      dish[field] = ensureArray(dish[field]);
+      const idx = dish[field].indexOf(allergen);
+      if (idx === -1) dish[field].push(allergen);
+      else dish[field].splice(idx, 1);
+      try { localStorage.setItem('menuDraft', JSON.stringify(state.comedor)); } catch(e){}
+      if (typeof window.saveMenuToLocalAndFirebase === 'function') {
+        try { window.saveMenuToLocalAndFirebase(state.comedor); } catch(e){ console.warn('saveMenuToLocalAndFirebase failed', e); }
+      }
+      if (typeof window.renderCurrentTab === 'function') renderCurrentTab();
+    } catch(e){ console.error('toggleAllergen error', e); }
+  };
+
+  // --- Asegurar que cualquier carga desde Firebase normaliza el estado ---
+  const origLoadFromFirebase = window.loadFromFirebase;
+  if (typeof origLoadFromFirebase === 'function') {
+    window.loadFromFirebase = function(){
+      origLoadFromFirebase();
+      // small defer to let listeners populate state, then normalize + render
+      setTimeout(function(){
+        try {
+          if (state && state.comedor) {
+            state.comedor = normalizeMenu(state.comedor);
+            if (typeof window.renderCurrentTab === 'function') renderCurrentTab();
+          }
+        } catch(e){ console.warn('post-load normalization failed', e); }
+      }, 250);
+    };
+  }
+
+  // run once now
+  try { state.comedor = normalizeMenu(state.comedor); if (typeof renderCurrentTab === 'function') renderCurrentTab(); } catch(e){}
+})();
+</script>
+
+</body>
+</html>
