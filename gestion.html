@@ -824,12 +824,27 @@ function initFirebase() {
     document.getElementById('firebase-warn').classList.add('visible');
   }
 }
+// Firebase RTDB puede devolver un array anidado como objeto indexado
+// ({"0":{...}} en vez de [{...}]) — esto lo normaliza siempre a un array
+// real de JS, filtrando huecos nulos.
+function normalizePlatosArray(platos) {
+  if (Array.isArray(platos)) return platos;
+  if (platos && typeof platos === 'object') return Object.values(platos).filter(Boolean);
+  return [];
+}
+
 function loadFromFirebase() {
   if (!fbReady) return;
   const db = firebase.database();
   db.ref('menu/comedor').on('value', snap => {
     const data = snap.val();
     if (data && data.fecha === todayStr()) {
+      // Firebase a veces devuelve un array anidado (como "platos" dentro de
+      // "comedor") como un objeto indexado ({"0":{...},"1":{...}}) en vez de
+      // un array real, sobre todo si en algún momento quedó con huecos.
+      // Sin esto, platos.push()/.forEach() dejaban de existir y "Añadir
+      // plato" (y el resto del render) fallaban en silencio.
+      data.platos = normalizePlatosArray(data.platos);
       state.comedor = data;
       renderCurrentTab();
       markSaved();
@@ -1019,7 +1034,11 @@ function restoreLocalDraft() {
 // ══════════════════════════════════════════════
 function renderCurrentTab() {
   const container = document.getElementById('dish-list');
-  const platos = state[currentMenuTab].platos || [];
+  // Segunda capa de protección: si por lo que sea platos llegó como objeto
+  // en vez de array, se corrige aquí también (y se deja corregido en el
+  // propio state, para que push/forEach no vuelvan a fallar después).
+  state[currentMenuTab].platos = normalizePlatosArray(state[currentMenuTab].platos);
+  const platos = state[currentMenuTab].platos;
   container.innerHTML = '';
   
   if (!platos.length) {
