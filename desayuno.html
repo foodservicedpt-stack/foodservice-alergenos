@@ -134,6 +134,19 @@
       transition: all 0.15s; flex-shrink: 0;
     }
     .btn-remove-dish:hover { background: rgba(239,68,68,0.4); }
+    .dish-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto; }
+    .gluten-toggle {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px;
+      border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.24);
+      color: white; font-size: 0.84rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+    .gluten-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .gluten-toggle-box {
+      width: 16px; height: 16px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.7);
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(255,255,255,0.12);
+    }
+    .gluten-toggle input:checked + .gluten-toggle-box { background: #22c55e; border-color: #22c55e; }
+    .gluten-toggle input:checked + .gluten-toggle-box::after { content: '✓'; color: white; font-size: 0.8rem; font-weight: 900; line-height: 1; }
 
     .allergen-body { padding: 18px 20px; }
     .alg-section { margin-bottom: 14px; }
@@ -243,13 +256,12 @@
     .print-allergens { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
     .print-alg-row { display: flex; align-items: center; gap: 5px; }
     .print-icon-wrap {
-      width: 34px; height: 34px; border-radius: 50%;
+      width: 42px; height: 42px;
       display: flex; align-items: center; justify-content: center;
-      border: 2.5px solid rgba(255,255,255,0.9);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.15); overflow: hidden;
+      overflow: hidden;
     }
-    .print-icon-wrap img { width: 100%; height: 100%; object-fit: contain; }
-    .print-icon-trace { border-style: dashed; opacity: 0.8; }
+    .print-icon-wrap img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+    .print-icon-trace { opacity: 0.8; }
     .trace-tag {
       font-size: 9px; font-weight: 800; color: #92400e;
       background: #fef3c7; border: 1.5px solid #fcd34d;
@@ -270,8 +282,8 @@
     .print-legend-title .en { display: block; font-style: italic; font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 0.7rem; }
     .print-legend-list { display: flex; flex-direction: column; justify-content: space-between; flex: 1; }
     .print-legend-item { display: flex; align-items: center; gap: 8px; }
-    .print-legend-circle { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .print-legend-circle img { width: 70%; height: 70%; object-fit: contain; }
+    .print-legend-circle { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .print-legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
     .print-legend-es { font-size: 0.72rem; font-weight: 700; color: #1e293b; text-transform: uppercase; line-height: 1.1; }
     .print-legend-en { font-size: 0.62rem; font-style: italic; color: #94a3b8; line-height: 1.1; }
     .print-traces-info { border-top: 1px dashed #e2e8f0; margin-top: 6px; padding-top: 6px; font-size: 0.65rem; color: #92400e; }
@@ -453,6 +465,13 @@ function renderDishCard(plato, idx) {
                value="${escHtml(plato.nombreEn||'')}"
                oninput="updateField('${plato.id}','nombreEn',this.value); scheduleMark()">
       </div>
+      <div class="dish-meta">
+        <label class="gluten-toggle">
+          <input type="checkbox" ${plato.sinGluten ? 'checked' : ''} onchange="toggleSinGluten('${plato.id}', this.checked)">
+          <span class="gluten-toggle-box"></span>
+          <span>🌾 Sin gluten</span>
+        </label>
+      </div>
       <button class="btn-remove-dish" onclick="removeDish('${plato.id}')">🗑 Eliminar</button>
     </div>
     <div class="allergen-body">
@@ -479,7 +498,7 @@ function buildAlgBtn(a, dishId, type, selected, isTrace=false) {
 // ── DISH CRUD ──
 function addDish() {
   const id = `d${Date.now()}`;
-  const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[] };
+  const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[], sinGluten:false };
   state.platos.push(plato);
   const emptyState = document.querySelector('#dish-list .empty-state');
   if (emptyState) emptyState.remove();
@@ -503,10 +522,30 @@ function updateField(dishId, field, value) {
   if(d){ d[field]=value; markUnsaved(); renderPreview(); }
 }
 function scheduleMark() { markUnsaved(); renderPreview(); }
-function toggleAllergen(dishId, type, algId, btn) {
+function toggleAllergen(dishId, type, algId) {
   const dish = state.platos.find(p=>p.id===dishId); if(!dish) return;
-  const arr = dish[type]; const idx = arr.indexOf(algId);
-  if(idx===-1){ arr.push(algId); btn.classList.add('active'); } else { arr.splice(idx,1); btn.classList.remove('active'); }
+  const otherType = type === 'contiene' ? 'trazas' : 'contiene';
+  if (!Array.isArray(dish[type])) dish[type] = [];
+  if (!Array.isArray(dish[otherType])) dish[otherType] = [];
+  const arr = dish[type];
+  const otherArr = dish[otherType];
+  const idx = arr.indexOf(algId);
+  const otherIdx = otherArr.indexOf(algId);
+
+  if (idx === -1) {
+    arr.push(algId);
+    if (otherIdx !== -1) otherArr.splice(otherIdx, 1);
+  } else {
+    arr.splice(idx, 1);
+  }
+
+  markUnsaved();
+  renderPreview();
+  renderEditor();
+}
+function toggleSinGluten(dishId, checked) {
+  const dish = state.platos.find(p=>p.id===dishId); if(!dish) return;
+  dish.sinGluten = checked;
   markUnsaved();
   renderPreview();
 }
@@ -709,7 +748,7 @@ function buildLegend() {
   const list = document.getElementById('print-legend');
   list.innerHTML = ALLERGENS.map(a => `
     <div class="print-legend-item">
-      <div class="print-legend-circle" style="background:${a.color}">
+      <div class="print-legend-circle">
         <img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'">
       </div>
       <div>
@@ -732,12 +771,12 @@ function renderPreview() {
     const trazas   = p.trazas   || [];
     let algHtml = '';
     if (!contiene.length && !trazas.length) {
-      algHtml = '<div class="no-allergen-print"><span>🛡️ SIN ALÉRGENOS DECLARADOS</span><span class="en">No allergens declared</span></div>';
+      algHtml = '<div class="no-allergen-print"><span>🛡️ Libre de alérgenos</span><span class="en">Free from allergens</span></div>';
     } else {
       if (contiene.length) {
         algHtml += `<div class="print-alg-row">${contiene.map(id => {
           const a = ALLERGENS.find(x=>x.id===id); if(!a) return '';
-          return `<div class="print-icon-wrap" style="background:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;
+          return `<div class="print-icon-wrap" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;
         }).join('')}</div>`;
       }
       if (trazas.length) {
@@ -745,16 +784,22 @@ function renderPreview() {
           <span class="trace-tag">* TRAZAS</span>
           ${trazas.map(id => {
             const a = ALLERGENS.find(x=>x.id===id); if(!a) return '';
-            return `<div class="print-icon-wrap print-icon-trace" style="background:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;
+            return `<div class="print-icon-wrap print-icon-trace" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;
           }).join('')}</div>`;
       }
     }
+    const glutenNote = p.sinGluten ? `
+      <div class="no-allergen-print" style="margin-top:6px; background:#f0fdf4; border-color:#86efac; color:#166534;">
+        <span>🌾 Hay opción sin gluten disponible. Pregunte al personal.</span>
+        <span class="en">Gluten-free option available. Please ask staff.</span>
+      </div>` : '';
     const row = document.createElement('div');
     row.className = 'print-dish-row';
     row.innerHTML = `
       <div class="print-dish-info">
         <div class="print-dish-es">${escHtml(p.nombreEs||'PRODUCTO SIN NOMBRE')}</div>
         <div class="print-dish-en">${escHtml(p.nombreEn||'')}</div>
+        ${glutenNote}
       </div>
       <div class="print-allergens">${algHtml}</div>`;
     container.appendChild(row);

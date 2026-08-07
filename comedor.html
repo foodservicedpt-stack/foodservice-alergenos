@@ -51,7 +51,7 @@
     .header-title .en { font-size: clamp(11px,1.4vw,22px); color: #93c5fd; letter-spacing: 4px; text-transform: uppercase; font-style: italic; }
     .header-spacer { flex: 1; }
     .header-datetime { text-align: right; color: white; line-height: 1.3; }
-    .header-date { font-size: clamp(14px,1.8vw,28px); font-weight: 700; color: #e0f2fe; text-transform: capitalize; }
+    .header-date { font-size: clamp(14px,1.8vw,28px); font-weight: 700; color: #e0f2fe; text-transform: none; }
     .header-time { font-size: clamp(20px,3vw,48px); font-weight: 900; color: #7dd3fc; letter-spacing: 2px; }
 
     /* ─── BODY ─── */
@@ -64,60 +64,75 @@
     .dish-row {
       background: #ffffff; border-radius: 14px;
       padding: var(--dish-pad) calc(var(--dish-pad) * 1.2);
-      display: flex; align-items: center;
+      display: flex; align-items: flex-start;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       border-left: 5px solid transparent;
       overflow: hidden;
-      gap: 0.5vw;
+      gap: 0.7vw;
       min-height: 6vw;
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
     .dish-row:nth-child(even) { border-left-color: #10b981; }
     @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
 
-    .dish-info { flex: 1; padding-right: 0.4vw; min-width: 0; }
+    .dish-info { flex: 1; padding-right: 0.4vw; min-width: 0; display: flex; flex-direction: column; gap: 0.45vw; }
     .dish-name-es {
       font-size: var(--dish-name-size); font-weight: 900; color: #0f172a;
       text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.08;
       white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
     }
     .dish-name-en {
-      font-size: var(--dish-en-size); color: #64748b; font-style: italic; margin-top: 0.3vw; line-height: 1.1;
+      font-size: calc(var(--dish-en-size) * 1.15); color: #64748b; font-style: italic; line-height: 1.1;
       white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+    }
+    .dish-gluten-note {
+      display: flex; flex-direction: column; gap: 0.16vw;
+      padding: 0.45vw 0.6vw; border-radius: 0.7vw;
+      border: 1px solid #bbf7d0; background: #f0fdf4;
+      max-width: 100%; align-self: flex-start;
+    }
+    .dish-gluten-es {
+      font-size: clamp(13px, 1.05vw, 20px); font-weight: 800; color: #166534;
+      line-height: 1.16; overflow-wrap: anywhere;
+    }
+    .dish-gluten-en {
+      font-size: clamp(11px, 0.9vw, 16px); font-style: italic; color: #4d7c4d;
+      line-height: 1.15; overflow-wrap: anywhere;
     }
 
     /* ─── ALLERGEN ICONS ─── */
-    .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: 30%; max-width: 30%; }
+    .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: min(32%, 320px); max-width: 320px; margin-left: 0.4vw; }
     .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; }
     .alg-icon-wrap {
-      width: var(--icon-size); height: var(--icon-size); border-radius: 50%; overflow: hidden;
+      width: var(--icon-size); height: var(--icon-size); overflow: hidden;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2); flex-shrink: 0;
-      border: 3px solid rgba(255,255,255,0.8);
+      flex-shrink: 0;
     }
-    .alg-icon-wrap img { width: 100%; height: 100%; object-fit: contain; }
-    .alg-icon-wrap.trace-icon { opacity: 0.75; border: 3px dashed rgba(255,255,255,0.6); }
+    .alg-icon-wrap img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+    .alg-icon-wrap.trace-icon { opacity: 0.75; }
     .trace-label {
       font-size: calc(var(--icon-size) * 0.28); font-weight: 800; color: #92400e;
       background: #fef3c7; border: 2px solid #fcd34d; border-radius: 50px;
-      padding: 0.2vw 0.7vw; letter-spacing: 0.5px; white-space: nowrap;
+      padding: 0.2vw 0.7vw; letter-spacing: 0.5px; white-space: normal;
+      line-height: 1.1; text-align: left; max-width: 100%;
     }
     .no-allergen {
       background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 12px;
       padding: 0.55vw 1.1vw; color: #065f46; font-weight: 800;
       font-size: calc(var(--dish-en-size) * 1.05);
       display: flex; flex-direction: row; align-items: center; gap: 0.7vw;
+      max-width: 100%; width: auto; flex-wrap: wrap;
     }
     .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
     .no-allergen .shield-ok svg {
       width: calc(var(--dish-name-size) * 1.15); height: calc(var(--dish-name-size) * 1.15);
       filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
     }
-    .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.1; }
-    .no-allergen-txt .es { white-space: nowrap; }
-    .no-allergen .en { font-style: italic; font-size: 0.82em; opacity: 0.7; font-weight: 600; white-space: nowrap; }
+    .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+    .no-allergen-txt .es { white-space: normal; overflow-wrap: anywhere; }
+    .no-allergen .en { font-style: italic; font-size: 0.82em; opacity: 0.7; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
@@ -129,8 +144,8 @@
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
     .legend-list { display: flex; flex-direction: column; justify-content: space-between; flex: 1; overflow: hidden; }
     .legend-item { display: flex; align-items: center; gap: 0.45vw; }
-    .legend-circle { width: 2.6vw; height: 2.6vw; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-    .legend-circle img { width: 70%; height: 70%; object-fit: contain; }
+    .legend-circle { width: 3.4vw; height: 3.4vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
     .legend-text-wrap { line-height: 1.15; min-width: 0; }
     .legend-es { font-size: 1.1vw; font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; }
     .legend-en { font-size: 0.92vw; color: #64748b; font-style: italic; display: block; }
@@ -401,8 +416,8 @@
     <img src="./img/Encabezado.png" alt="Food Service DPT" class="header-logo" onerror="this.style.display='none'">
     <div class="header-divider"></div>
     <div class="header-title">
-      <div class="es">Menú del Comedor</div>
-      <div class="en">Dining Room Menu</div>
+      <div class="es">Menú del día</div>
+      <div class="en">Menu of the day</div>
     </div>
     <div class="header-spacer"></div>
     <div class="header-datetime">
@@ -862,8 +877,12 @@ function formatDateEs(dateStr) {
   if (!dateStr) return formatDateEs(todayStr());
   const [y,m,d] = dateStr.split('-');
   const fecha = new Date(+y, +m-1, +d);
-  let s = fecha.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  const weekday = fecha.toLocaleDateString('es-ES', { weekday:'long' });
+  const day = fecha.getDate();
+  const month = fecha.toLocaleDateString('es-ES', { month:'long' });
+  const year = fecha.getFullYear();
+  const weekdayCapitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  return `${weekdayCapitalized}, ${day} de ${month} de ${year}`;
 }
 function todayStr() {
   const d = new Date();
@@ -890,8 +909,8 @@ function adjustSizes(rowsCount, rowHeight) {
 
   const nameFs = Math.max(16, Math.min(dishH * 0.55, availW * 0.045));
   const enFs = Math.max(12, nameFs * 0.38);
-  const iconSize = Math.max(24, Math.min(dishH * 0.55, availW * 0.06));
-  const legendIcon = Math.max(18, Math.min(iconSize, 70));
+  const iconSize = Math.max(30, Math.min(dishH * 0.72, availW * 0.08));
+  const legendIcon = Math.max(24, Math.min(iconSize + 8, 84));
   const legendText = Math.max(12, legendIcon * 0.42);
 
   root.setProperty('--dish-name-size', nameFs + 'px');
@@ -930,7 +949,7 @@ function buildLegend(usedIds) {
   const toShow = usedIds.length ? ALLERGENS.filter(a => usedIds.includes(a.id)) : ALLERGENS;
   list.innerHTML = toShow.map(a => `
     <div class="legend-item">
-      <div class="legend-circle" style="background:${a.color}">
+      <div class="legend-circle">
         <img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'">
       </div>
       <div class="legend-text-wrap">
@@ -968,18 +987,24 @@ function renderMenu(data) {
             <path d="M8.3 12.1 l2.6 2.6 l4.8 -5.4" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </span>
-        <span class="no-allergen-txt"><span class="es">SIN ALÉRGENOS DECLARADOS</span><span class="en">No allergens declared</span></span>
+        <span class="no-allergen-txt"><span class="es">Libre de alérgenos</span><span class="en">Allergen-free</span></span>
       </div>`;
     } else {
-      if (contiene.length) algHtml += `<div class="allergen-row">${contiene.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap" style="background:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
-      if (trazas.length)   algHtml += `<div class="allergen-row"><span class="trace-label">⚠ TRAZAS</span>${trazas.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap trace-icon" style="background:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
+      if (contiene.length) algHtml += `<div class="allergen-row">${contiene.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
+      if (trazas.length)   algHtml += `<div class="allergen-row"><span class="trace-label">⚠ TRAZAS / May contain traces</span>${trazas.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap trace-icon" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
     }
+    const glutenNote = p.sinGluten ? `
+      <div class="dish-gluten-note">
+        <div class="dish-gluten-es">Hay opción sin gluten disponible. Pregunte al personal.</div>
+        <div class="dish-gluten-en">Gluten-free option available. Please ask staff.</div>
+      </div>` : '';
     const row = document.createElement('div');
     row.className = 'dish-row';
     row.innerHTML = `
       <div class="dish-info">
         <div class="dish-name-es">${escHtml(p.nombreEs||'PLATO SIN NOMBRE')}</div>
         <div class="dish-name-en">${escHtml(p.nombreEn||'')}</div>
+        ${glutenNote}
       </div>
       <div class="dish-allergens">${algHtml}</div>`;
     col.appendChild(row);
