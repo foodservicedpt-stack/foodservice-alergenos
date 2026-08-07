@@ -830,7 +830,19 @@ function loadFromFirebase() {
   db.ref('menu/comedor').on('value', snap => {
     const data = snap.val();
     if (data && data.fecha === todayStr()) {
-      state.comedor = data;
+      const rawPlatos = data.platos;
+      const platosList = Array.isArray(rawPlatos) ? rawPlatos : (rawPlatos && typeof rawPlatos === 'object' ? Object.values(rawPlatos) : []);
+      state.comedor = {
+        fecha: data.fecha,
+        platos: platosList.map(p => ({
+          id: p.id || `d${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+          nombreEs: p.nombreEs || '',
+          nombreEn: p.nombreEn || '',
+          contiene: Array.isArray(p.contiene) ? p.contiene : (p.contiene && typeof p.contiene === 'object' ? Object.values(p.contiene) : []),
+          trazas: Array.isArray(p.trazas) ? p.trazas : (p.trazas && typeof p.trazas === 'object' ? Object.values(p.trazas) : []),
+          oculto: !!p.oculto
+        }))
+      };
       renderCurrentTab();
       markSaved();
     } else if (data && data.fecha !== todayStr()) {
@@ -841,31 +853,41 @@ function loadFromFirebase() {
   }, err => console.warn(err));
   db.ref('turnos').on('value', snap => {
     const data = snap.val();
-    if (data && Array.isArray(data)) {
-      turnosState = data.map(t => normalizeTurno(t));
-      renderTurnos();
+    if (data) {
+      const arr = Array.isArray(data) ? data : Object.values(data);
+      turnosState = arr.map(t => normalizeTurno(t));
+    } else {
+      turnosState = [];
     }
+    renderTurnos();
   }, err => console.warn(err));
-db.ref('recordatorios').on('value', snap => {
+  db.ref('recordatorios').on('value', snap => {
     const data = snap.val();
-    if (data && Array.isArray(data)) {
-      remindersState = data;
-      renderReminders();
-    } else if (data && typeof data === 'object' && data.reminders) {
-      // New format with carouselInterval
-      remindersState = data.reminders || [];
-      carouselInterval = data.carouselInterval || 15;
-      document.getElementById('carousel-interval').value = carouselInterval;
-      renderReminders();
+    if (data) {
+      if (Array.isArray(data)) {
+        remindersState = data;
+      } else if (typeof data === 'object') {
+        if (data.reminders) {
+          remindersState = Array.isArray(data.reminders) ? data.reminders : Object.values(data.reminders);
+          carouselInterval = data.carouselInterval || 15;
+          const el = document.getElementById('carousel-interval');
+          if (el) el.value = carouselInterval;
+        } else {
+          remindersState = Object.values(data);
+        }
+      } else {
+        remindersState = [];
+      }
     } else {
       remindersState = [
         { id:`r${Date.now()}-${Math.random().toString(36).slice(2,6)}`, image:'./img/recordatorio_1.png', mensajeEs:'¡Recoge tu bandeja y vasos!', mensajeEn:'Pick up your tray and glasses!' },
         { id:`r${Date.now()}-${Math.random().toString(36).slice(2,6)}`, image:'./img/recordatorio_2.png', mensajeEs:'Deja la mesa limpia para el siguiente turno', mensajeEn:'Leave the table clean for the next shift' }
       ];
       carouselInterval = 15;
-      document.getElementById('carousel-interval').value = carouselInterval;
-      renderReminders();
+      const el = document.getElementById('carousel-interval');
+      if (el) el.value = carouselInterval;
     }
+    renderReminders();
   }, err => console.warn(err));
   db.ref('cierreComedor').on('value', snap => {
     cierreState = normalizeCierre(snap.val());
@@ -988,15 +1010,22 @@ async function manualTranslateCierre() {
 // ══════════════════════════════════════════════
 function initPanel() {
   document.getElementById('date-input').value = todayStr();
+  if (!state[currentMenuTab]) state[currentMenuTab] = { fecha: todayStr(), platos: [] };
+  if (!Array.isArray(state[currentMenuTab].platos)) state[currentMenuTab].platos = [];
   initFirebase();
   if (!fbReady) restoreLocalDraft();
+  if (!state[currentMenuTab] || !Array.isArray(state[currentMenuTab].platos)) {
+    state[currentMenuTab] = { fecha: todayStr(), platos: [] };
+  }
   if (!state[currentMenuTab].platos.length) addDish();
   renderCurrentTab();
+  if (!Array.isArray(turnosState)) turnosState = [];
   if (!turnosState.length) {
     // Default: one example turno
     turnosState.push(newTurnoObj('Turno 1', '13:30', '#1e3a5f', '#ffffff', 5, true, '¡Gracias por venir! Por favor, libera tu mesa.', 'Thank You! Please clear your table.'));
   }
   renderTurnos();
+  if (!Array.isArray(remindersState)) remindersState = [];
   renderReminders();
 }
 
@@ -1007,8 +1036,17 @@ function initPanel() {
 function restoreLocalDraft() {
   try {
     const saved = JSON.parse(localStorage.getItem('fsdpt_menu') || 'null');
-    if (saved?.comedor?.fecha === todayStr() && saved.comedor.platos?.length) {
-      state.comedor = saved.comedor;
+    if (saved?.comedor?.fecha === todayStr()) {
+      const rawPlatos = saved.comedor.platos;
+      const platosList = Array.isArray(rawPlatos) ? rawPlatos : (rawPlatos && typeof rawPlatos === 'object' ? Object.values(rawPlatos) : []);
+      state.comedor = {
+        fecha: saved.comedor.fecha,
+        platos: platosList.map(p => ({
+          ...p,
+          contiene: Array.isArray(p.contiene) ? p.contiene : (p.contiene && typeof p.contiene === 'object' ? Object.values(p.contiene) : []),
+          trazas: Array.isArray(p.trazas) ? p.trazas : (p.trazas && typeof p.trazas === 'object' ? Object.values(p.trazas) : [])
+        }))
+      };
       showToast('📄 Borrador local recuperado (Firebase no configurado)', 'info');
     }
   } catch (e) { /* borrador corrupto: se ignora */ }
@@ -1019,7 +1057,11 @@ function restoreLocalDraft() {
 // ══════════════════════════════════════════════
 function renderCurrentTab() {
   const container = document.getElementById('dish-list');
-  const platos = state[currentMenuTab].platos || [];
+  if (!state[currentMenuTab] || !Array.isArray(state[currentMenuTab].platos)) {
+    if (!state[currentMenuTab]) state[currentMenuTab] = { fecha: todayStr(), platos: [] };
+    else state[currentMenuTab].platos = [];
+  }
+  const platos = state[currentMenuTab].platos;
   container.innerHTML = '';
   
   if (!platos.length) {
@@ -1089,7 +1131,8 @@ function renderDish(plato, idx, total) {
   container.appendChild(div);
 }
 function buildAlgBtn(a, dishId, type, selected, isTrace=false) {
-  const active = selected.includes(a.id) ? 'active' : '';
+  const selArr = Array.isArray(selected) ? selected : (selected && typeof selected === 'object' ? Object.values(selected) : []);
+  const active = selArr.includes(a.id) ? 'active' : '';
   const traceClass = isTrace ? 'traces-mode' : '';
   return `<button class="alg-btn ${active} ${traceClass}" style="--clr:${a.color}"
             onclick="toggleAllergen('${dishId}','${type}','${a.id}',this)" title="${a.es} / ${a.en}">
@@ -1101,18 +1144,22 @@ function buildAlgBtn(a, dishId, type, selected, isTrace=false) {
 function addDish() {
   const id = `d${Date.now()}`;
   const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[], oculto:false };
+  if (!state[currentMenuTab]) state[currentMenuTab] = { fecha: todayStr(), platos: [] };
+  if (!Array.isArray(state[currentMenuTab].platos)) state[currentMenuTab].platos = [];
   state[currentMenuTab].platos.push(plato);
   renderCurrentTab();
   markUnsaved();
   setTimeout(() => document.getElementById(`dish-card-${id}`)?.querySelector('.input-es')?.focus(), 50);
 }
 function removeDish(id) {
+  if (!state[currentMenuTab] || !Array.isArray(state[currentMenuTab].platos)) return;
   state[currentMenuTab].platos = state[currentMenuTab].platos.filter(p => p.id !== id);
   const card = document.getElementById(`dish-card-${id}`);
   if (card) { card.style.opacity='0'; card.style.transform='translateX(20px)'; card.style.transition='all .25s'; setTimeout(() => { card.remove(); renderCurrentTab(); }, 250); }
   markUnsaved();
 }
 function moveDish(dishId, direction) {
+  if (!state[currentMenuTab] || !Array.isArray(state[currentMenuTab].platos)) return;
   const platos = state[currentMenuTab].platos;
   const idx = platos.findIndex(p => p.id === dishId);
   if (idx === -1) return;
@@ -1125,8 +1172,13 @@ function moveDish(dishId, direction) {
   markUnsaved();
 }
 function renumberDishes() { document.querySelectorAll('.dish-num').forEach((el,i) => el.textContent=i+1); }
-function updateField(dishId, field, value) { const d = state[currentMenuTab].platos.find(p=>p.id===dishId); if(d){d[field]=value; markUnsaved();} }
+function updateField(dishId, field, value) {
+  if (!state[currentMenuTab] || !Array.isArray(state[currentMenuTab].platos)) return;
+  const d = state[currentMenuTab].platos.find(p=>p.id===dishId);
+  if(d){d[field]=value; markUnsaved();}
+}
 function toggleDishHidden(dishId) {
+  if (!state[currentMenuTab] || !Array.isArray(state[currentMenuTab].platos)) return;
   const d = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!d) return;
   d.oculto = !d.oculto;
   const card = document.getElementById(`dish-card-${dishId}`);
@@ -1137,8 +1189,13 @@ function toggleDishHidden(dishId) {
   markUnsaved();
 }
 function toggleAllergen(dishId, type, algId, btn) {
+  if (!state[currentMenuTab] || !Array.isArray(state[currentMenuTab].platos)) return;
   const dish = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!dish) return;
-  const arr = dish[type]; const idx = arr.indexOf(algId);
+  if (!Array.isArray(dish[type])) {
+    dish[type] = dish[type] ? (Array.isArray(dish[type]) ? dish[type] : Object.values(dish[type])) : [];
+  }
+  const arr = dish[type];
+  const idx = arr.indexOf(algId);
   if(idx===-1){arr.push(algId); btn.classList.add('active');} else {arr.splice(idx,1); btn.classList.remove('active');}
   markUnsaved();
 }
@@ -1380,6 +1437,7 @@ function normalizeTurno(t) {
 }
 
 function addTurno() {
+  if (!Array.isArray(turnosState)) turnosState = [];
   const turno = newTurnoObj(`Turno ${turnosState.length+1}`);
   turnosState.push(turno);
   renderTurnoCard(turno);
@@ -1387,6 +1445,7 @@ function addTurno() {
 }
 
 function removeTurno(id) {
+  if (!Array.isArray(turnosState)) turnosState = [];
   turnosState = turnosState.filter(t=>t.id!==id);
   const card = document.getElementById(`turno-card-${id}`);
   if(card){card.style.opacity='0';card.style.transform='translateX(20px)';card.style.transition='all .25s';setTimeout(()=>{card.remove();renumberTurnos();},250);}
@@ -1404,6 +1463,7 @@ function newReminderObj(image='./img/recordatorio_1.png', mensajeEs='', mensajeE
 }
 
 function addReminder() {
+  if (!Array.isArray(remindersState)) remindersState = [];
   const reminder = newReminderObj();
   remindersState.push(reminder);
   renderReminderCard(reminder);
@@ -1411,6 +1471,7 @@ function addReminder() {
 }
 
 function removeReminder(id) {
+  if (!Array.isArray(remindersState)) remindersState = [];
   remindersState = remindersState.filter(r=>r.id!==id);
   const card = document.getElementById(`reminder-card-${id}`);
   if(card){card.style.opacity='0';card.style.transform='translateX(20px)';card.style.transition='all .25s';setTimeout(()=>{card.remove();},250);}
