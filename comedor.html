@@ -25,6 +25,8 @@
       --turno-countdown-size: 2vw;
       --carousel-es-size: 2.8vw;
       --carousel-en-size: 1.8vw;
+      --carousel-farewell-es-size: 4.2vw;
+      --carousel-farewell-en-size: 2.2vw;
     }
 
     html, body {
@@ -272,6 +274,15 @@
     .carousel-slide.farewell {
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
       border-radius: 1vw;
+      /* Sin imagen: centra el mensaje en todo el alto del carrusel en vez de
+         dejarlo arriba con el hueco vacío que reservaban los slides con foto. */
+      justify-content: center;
+    }
+    .carousel-slide.farewell .slide-text-es {
+      font-size: var(--carousel-farewell-es-size);
+    }
+    .carousel-slide.farewell .slide-text-en {
+      font-size: var(--carousel-farewell-en-size);
     }
     .carousel-slide img {
       max-width: 100%;
@@ -680,17 +691,24 @@ function fitTurnoOverlay() {
   root.setProperty('--turno-countdown-size', Math.max(12, Math.min(30, 26 * scale)) + 'px');
   root.setProperty('--carousel-es-size', Math.max(16, Math.min(42, 38 * scale)) + 'px');
   root.setProperty('--carousel-en-size', Math.max(12, Math.min(26, 24 * scale)) + 'px');
+  // El mensaje de despedida no comparte espacio con ninguna imagen, así que
+  // puede permitirse un tamaño bastante mayor que el resto de slides.
+  root.setProperty('--carousel-farewell-es-size', Math.max(22, Math.min(64, 56 * scale)) + 'px');
+  root.setProperty('--carousel-farewell-en-size', Math.max(14, Math.min(34, 30 * scale)) + 'px');
 
-  // Si el carrusel crece demasiado, reducirlo gradualmente hasta que la
-  // tarjeta quepa en el área visible del televisor.
+  // Si el conjunto sigue sin caber, reduce gradualmente TODOS los tamaños
+  // (no solo la cuenta atrás) hasta que la tarjeta quepa en el televisor.
+  const shrinkVars = [
+    '--turno-title-size', '--turno-msg-es-size', '--turno-msg-en-size',
+    '--turno-countdown-size', '--carousel-es-size', '--carousel-en-size',
+    '--carousel-farewell-es-size', '--carousel-farewell-en-size'
+  ];
   let guard = 0;
-  while (card.scrollHeight > window.innerHeight * 0.94 && guard++ < 8) {
-    const current = parseFloat(getComputedStyle(document.documentElement)
-      .getPropertyValue('--turno-countdown-size')) || 20;
-    const next = Math.max(12, current * 0.9);
-    root.setProperty('--turno-countdown-size', next + 'px');
-    root.setProperty('--carousel-es-size', Math.max(15, next * 1.35) + 'px');
-    root.setProperty('--carousel-en-size', Math.max(11, next * 0.82) + 'px');
+  while (card.scrollHeight > window.innerHeight * 0.94 && guard++ < 10) {
+    shrinkVars.forEach(name => {
+      const current = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 20;
+      root.setProperty(name, Math.max(11, current * 0.94) + 'px');
+    });
   }
 }
 
@@ -722,13 +740,14 @@ function buildTurnoCarousel(t) {
   const track = document.getElementById('carousel-track');
   const dots = document.getElementById('carousel-dots');
   const carousel = document.getElementById('turno-carousel');
-  
+
   if (!carousel) return;
-  
+
   // Construir slides: primero el mensaje de despedida, luego cada recordatorio
   const slides = [];
-  
-  // Slide 1: Mensaje de despedida (del turno)
+
+  // Slide 1: Mensaje de despedida (del turno) — sin imagen, así que puede
+  // usar todo el ancho/alto del carrusel (ver .carousel-slide.farewell).
   slides.push({
     type: 'farewell',
     image: null,
@@ -736,7 +755,7 @@ function buildTurnoCarousel(t) {
     textEn: t.mensajeEn || 'Thank you! Please clear your table.',
     label: 'CAMBIO DE TURNO'
   });
-  
+
   // Slides siguientes: cada recordatorio
   remindersConfig.forEach((r, i) => {
     slides.push({
@@ -747,43 +766,53 @@ function buildTurnoCarousel(t) {
       label: `RECORDATORIO ${i + 1}`
     });
   });
-  
+
   if (slides.length === 0) {
     carousel.style.display = 'none';
     return;
   }
-  
+
   carousel.style.display = 'block';
-  
-  const trackEl = document.getElementById('carousel-track');
-  const dotsEl = document.getElementById('carousel-dots');
-  trackEl.innerHTML = '';
-  dotsEl.innerHTML = '';
-  currentReminderIndex = 0;
-  
+
+  track.innerHTML = '';
+  dots.innerHTML = '';
+  // Reinicia el estado real del carrusel (antes tenía un typo que creaba
+  // una variable global sin usar y dejaba el track desplazado del turno
+  // anterior hasta el primer auto-avance).
+  currentSlideIndex = 0;
+  track.style.transform = 'translateX(0)';
+
   slides.forEach((slide, i) => {
     const div = document.createElement('div');
     div.className = 'carousel-slide' + (slide.type === 'farewell' ? ' farewell' : '');
-    
+
+    // Se construye con DOM/textContent (no innerHTML) para que los mensajes
+    // introducidos en el panel de gestión no puedan inyectar HTML.
     if (slide.image) {
-      div.innerHTML = `
-        <img src="${slide.image}" alt="${slide.label}" onerror="this.style.display='none'">
-        <div class="slide-text-es">${slide.textEs}</div>
-        <div class="slide-text-en">${slide.textEn || ''}</div>
-      `;
-    } else {
-      div.innerHTML = `
-        <div class="slide-text-es">${slide.textEs}</div>
-        <div class="slide-text-en">${slide.textEn || ''}</div>
-      `;
+      const img = document.createElement('img');
+      img.src = slide.image;
+      img.alt = slide.label;
+      img.onerror = () => { img.style.display = 'none'; };
+      div.appendChild(img);
     }
-    trackEl.appendChild(div);
-    
+
+    const esDiv = document.createElement('div');
+    esDiv.className = 'slide-text-es';
+    esDiv.textContent = slide.textEs;
+    div.appendChild(esDiv);
+
+    const enDiv = document.createElement('div');
+    enDiv.className = 'slide-text-en';
+    enDiv.textContent = slide.textEn || '';
+    div.appendChild(enDiv);
+
+    track.appendChild(div);
+
     // Dot
     const dot = document.createElement('div');
     dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
     dot.onclick = () => goToSlide(i);
-    document.getElementById('carousel-dots').appendChild(dot);
+    dots.appendChild(dot);
   });
 }
 
