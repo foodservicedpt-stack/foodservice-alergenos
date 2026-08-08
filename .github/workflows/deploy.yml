@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel: true
+  cancel-in-progress: true
 
 jobs:
   deploy:
