@@ -103,8 +103,8 @@
     }
 
     /* ─── ALLERGEN ICONS ─── */
-    .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: min(32%, 320px); max-width: 320px; margin-left: 0.4vw; }
-    .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; }
+    .dish-allergens { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: min(32%, 320px); max-width: 320px; margin-left: 0.4vw; }
+    .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: nowrap; justify-content: flex-start; max-width: 100%; }
     .alg-icon-wrap {
       width: var(--icon-size); height: var(--icon-size); overflow: hidden;
       display: flex; align-items: center; justify-content: center;
@@ -951,8 +951,10 @@ function dishContentOverflows(mainCol, rows) {
   return rows.some(r => {
     const nameEl = r.querySelector('.dish-name-es');
     const enEl = r.querySelector('.dish-name-en');
+    const allergensEl = r.querySelector('.dish-allergens');
     return (nameEl && nameEl.scrollHeight > nameEl.clientHeight + 1) ||
-           (enEl && enEl.scrollHeight > enEl.clientHeight + 1);
+           (enEl && enEl.scrollHeight > enEl.clientHeight + 1) ||
+           (allergensEl && allergensEl.scrollHeight > allergensEl.clientHeight + 1);
   });
 }
 
