@@ -1204,6 +1204,14 @@ function applyTVSettings(settings) {
   if (settings.turnoCountdownSize) root.setProperty('--turno-countdown-size', settings.turnoCountdownSize);
   if (settings.carouselEsSize) root.setProperty('--carousel-es-size', settings.carouselEsSize);
   if (settings.carouselEnSize) root.setProperty('--carousel-en-size', settings.carouselEnSize);
+
+  const mainCol = document.getElementById('main-col');
+  const rows = mainCol ? mainCol.querySelectorAll('.dish-row') : [];
+  const first = rows[0];
+  if (rows.length && first) {
+    adjustSizes(rows.length, first.getBoundingClientRect().height);
+    requestAnimationFrame(() => { fitAllergenIcons(); fitLegend(); });
+  }
 }
 // Aplicación inmediata al cargar la página (por si Firebase tarda un
 // instante en conectar, o como único origen si no está configurado).
