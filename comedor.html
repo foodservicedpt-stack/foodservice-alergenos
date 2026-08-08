@@ -115,7 +115,7 @@
     .trace-label {
       font-size: calc(var(--icon-size) * 0.28); font-weight: 800; color: #92400e;
       background: #fef3c7; border: 2px solid #fcd34d; border-radius: 50px;
-      padding: 0.2vw 0.7vw; letter-spacing: 0.5px; white-space: normal;
+      padding: 0.2vw 0.7vw; letter-spacing: 0.5px; white-space: nowrap;
       line-height: 1.1; text-align: left; max-width: 100%;
     }
     .no-allergen {
@@ -123,7 +123,7 @@
       padding: 0.55vw 1.1vw; color: #065f46; font-weight: 800;
       font-size: calc(var(--dish-en-size) * 1.05 * var(--no-allergen-scale, 1));
       display: flex; flex-direction: row; align-items: center; gap: 0.7vw;
-      max-width: 100%; width: auto; flex-wrap: wrap;
+      max-width: 100%; width: auto; flex-wrap: nowrap;
     }
     .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
     .no-allergen .shield-ok svg {
