@@ -104,7 +104,7 @@
 
     /* ─── ALLERGEN ICONS ─── */
     .dish-allergens { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: min(32%, 320px); max-width: 320px; margin-left: 0.4vw; }
-    .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: nowrap; justify-content: flex-start; max-width: 100%; }
+    .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: wrap; justify-content: flex-start; max-width: 100%; }
     .alg-icon-wrap {
       width: var(--icon-size); height: var(--icon-size); overflow: hidden;
       display: flex; align-items: center; justify-content: center;
@@ -142,7 +142,7 @@
     }
     .legend-title { font-size: 1.2vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5vw; margin-bottom: 0.6vw; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
-    .legend-list { display: flex; flex-direction: column; justify-content: space-between; flex: 1; overflow: hidden; }
+    .legend-list { display: flex; flex-direction: column; justify-content: space-between; flex: 1; }
     .legend-item { display: flex; align-items: center; gap: 0.45vw; }
     .legend-circle { width: 3.4vw; height: 3.4vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
     .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
@@ -1098,6 +1098,14 @@ function fitAllergenIcons() {
 
   // Máx. de iconos en una misma fila y máx. de filas de alérgenos por plato
   let maxIcons = 1, maxRows = 1;
+
+  // Check if any dish has traces
+  let hasTraces = false;
+  rows.forEach(r => {
+    if (r.querySelector('.trace-label')) {
+      hasTraces = true;
+    }
+  });
   rows.forEach(r => {
     const ars = r.querySelectorAll('.allergen-row');
     if (ars.length > maxRows) maxRows = ars.length;
@@ -1109,9 +1117,13 @@ function fitAllergenIcons() {
   });
 
   // Ancho disponible para la columna de alérgenos (≈42% del ancho de la fila)
-  const allergenW = rowW * 0.42;
+  const allergenW = rowW * (hasTraces ? 0.40 : 0.50);
   const byWidth  = (allergenW - gap * (maxIcons - 1)) / maxIcons;
-  const byHeight = (rowH * 0.80 - gap * (maxRows - 1)) / maxRows;
+  // Altura disponible para las filas de alérgenos
+  // Si no hay trazas, usar más altura (hasta 90% de la altura de la fila)
+  // Si hay trazas, ser más conservador (75% de la altura de la fila)
+  const availableHeight = rowH * (hasTraces ? 0.75 : 0.90);
+  const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
   let icon = Math.min(byWidth, byHeight);
   icon = Math.max(24, Math.min(icon, 120));
   document.documentElement.style.setProperty('--icon-size', icon + 'px');
