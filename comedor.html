@@ -70,6 +70,15 @@
       overflow: hidden;
       gap: 0.7vw;
       min-height: 6vw;
+      /* Sin esto, si el contenido total no cabe en .main-col, flexbox
+         encoge cada fila por debajo de lo que necesita su propio
+         contenido (en vez de dejar que el conjunto desborde la columna),
+         y como la fila tiene overflow:hidden, cada plato recorta su
+         propio texto/badges por dentro. Con flex-shrink:0 las filas
+         mantienen su altura real, así el desbordamiento ocurre a nivel
+         de .main-col — que es justo lo que fitDishRows() sabe detectar
+         y corregir reduciendo el tamaño de letra. */
+      flex-shrink: 0;
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
     .dish-row:nth-child(even) { border-left-color: #10b981; }
