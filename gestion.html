@@ -193,6 +193,25 @@
       transition: all 0.15s; flex-shrink: 0;
     }
     .btn-remove-dish:hover { background: rgba(239,68,68,0.35); }
+    .dish-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto; }
+    .gluten-toggle {
+      position: relative; display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.28); color: #fff; cursor: pointer;
+      font-size: 0.84rem; font-weight: 700; white-space: nowrap;
+    }
+    .gluten-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .gluten-toggle-box {
+      width: 16px; height: 16px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.7);
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: rgba(255,255,255,0.12);
+    }
+    .gluten-toggle input:checked + .gluten-toggle-box {
+      background: #22c55e; border-color: #22c55e;
+    }
+    .gluten-toggle input:checked + .gluten-toggle-box::after {
+      content: '✓'; color: white; font-size: 0.8rem; font-weight: 900; line-height: 1;
+    }
     .btn-move {
       padding: 6px 10px; border-radius: 8px;
       background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
@@ -476,7 +495,7 @@
   font-weight: 600;
   color: var(--primary);
 }
-}</style>
+</style>
 </head>
 <body>
 
@@ -495,7 +514,7 @@
 
   <!-- TAB BAR -->
 <div class="tab-bar">
-  <button class="tab-btn active" id="tab-comedor"  onclick="switchMainTab('comedor')">🍽️&nbsp;&nbsp;Menú del Comedor</button>
+  <button class="tab-btn active" id="tab-comedor"  onclick="switchMainTab('comedor')">🍽️&nbsp;&nbsp;Menú del día</button>
   <button class="tab-btn tab-turnos" id="tab-turnos" onclick="switchMainTab('turnos')">⚙️&nbsp;&nbsp;Gestión de Turnos</button>
   <button class="tab-btn" id="tab-ajustes" onclick="switchMainTab('ajustes')">🔧&nbsp;&nbsp;Ajustes de Tamaños</button>
 </div>
@@ -770,6 +789,28 @@ function markSaved() {
   document.getElementById('status-text').textContent = 'Publicado en TV ✓';
 }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function normalizeAllergenList(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).map(v => String(v).trim()).filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return [value.trim()];
+  }
+  if (value && typeof value === 'object') {
+    return Object.values(value).filter(Boolean).map(v => (typeof v === 'string' ? v : (v && typeof v === 'object' && v.id ? String(v.id) : String(v)))).map(v => String(v).trim()).filter(Boolean);
+  }
+  return [];
+}
+function normalizeDish(plato) {
+  if (!plato || typeof plato !== 'object') return plato;
+  return {
+    ...plato,
+    contiene: normalizeAllergenList(plato.contiene),
+    trazas: normalizeAllergenList(plato.trazas),
+    oculto: Boolean(plato.oculto),
+    sinGluten: Boolean(plato.sinGluten)
+  };
+}
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   return `${r},${g},${b}`;
@@ -1023,7 +1064,7 @@ function restoreLocalDraft() {
   try {
     const saved = JSON.parse(localStorage.getItem('fsdpt_menu') || 'null');
     if (saved?.comedor?.fecha === todayStr() && saved.comedor.platos?.length) {
-      state.comedor = saved.comedor;
+      state.comedor = normalizeDish(saved.comedor);
       showToast('📄 Borrador local recuperado (Firebase no configurado)', 'info');
     }
   } catch (e) { /* borrador corrupto: se ignora */ }
@@ -1037,7 +1078,7 @@ function renderCurrentTab() {
   // Segunda capa de protección: si por lo que sea platos llegó como objeto
   // en vez de array, se corrige aquí también (y se deja corregido en el
   // propio state, para que push/forEach no vuelvan a fallar después).
-  state[currentMenuTab].platos = normalizePlatosArray(state[currentMenuTab].platos);
+  state[currentMenuTab].platos = normalizePlatosArray(state[currentMenuTab].platos).map(normalizeDish);
   const platos = state[currentMenuTab].platos;
   container.innerHTML = '';
   
@@ -1084,6 +1125,13 @@ function renderDish(plato, idx, total) {
                value="${escHtml(plato.nombreEn||'')}"
                oninput="updateField('${plato.id}','nombreEn',this.value); markUnsaved()">
       </div>
+      <div class="dish-meta">
+        <label class="gluten-toggle">
+          <input type="checkbox" ${plato.sinGluten ? 'checked' : ''} onchange="toggleSinGluten('${plato.id}', this.checked)">
+          <span class="gluten-toggle-box"></span>
+          <span>🌾 Sin gluten</span>
+        </label>
+      </div>
       <div class="dish-move" style="display:flex; gap:4px;">
         <button class="btn-move${idx === 0 ? ' disabled' : ''}" onclick="moveDish('${plato.id}', 'up')" title="Mover arriba" ${idx === 0 ? 'disabled' : ''}>⬆️</button>
         <button class="btn-move${idx === total - 1 ? ' disabled' : ''}" onclick="moveDish('${plato.id}', 'down')" title="Mover abajo" ${idx === total - 1 ? 'disabled' : ''}>⬇️</button>
@@ -1098,11 +1146,11 @@ function renderDish(plato, idx, total) {
     <div class="allergen-body">
       <div class="alg-section">
         <div class="alg-label"><span class="type-contains">● CONTIENE</span> / Contains:</div>
-        <div class="alg-grid">${ALLERGENS.map(a => buildAlgBtn(a, plato.id, 'contiene', plato.contiene||[])).join('')}</div>
+        <div class="alg-grid">${ALLERGENS.map(a => buildAlgBtn(a, plato.id, 'contiene', normalizeAllergenList(plato.contiene))).join('')}</div>
       </div>
       <div class="alg-section">
         <div class="alg-label"><span class="type-traces">⚠ TRAZAS</span> / May contain traces:</div>
-        <div class="alg-grid">${ALLERGENS.map(a => buildAlgBtn(a, plato.id, 'trazas', plato.trazas||[], true)).join('')}</div>
+        <div class="alg-grid">${ALLERGENS.map(a => buildAlgBtn(a, plato.id, 'trazas', normalizeAllergenList(plato.trazas), true)).join('')}</div>
       </div>
     </div>`;
   container.appendChild(div);
@@ -1119,7 +1167,7 @@ function buildAlgBtn(a, dishId, type, selected, isTrace=false) {
 // ──────── DISH CRUD ────────
 function addDish() {
   const id = `d${Date.now()}`;
-  const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[], oculto:false };
+  const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[], oculto:false, sinGluten:false };
   state[currentMenuTab].platos.push(plato);
   renderCurrentTab();
   markUnsaved();
@@ -1155,10 +1203,29 @@ function toggleDishHidden(dishId) {
   showToast(d.oculto ? '🙈 Plato oculto en la pantalla TV' : '👁 Plato visible en la pantalla TV', 'info');
   markUnsaved();
 }
-function toggleAllergen(dishId, type, algId, btn) {
+function toggleAllergen(dishId, type, algId) {
   const dish = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!dish) return;
-  const arr = dish[type]; const idx = arr.indexOf(algId);
-  if(idx===-1){arr.push(algId); btn.classList.add('active');} else {arr.splice(idx,1); btn.classList.remove('active');}
+  const otherType = type === 'contiene' ? 'trazas' : 'contiene';
+  if (!Array.isArray(dish[type])) dish[type] = [];
+  if (!Array.isArray(dish[otherType])) dish[otherType] = [];
+  const arr = dish[type];
+  const otherArr = dish[otherType];
+  const idx = arr.indexOf(algId);
+  const otherIdx = otherArr.indexOf(algId);
+
+  if (idx === -1) {
+    arr.push(algId);
+    if (otherIdx !== -1) otherArr.splice(otherIdx, 1);
+  } else {
+    arr.splice(idx, 1);
+  }
+
+  markUnsaved();
+  renderCurrentTab();
+}
+function toggleSinGluten(dishId, checked) {
+  const dish = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!dish) return;
+  dish.sinGluten = checked;
   markUnsaved();
 }
 
