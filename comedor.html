@@ -909,8 +909,8 @@ function adjustSizes(rowsCount, rowHeight) {
 
   const nameFs = Math.max(16, Math.min(dishH * 0.55, availW * 0.045));
   const enFs = Math.max(12, nameFs * 0.38);
-  const iconSize = Math.max(30, Math.min(dishH * 0.72, availW * 0.08));
-  const legendIcon = Math.max(24, Math.min(iconSize + 8, 84));
+  const iconSize = Math.max(24, Math.min(dishH * 0.55, availW * 0.06));
+  const legendIcon = Math.max(18, Math.min(iconSize, 70));
   const legendText = Math.max(12, legendIcon * 0.42);
 
   root.setProperty('--dish-name-size', nameFs + 'px');
