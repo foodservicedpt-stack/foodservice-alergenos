@@ -76,7 +76,7 @@ const firebaseConfig = {
 
 ### 1.5 Reglas de seguridad (recomendado)
 
-En Firebase Console → Realtime Database → **Reglas**, pega esto para permitir lectura pública y escritura solo verificada:
+En Firebase Console → Realtime Database → **Reglas**, pega esto para permitir lectura pública (la necesitan la TV y la ficha de desayuno, que no llevan login) y escritura abierta desde el panel de gestión:
 
 ```json
 {
@@ -87,7 +87,9 @@ En Firebase Console → Realtime Database → **Reglas**, pega esto para permiti
 }
 ```
 
-> Para mayor seguridad en el futuro, puedes activar autenticación Firebase y restringir escritura.
+> ⚠️ **Importante:** con esta regla, cualquiera que conozca la URL de tu base de datos (`databaseURL` en `firebase-config.js`) puede leer y **escribir** en ella sin pasar por `gestion.html` — el panel no tiene login, así que la única protección real es que la URL no se comparta. Si vas a alojar esto en una URL pública (GitHub Pages, Netlify...), valora limitar la escritura a un token/contraseña compartida en las propias reglas, o activar Firebase Auth (aunque sea anónima) y exigir `auth != null` para escribir. Para un uso interno con la URL sin indexar, el riesgo es bajo, pero conviene saberlo.
+
+> ⚠️ **La clave de Gemini (`geminiApiKey`) NO es como el resto de la config de Firebase.** El `apiKey` de Firebase está pensado para ser público (la seguridad la dan las reglas de arriba), pero la clave de Gemini es un secreto de verdad: quien la vea puede gastar tu cuota de Google AI Studio. Al estar en `firebase-config.js` se envía al navegador de cualquiera que abra `gestion.html` o `desayuno.html`, y si el repo es público, queda visible también en el historial de git. Si tu repo es público, o no puedes garantizar que la URL del sitio se mantenga privada, considera mover la llamada a Gemini a una función serverless (Cloud Function, Netlify Function...) que guarde la clave solo en el servidor.
 
 ---
 
@@ -148,14 +150,9 @@ Sube tus archivos a la carpeta `img/` con exactamente estos nombres:
 
 ---
 
-## 🔑 Contraseña
+## 🔑 Acceso al panel
 
-La contraseña del panel de gestión es: **Foodservice1914**
-
-Para cambiarla, edita la línea en `gestion.html`:
-```javascript
-const PASSWORD = 'Foodservice1914';
-```
+El panel de gestión (`gestion.html`) **no tiene contraseña** — cualquiera con la URL puede entrar y publicar cambios. La seguridad depende de que la URL del sitio no se comparta públicamente y de las reglas de Firebase (ver sección 1.5). Si necesitas restringir el acceso, la forma más sencilla es protegerlo a nivel de hosting (por ejemplo, Netlify permite añadir contraseña o restricción por IP en sitios de pago) en vez de depender de una contraseña dentro del propio HTML, que cualquiera puede leer en el código fuente.
 
 ---
 
@@ -169,6 +166,7 @@ const PASSWORD = 'Foodservice1914';
 - ✅ **14 alérgenos** oficiales UE con iconos
 - ✅ **Distingue "Contiene" de "Trazas"** visualmente
 - ✅ Sin alérgenos → badge verde "Sin alérgenos declarados"
+- ✅ **Ajustes de tamaño de texto en tiempo real** — se controlan desde `gestión → Ajustes` y se sincronizan por Firebase, así que funcionan aunque el panel y la TV estén en dispositivos distintos
 
 ---
 

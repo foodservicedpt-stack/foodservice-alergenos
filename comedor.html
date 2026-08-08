@@ -11,14 +11,22 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --dish-name-size: 3.0vw;
-      --dish-en-size:   1.5vw;
-      --icon-size:      4.8vw;
-      --icon-gap:       0.5vw;
-      --dish-pad:       1.4vw;
-      --legend-icon:    2.4vw;
-      --legend-text:    1.1vw;
-      --header-h:       11vh;
+      --dish-name-size: 6vw;
+      --dish-en-size: 2.2vw;
+      --icon-size: 5.5vw;
+      --icon-gap: 0.6vw;
+      --dish-pad: 1.4vw;
+      --legend-icon: 3vw;
+      --legend-text: 1.4vw;
+      --header-h: 11vh;
+      --turno-title-size: 2.2vw;
+      --turno-msg-es-size: 3.2vw;
+      --turno-msg-en-size: 2vw;
+      --turno-countdown-size: 2vw;
+      --carousel-es-size: 2.8vw;
+      --carousel-en-size: 1.8vw;
+      --carousel-farewell-es-size: 4.2vw;
+      --carousel-farewell-en-size: 2.2vw;
     }
 
     html, body {
@@ -43,7 +51,7 @@
     .header-title .en { font-size: clamp(11px,1.4vw,22px); color: #93c5fd; letter-spacing: 4px; text-transform: uppercase; font-style: italic; }
     .header-spacer { flex: 1; }
     .header-datetime { text-align: right; color: white; line-height: 1.3; }
-    .header-date { font-size: clamp(14px,1.8vw,28px); font-weight: 700; color: #e0f2fe; text-transform: capitalize; }
+    .header-date { font-size: clamp(14px,1.8vw,28px); font-weight: 700; color: #e0f2fe; text-transform: none; }
     .header-time { font-size: clamp(20px,3vw,48px); font-weight: 900; color: #7dd3fc; letter-spacing: 2px; }
 
     /* ─── BODY ─── */
@@ -55,90 +63,105 @@
     /* ─── DISH ROW ─── */
     .dish-row {
       background: #ffffff; border-radius: 14px;
-      padding: var(--dish-pad) calc(var(--dish-pad) * 1.5);
-      display: flex; align-items: center;
+      padding: var(--dish-pad) calc(var(--dish-pad) * 1.2);
+      display: flex; align-items: flex-start;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      flex: 1; min-height: 0; flex-shrink: 0;
+      flex: 1; min-height: 6vw; flex-shrink: 0;
       border-left: 5px solid transparent;
-      animation: slideIn 0.4s ease-out; overflow: hidden;
+      overflow: hidden;
+      gap: 0.7vw;
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
     .dish-row:nth-child(even) { border-left-color: #10b981; }
     @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
 
-    .dish-info { flex: 1; padding-right: 1vw; min-width: 0; }
+    .dish-info { flex: 1; padding-right: 0.4vw; min-width: 0; display: flex; flex-direction: column; gap: 0.45vw; }
     .dish-name-es {
       font-size: var(--dish-name-size); font-weight: 900; color: #0f172a;
       text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.08;
       white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
     }
     .dish-name-en {
-      font-size: var(--dish-en-size); color: #64748b; font-style: italic; margin-top: 0.3vw; line-height: 1.1;
+      font-size: calc(var(--dish-en-size) * 1.15); color: #64748b; font-style: italic; line-height: 1.1;
       white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+    }
+    .dish-gluten-note {
+      display: flex; flex-direction: column; gap: 0.16vw;
+      padding: 0.45vw 0.6vw; border-radius: 0.7vw;
+      border: 1px solid #bbf7d0; background: #f0fdf4;
+      max-width: 100%; align-self: flex-start;
+    }
+    .dish-gluten-es {
+      font-size: clamp(13px, 1.05vw, 20px); font-weight: 800; color: #166534;
+      line-height: 1.16; overflow-wrap: anywhere;
+    }
+    .dish-gluten-en {
+      font-size: clamp(11px, 0.9vw, 16px); font-style: italic; color: #4d7c4d;
+      line-height: 1.15; overflow-wrap: anywhere;
     }
 
     /* ─── ALLERGEN ICONS ─── */
-    .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.5vw; flex-shrink: 0; width: 42%; max-width: 42%; }
+    .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: min(32%, 320px); max-width: 320px; margin-left: 0.4vw; }
     .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; }
     .alg-icon-wrap {
-      width: var(--icon-size); height: var(--icon-size); border-radius: 50%; overflow: hidden;
+      width: var(--icon-size); height: var(--icon-size); overflow: hidden;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2); flex-shrink: 0;
-      border: 3px solid rgba(255,255,255,0.8);
+      flex-shrink: 0;
     }
-    .alg-icon-wrap img { width: 75%; height: 75%; object-fit: contain; }
-    .alg-icon-wrap.trace-icon { opacity: 0.75; border: 3px dashed rgba(255,255,255,0.6); }
+    .alg-icon-wrap img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+    .alg-icon-wrap.trace-icon { opacity: 0.75; }
     .trace-label {
       font-size: calc(var(--icon-size) * 0.28); font-weight: 800; color: #92400e;
       background: #fef3c7; border: 2px solid #fcd34d; border-radius: 50px;
-      padding: 0.2vw 0.7vw; letter-spacing: 0.5px; white-space: nowrap;
+      padding: 0.2vw 0.7vw; letter-spacing: 0.5px; white-space: normal;
+      line-height: 1.1; text-align: left; max-width: 100%;
     }
     .no-allergen {
       background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 12px;
       padding: 0.55vw 1.1vw; color: #065f46; font-weight: 800;
-      font-size: calc(var(--dish-en-size) * 1.05);
+      font-size: calc(var(--dish-en-size) * 1.05 * var(--no-allergen-scale, 1));
       display: flex; flex-direction: row; align-items: center; gap: 0.7vw;
+      max-width: 100%; width: auto; flex-wrap: wrap;
     }
     .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
     .no-allergen .shield-ok svg {
       width: calc(var(--dish-name-size) * 1.15); height: calc(var(--dish-name-size) * 1.15);
       filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
     }
-    .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.1; }
-    .no-allergen-txt .es { white-space: nowrap; }
-    .no-allergen .en { font-style: italic; font-size: 0.82em; opacity: 0.7; font-weight: 600; white-space: nowrap; }
+    .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+    .no-allergen-txt .es { white-space: normal; overflow-wrap: anywhere; }
+    .no-allergen .en { font-style: italic; font-size: 0.82em; opacity: 0.7; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
-      width: 19vw; background: white; border-radius: 14px;
-      padding: 1.2vw 1vw; display: flex; flex-direction: column;
+      width: 20vw; background: white; border-radius: 14px;
+      padding: 1vw 0.8vw; display: flex; flex-direction: column;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06); overflow: hidden;
     }
-    .legend-title { font-size: var(--legend-text); font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.6vw; margin-bottom: 0.8vw; }
+    .legend-title { font-size: 1.2vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5vw; margin-bottom: 0.6vw; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
-    .legend-list { display: flex; flex-direction: column; justify-content: space-between; flex: 1; }
-    .legend-item { display: flex; align-items: center; gap: 0.6vw; }
-    .legend-circle { width: var(--legend-icon); height: var(--legend-icon); border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-    .legend-circle img { width: 70%; height: 70%; object-fit: contain; }
-    .legend-text-wrap { line-height: 1.1; min-width: 0; }
-    .legend-es { font-size: var(--legend-text); font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; }
-    .legend-en { font-size: calc(var(--legend-text) * 0.85); color: #94a3b8; font-style: italic; display: block; }
-    .traces-info { border-top: 2px dashed #e2e8f0; margin-top: 0.6vw; padding-top: 0.6vw; font-size: calc(var(--legend-text) * 0.85); color: #92400e; }
+    .legend-list { display: flex; flex-direction: column; justify-content: space-between; flex: 1; overflow: hidden; }
+    .legend-item { display: flex; align-items: center; gap: 0.45vw; }
+    .legend-circle { width: 3.4vw; height: 3.4vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+    .legend-text-wrap { line-height: 1.15; min-width: 0; }
+    .legend-es { font-size: 1.1vw; font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; }
+    .legend-en { font-size: 0.92vw; color: #64748b; font-style: italic; display: block; }
 
     /* ─── FOOTER ─── */
     .footer { background: #0b1f3a; padding: 0.5vw 2.5vw; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .footer-brand { color: #475569; font-size: clamp(10px,1vw,14px); letter-spacing: 1px; }
-    .footer-updated { color: #475569; font-size: clamp(9px,0.9vw,13px); }
+    .footer-brand { color: #94a3b8; font-size: clamp(10px,1vw,14px); letter-spacing: 1px; }
+    .footer-updated { color: #94a3b8; font-size: clamp(9px,0.9vw,13px); }
     .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 6px; animation: blink 2s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
     .no-data { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; gap: 16px; }
     .no-data .icon { font-size: 5vw; }
     .no-data p { font-size: 2vw; font-weight: 600; }
     .no-data small { font-size: 1.2vw; opacity: 0.7; }
-    .fade-update { animation: fadeUpdate 0.5s ease-out; }
-    @keyframes fadeUpdate { 0%{opacity:0.3;transform:scale(0.99)} 100%{opacity:1;transform:scale(1)} }
+    .fade-update { animation: none; }
+    @keyframes fadeUpdate { 0%{opacity:1;transform:scale(1)} 100%{opacity:1;transform:scale(1)} }
 
     /* ═══════════════════════════════════════════════════
        TURNO OVERLAY — Pantalla completa espectacular
@@ -161,12 +184,12 @@
     /* Main card */
     .turno-card-tv {
       position: relative; z-index: 1;
-      width: 88vw; max-width: 1400px;
-      border-radius: 3vw;
-      padding: 5vw 7vw;
+      width: 92vw; max-width: 1600px;
+      border-radius: 2.5vw;
+      padding: clamp(20px, 3vw, 48px) clamp(24px, 5vw, 80px);
       text-align: center;
-      overflow: hidden;                 /* clip the top strip & particles to the card */
-      box-shadow: 0 4vw 8vw rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.12);
+      overflow: hidden;
+      box-shadow: 0 3vw 6vw rgba(0,0,0,0.6), 0 0 0 3px rgba(255,255,255,0.12);
       transform: scale(0.85) translateY(3vw);
       transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease;
       animation: cardGlow 2.5s ease-in-out infinite;
@@ -181,8 +204,8 @@
 
     /* Bell pulse animation */
     .turno-bell {
-      font-size: 12vw; line-height: 1;
-      display: block; margin-bottom: 2vw;
+      font-size: clamp(34px, 7vw, 112px); line-height: 1;
+      display: block; margin-bottom: 1vw;
       animation: bellRing 0.6s ease-in-out 0.3s 3;
       transform-origin: top center;
     }
@@ -195,49 +218,144 @@
     }
 
     .turno-title {
-      font-size: clamp(18px, 2.2vw, 38px);
+      font-size: clamp(16px, var(--turno-title-size), 36px);
       font-weight: 900; letter-spacing: 4px;
       text-transform: uppercase; opacity: 0.75;
-      margin-bottom: 1.5vw;
+      margin-bottom: 1vw;
     }
 
     .turno-msg-es {
-      font-size: clamp(28px, 5.5vw, 96px);
+      font-size: clamp(20px, var(--turno-msg-es-size), 52px);
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.03em;
       line-height: 1.05;
-      margin-bottom: 1.5vw;
+      margin-bottom: 1vw;
       text-shadow: 0 4px 20px rgba(0,0,0,0.25);
-      /* text wraps if too long */
       word-break: break-word;
     }
 
     .turno-msg-en {
-      font-size: clamp(16px, 2.6vw, 46px);
+      font-size: clamp(14px, var(--turno-msg-en-size), 30px);
       font-style: italic;
       opacity: 0.78;
-      margin-bottom: 3vw;
+      margin-bottom: 1.5vw;
       line-height: 1.2;
     }
 
     /* Countdown bar */
     .turno-countdown-wrap {
-      display: flex; flex-direction: column; align-items: center; gap: 0.8vw;
+      display: flex; flex-direction: column; align-items: center; gap: 0.6vw;
     }
     .turno-countdown-label {
-      font-size: clamp(12px, 1.2vw, 20px); font-weight: 700;
-      opacity: 0.65; letter-spacing: 1px; text-transform: uppercase;
+      font-size: clamp(13px, var(--turno-countdown-size), 30px); font-weight: 900;
+      opacity: 0.85; letter-spacing: 2px; text-transform: uppercase;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
     .turno-progress-track {
-      width: 60%; height: 10px; border-radius: 10px;
+      width: min(65%, 900px); height: clamp(10px, 1.3vw, 20px); border-radius: 10px;
       background: rgba(255,255,255,0.2); overflow: hidden;
     }
     .turno-progress-bar {
       height: 100%; border-radius: 10px;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.9);
       transition: width 1s linear;
     }
+
+    /* TURNO CAROUSEL (integrado: despedida + recordatorios) */
+    .turno-carousel {
+      position: relative;
+      margin: 2vw 0;
+      padding: 1.5vw;
+      border-radius: 1.5vw;
+      background: rgba(0,0,0,0.15);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      min-height: 22vh;
+    }
+    .carousel-track {
+      display: flex;
+      transition: transform 0.8s cubic-bezier(0.4,0,0.2,1);
+      will-change: transform;
+    }
+    .carousel-slide {
+      flex: 0 0 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2vw;
+      padding: 2vw;
+    }
+    .carousel-slide.farewell {
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+      border-radius: 1vw;
+      /* Sin imagen: centra el mensaje en todo el alto del carrusel en vez de
+         dejarlo arriba con el hueco vacío que reservaban los slides con foto. */
+      justify-content: center;
+    }
+    .carousel-slide.farewell .slide-text-es {
+      font-size: var(--carousel-farewell-es-size);
+    }
+    .carousel-slide.farewell .slide-text-en {
+      font-size: var(--carousel-farewell-en-size);
+    }
+    .carousel-slide img {
+      max-width: 100%;
+      max-height: 30vh;
+      width: auto;
+      height: auto;
+      border-radius: 1vw;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.3);
+      object-fit: contain;
+    }
+.slide-text-es {
+      font-size: var(--carousel-es-size);
+      font-weight: 900;
+      text-transform: uppercase;
+      text-align: center;
+      text-shadow: 0 3px 15px rgba(0,0,0,0.6);
+      line-height: 1.1;
+      word-break: break-word;
+      max-width: 95%;
+      color: inherit;
+    }
+.slide-text-en {
+      font-size: var(--carousel-en-size);
+      font-style: italic;
+      opacity: 0.85;
+      text-align: center;
+      line-height: 1.2;
+      max-width: 95%;
+      color: inherit;
+    }
+    .slide-label {
+      font-size: clamp(12px, 1.8vw, 24px);
+      font-weight: 700;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 0.5vw;
+    }
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 0.6vw;
+      margin-top: 1vw;
+    }
+    .carousel-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+    }
+    .carousel-dot.active {
+      background: #fff;
+      transform: scale(1.4);
+      border-color: rgba(255,255,255,0.5);
+    }
+    .carousel-dot:hover { background: rgba(255,255,255,0.5); }
 
     /* Dismiss button (subtle, for manual close) */
     .turno-dismiss-btn {
@@ -273,6 +391,20 @@
     .turno-particles::before { width: 40vw; height: 40vw; left: -10vw; top: -10vw; animation-delay: 0s; }
     .turno-particles::after  { width: 30vw; height: 30vw; right: -5vw; bottom: -5vw; animation-delay: -4s; }
     @keyframes floatCircle { 0%,100%{transform:translate(0,0)} 50%{transform:translate(2vw,2vw)} }
+
+    /* ─── CIERRE DE COMEDOR ─── */
+    #cierre-overlay { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; padding:4vw; opacity:0; visibility:hidden; transition:opacity .45s ease, visibility .45s; background:radial-gradient(circle at 50% 0%, #263f67 0%, #101d34 46%, #070d19 100%); color:#fff; }
+    #cierre-overlay.visible { opacity:1; visibility:visible; }
+    .cierre-card { width:min(90vw,1500px); text-align:center; padding:6vw 7vw; border:1px solid rgba(255,255,255,.22); border-radius:3vw; background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.035)); box-shadow:0 3vw 8vw rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.18); position:relative; overflow:hidden; }
+    .cierre-card::before { content:''; position:absolute; inset:auto -10% -70% -10%; height:55%; background:radial-gradient(ellipse,rgba(56,189,248,.24),transparent 65%); pointer-events:none; }
+    .cierre-logo { position:relative; height:clamp(60px,8vw,130px); object-fit:contain; filter:brightness(1.2) drop-shadow(0 10px 16px rgba(0,0,0,.35)); margin-bottom:2vw; }
+    .cierre-kicker { position:relative; color:#7dd3fc; font-size:clamp(15px,1.7vw,28px); font-weight:800; letter-spacing:.25em; text-transform:uppercase; }
+    .cierre-title { position:relative; font-size:clamp(48px,8vw,132px); font-weight:950; letter-spacing:.035em; text-transform:uppercase; line-height:1; margin:1.3vw 0; text-shadow:0 5px 24px rgba(0,0,0,.3); }
+    .cierre-message-es { position:relative; font-size:clamp(23px,3.3vw,56px); font-weight:750; line-height:1.12; margin:0 auto 1vw; max-width:1000px; }
+    .cierre-message-en { position:relative; color:#cbd5e1; font-size:clamp(17px,2.1vw,34px); font-style:italic; line-height:1.2; }
+    .cierre-clock-wrap { position:relative; display:inline-flex; flex-direction:column; gap:.5vw; margin-top:3.5vw; padding:1.4vw 4vw 1.8vw; border-top:1px solid rgba(125,211,252,.42); border-bottom:1px solid rgba(125,211,252,.42); }
+    .cierre-clock-label { color:#bae6fd; font-size:clamp(14px,1.5vw,24px); font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
+    .cierre-clock { color:#fff; font-size:clamp(52px,9vw,150px); font-weight:950; line-height:.95; letter-spacing:.06em; font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
@@ -284,8 +416,8 @@
     <img src="./img/Encabezado.png" alt="Food Service DPT" class="header-logo" onerror="this.style.display='none'">
     <div class="header-divider"></div>
     <div class="header-title">
-      <div class="es">Menú del Comedor</div>
-      <div class="en">Dining Room Menu</div>
+      <div class="es">Menú del día</div>
+      <div class="en">Menu of the day</div>
     </div>
     <div class="header-spacer"></div>
     <div class="header-datetime">
@@ -306,13 +438,26 @@
     <div class="sidebar">
       <div class="legend-title">ALÉRGENOS<span class="en">Allergen Legend</span></div>
       <div class="legend-list" id="legend-list"></div>
-      <div class="traces-info">⚠ TRAZAS / TRACES: borde punteado / dashed border</div>
     </div>
   </div>
 
   <div class="footer">
     <span class="footer-brand">FOOD SERVICE DPT &nbsp;·&nbsp; Allergen Management System</span>
     <span class="footer-updated"><span class="live-dot"></span><span id="footer-updated">En vivo</span></span>
+  </div>
+</div>
+
+<!-- ══════════════════════ CIERRE DE COMEDOR ══════════════════════ -->
+<div id="cierre-overlay" aria-live="polite">
+  <div class="cierre-card">
+    <img src="./img/Encabezado.png" alt="Food Service DPT" class="cierre-logo" onerror="this.style.display='none'">
+    <div class="cierre-kicker">Food Service DPT</div>
+    <div class="cierre-title">Comedor cerrado</div>
+    <div class="cierre-message-es" id="cierre-message-es">El comedor está cerrado</div>
+    <div class="cierre-message-en" id="cierre-message-en">The dining room is closed</div>
+    <div class="cierre-clock-wrap">
+      <div class="cierre-clock" id="cierre-clock">--:--:--</div>
+    </div>
   </div>
 </div>
 
@@ -327,9 +472,14 @@
 
     <span class="turno-bell" id="turno-bell">🔔</span>
     <div class="turno-title" id="turno-title">CAMBIO DE TURNO · SHIFT CHANGE</div>
-    <div class="turno-msg-es" id="turno-msg-es">¡Gracias! Por favor, libera tu mesa.</div>
-    <div class="turno-msg-en" id="turno-msg-en">Thank you! Please clear your table.</div>
 
+    <!-- CAROUSEL INTEGRADO: mensaje de despedida + recordatorios -->
+    <div class="turno-carousel" id="turno-carousel">
+      <div class="carousel-track" id="carousel-track"></div>
+      <div class="carousel-dots" id="carousel-dots"></div>
+    </div>
+
+    <!-- CUENTA ATRÁS SIEMPRE VISIBLE (fuera del carousel) -->
     <div class="turno-countdown-wrap">
       <div class="turno-countdown-label" id="turno-countdown-label">Cambio de turno</div>
       <div class="turno-progress-track">
@@ -364,6 +514,9 @@ const ALLERGENS = [
 //  ESTADO TURNOS
 // ══════════════════════════════════════════════
 let turnosConfig     = [];           // from Firebase
+let remindersConfig  = [];           // from Firebase
+let carouselInterval  = 15;          // seconds between carousel slides
+let cierreConfig = null;             // cierre configurado desde el panel
 let firedTurnos      = new Set();    // HH:MM keys fired today to avoid re-triggering
 let lastFiredDate    = '';           // reset firedTurnos at midnight
 let turnoCountdown   = null;         // interval
@@ -371,10 +524,61 @@ let turnoRemaining   = 0;
 let turnoTotal       = 60;
 let latestComedorData = null;        // último menú recibido (para reevaluar en el cambio de día)
 
+let lastRenderedMenuKey = '';
+
+// Carousel state
+let carouselTimer = null;
+let currentSlideIndex = 0;
+
 // Muestra el menú solo si su fecha es HOY (reinicio automático diario)
+// y solo re-renderiza si los datos han cambiado realmente
 function refreshMenuDisplay() {
-  if (latestComedorData && latestComedorData.fecha === todayStr()) renderMenu(latestComedorData);
-  else showNoData();
+  if (!latestComedorData || latestComedorData.fecha !== todayStr()) {
+    showNoData();
+    lastRenderedMenuKey = '';
+    return;
+  }
+  const key = JSON.stringify(latestComedorData);
+  if (key === lastRenderedMenuKey) return;
+  lastRenderedMenuKey = key;
+  renderMenu(latestComedorData);
+}
+
+function cierreProgramadoActivo(now = new Date()) {
+  if (!cierreConfig?.programado || !cierreConfig.hora || !cierreConfig.duracion) return false;
+  const [h, m] = cierreConfig.hora.split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
+  const start = new Date(now); start.setHours(h, m, 0, 0);
+  const end = new Date(start.getTime() + Number(cierreConfig.duracion) * 60000);
+  return now >= start && now < end;
+}
+function cierreActivo() { return !!cierreConfig?.activo || cierreProgramadoActivo(); }
+function horaReapertura() {
+  if (cierreConfig?.reapertura) return cierreConfig.reapertura;
+  if (cierreConfig?.duracion && cierreConfig?.hora) {
+    const [h,m] = cierreConfig.hora.split(':').map(Number);
+    if (Number.isFinite(h) && Number.isFinite(m)) return minToHHMM(h * 60 + m + Number(cierreConfig.duracion));
+  }
+  return '--:--';
+}
+function refreshCierre() {
+  const overlay = document.getElementById('cierre-overlay');
+  const active = cierreActivo();
+  overlay.classList.toggle('visible', active);
+  if (!active) return;
+  document.getElementById('cierre-message-es').textContent = cierreConfig?.mensajeEs || 'El comedor está cerrado';
+  document.getElementById('cierre-message-en').textContent = cierreConfig?.mensajeEn || 'The dining room is closed';
+  updateCierreClock();
+  // El cierre tiene prioridad sobre los avisos temporales de turno.
+  dismissTurno();
+}
+function updateCierreClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  const el = document.getElementById('cierre-clock');
+  if (el) el.textContent = `${hh}:${mm}:${ss}`;
 }
 
 // ══════════════════════════════════════════════
@@ -396,7 +600,9 @@ function updateClock() {
   }
 
   // Check turnos only at :00 seconds to avoid double-fire within the minute
-  if (ss === '00') checkTurnos(`${hh}:${mm}`);
+  refreshCierre();
+  if (cierreActivo()) updateCierreClock();
+  if (ss === '00' && !cierreActivo()) checkTurnos(`${hh}:${mm}`);
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -439,11 +645,6 @@ function checkTurnos(hhmm) {
 }
 
 function showTurno(t) {
-  // Populate content
-  document.getElementById('turno-msg-es').textContent  = t.mensajeEs || '¡Gracias! Por favor, libera tu mesa.';
-  document.getElementById('turno-msg-en').textContent  = t.mensajeEn || 'Thank you! Please clear your table.';
-  document.getElementById('turno-title').textContent   = (t.label || 'Cambio de Turno').toUpperCase() + ' · SHIFT CHANGE';
-
   // Apply colors
   const card = document.getElementById('turno-card-tv');
   const bgColor   = t.bgColor   || '#1e3a5f';
@@ -451,8 +652,8 @@ function showTurno(t) {
   card.style.background = bgColor;
   card.style.color      = textColor;
 
-  // Style inner text elements explicitly
-  ['turno-title','turno-msg-es','turno-msg-en','turno-countdown-label'].forEach(id => {
+  document.getElementById('turno-title').textContent = (t.label || 'Cambio de Turno').toUpperCase() + ' · SHIFT CHANGE';
+  ['turno-title','turno-countdown-label'].forEach(id => {
     document.getElementById(id).style.color = textColor;
   });
   document.getElementById('turno-progress-bar').style.background = hexToRgbaLight(textColor);
@@ -465,9 +666,18 @@ function showTurno(t) {
   turnoRemaining = totalSec;
   updateCountdownUI(hora);
 
+  // Build carousel (despedida + recordatorios)
+  buildTurnoCarousel(t);
+
   // Show overlay
   const overlay = document.getElementById('turno-overlay');
   overlay.classList.add('visible');
+
+  // Ajustar el contenido después de que el overlay tenga sus dimensiones reales.
+  requestAnimationFrame(fitTurnoOverlay);
+
+  // Start carousel auto-advance (cada 15 segundos)
+  startCarousel();
 
   // Countdown interval
   clearInterval(turnoCountdown);
@@ -476,6 +686,45 @@ function showTurno(t) {
     updateCountdownUI(hora);
     if (turnoRemaining <= 0) { clearInterval(turnoCountdown); dismissTurno(); }
   }, 1000);
+}
+
+// Autoajuste del aviso de turno, siguiendo el mismo principio usado por
+// el menú, los iconos y la leyenda. Evita que el texto o la cuenta atrás
+// se salgan de la tarjeta en pantallas pequeñas o con mucha altura reducida.
+function fitTurnoOverlay() {
+  const card = document.getElementById('turno-card-tv');
+  if (!card || !card.classList) return;
+
+  const root = document.documentElement.style;
+  const availableW = Math.max(260, card.clientWidth - 48);
+  const availableH = Math.max(180, window.innerHeight * 0.92);
+  const scale = Math.min(1, availableW / 1100, availableH / 760);
+
+  root.setProperty('--turno-title-size', Math.max(14, Math.min(36, 34 * scale)) + 'px');
+  root.setProperty('--turno-msg-es-size', Math.max(18, Math.min(52, 48 * scale)) + 'px');
+  root.setProperty('--turno-msg-en-size', Math.max(13, Math.min(30, 28 * scale)) + 'px');
+  root.setProperty('--turno-countdown-size', Math.max(12, Math.min(30, 26 * scale)) + 'px');
+  root.setProperty('--carousel-es-size', Math.max(16, Math.min(42, 38 * scale)) + 'px');
+  root.setProperty('--carousel-en-size', Math.max(12, Math.min(26, 24 * scale)) + 'px');
+  // El mensaje de despedida no comparte espacio con ninguna imagen, así que
+  // puede permitirse un tamaño bastante mayor que el resto de slides.
+  root.setProperty('--carousel-farewell-es-size', Math.max(22, Math.min(64, 56 * scale)) + 'px');
+  root.setProperty('--carousel-farewell-en-size', Math.max(14, Math.min(34, 30 * scale)) + 'px');
+
+  // Si el conjunto sigue sin caber, reduce gradualmente TODOS los tamaños
+  // (no solo la cuenta atrás) hasta que la tarjeta quepa en el televisor.
+  const shrinkVars = [
+    '--turno-title-size', '--turno-msg-es-size', '--turno-msg-en-size',
+    '--turno-countdown-size', '--carousel-es-size', '--carousel-en-size',
+    '--carousel-farewell-es-size', '--carousel-farewell-en-size'
+  ];
+  let guard = 0;
+  while (card.scrollHeight > window.innerHeight * 0.94 && guard++ < 10) {
+    shrinkVars.forEach(name => {
+      const current = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 20;
+      root.setProperty(name, Math.max(11, current * 0.94) + 'px');
+    });
+  }
 }
 
 function updateCountdownUI(hora) {
@@ -491,11 +740,134 @@ function dismissTurno() {
   const overlay = document.getElementById('turno-overlay');
   overlay.classList.remove('visible');
   clearInterval(turnoCountdown);
+  stopCarousel();
 }
 
 function hexToRgbaLight(hex) {
   // returns a lighter version for the progress bar
   return hex === '#ffffff' ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)';
+}
+
+// ══════════════════════════════════════════════
+//  TURNO CAROUSEL (despedida + recordatorios)
+// ══════════════════════════════════════════════
+function buildTurnoCarousel(t) {
+  const track = document.getElementById('carousel-track');
+  const dots = document.getElementById('carousel-dots');
+  const carousel = document.getElementById('turno-carousel');
+
+  if (!carousel) return;
+
+  // Construir slides: primero el mensaje de despedida, luego cada recordatorio
+  const slides = [];
+
+  // Slide 1: Mensaje de despedida (del turno) — sin imagen, así que puede
+  // usar todo el ancho/alto del carrusel (ver .carousel-slide.farewell).
+  slides.push({
+    type: 'farewell',
+    image: null,
+    textEs: t.mensajeEs || '¡Gracias! Por favor, libera tu mesa.',
+    textEn: t.mensajeEn || 'Thank you! Please clear your table.',
+    label: 'CAMBIO DE TURNO'
+  });
+
+  // Slides siguientes: cada recordatorio
+  remindersConfig.forEach((r, i) => {
+    slides.push({
+      type: 'reminder',
+      image: r.image,
+      textEs: r.mensajeEs,
+      textEn: r.mensajeEn || '',
+      label: `RECORDATORIO ${i + 1}`
+    });
+  });
+
+  if (slides.length === 0) {
+    carousel.style.display = 'none';
+    return;
+  }
+
+  carousel.style.display = 'block';
+
+  track.innerHTML = '';
+  dots.innerHTML = '';
+  // Reinicia el estado real del carrusel (antes tenía un typo que creaba
+  // una variable global sin usar y dejaba el track desplazado del turno
+  // anterior hasta el primer auto-avance).
+  currentSlideIndex = 0;
+  track.style.transform = 'translateX(0)';
+
+  slides.forEach((slide, i) => {
+    const div = document.createElement('div');
+    div.className = 'carousel-slide' + (slide.type === 'farewell' ? ' farewell' : '');
+
+    // Se construye con DOM/textContent (no innerHTML) para que los mensajes
+    // introducidos en el panel de gestión no puedan inyectar HTML.
+    if (slide.image) {
+      const img = document.createElement('img');
+      img.src = slide.image;
+      img.alt = slide.label;
+      img.onerror = () => { img.style.display = 'none'; };
+      div.appendChild(img);
+    }
+
+    const esDiv = document.createElement('div');
+    esDiv.className = 'slide-text-es';
+    esDiv.textContent = slide.textEs;
+    div.appendChild(esDiv);
+
+    const enDiv = document.createElement('div');
+    enDiv.className = 'slide-text-en';
+    enDiv.textContent = slide.textEn || '';
+    div.appendChild(enDiv);
+
+    track.appendChild(div);
+
+    // Dot
+    const dot = document.createElement('div');
+    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goToSlide(i);
+    dots.appendChild(dot);
+  });
+}
+
+function startCarousel() {
+  stopCarousel();
+  
+  // Contar total slides: 1 despedida + recordatorios
+  const totalSlides = 1 + remindersConfig.length;
+  if (totalSlides <= 1) return;
+  
+  // Usar el intervalo configurado (en milisegundos)
+  const intervalMs = carouselInterval * 1000;
+  carouselTimer = setInterval(() => {
+    currentSlideIndex = (currentSlideIndex + 1) % (1 + remindersConfig.length);
+    goToSlide(currentSlideIndex);
+  }, intervalMs);
+}
+
+function stopCarousel() {
+  if (carouselTimer) {
+    clearInterval(carouselTimer);
+    carouselTimer = null;
+  }
+}
+
+function goToSlide(index) {
+  const track = document.getElementById('carousel-track');
+  const dots = document.querySelectorAll('.carousel-dot');
+  
+  if (!track) return;
+  
+  const totalSlides = 1 + remindersConfig.length;
+  index = ((index % totalSlides) + totalSlides) % totalSlides;
+  currentSlideIndex = index;
+  
+  track.style.transform = `translateX(-${index * 100}%)`;
+  
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('active', i === index);
+  });
 }
 
 // ══════════════════════════════════════════════
@@ -505,8 +877,12 @@ function formatDateEs(dateStr) {
   if (!dateStr) return formatDateEs(todayStr());
   const [y,m,d] = dateStr.split('-');
   const fecha = new Date(+y, +m-1, +d);
-  let s = fecha.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  const weekday = fecha.toLocaleDateString('es-ES', { weekday:'long' });
+  const day = fecha.getDate();
+  const month = fecha.toLocaleDateString('es-ES', { month:'long' });
+  const year = fecha.getFullYear();
+  const weekdayCapitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  return `${weekdayCapitalized}, ${day} de ${month} de ${year}`;
 }
 function todayStr() {
   const d = new Date();
@@ -516,13 +892,117 @@ function todayStr() {
 // ══════════════════════════════════════════════
 //  AUTO-SIZING
 // ══════════════════════════════════════════════
-function adjustSizes(n) {
-  const r = document.documentElement.style;
-  if      (n <= 4)  { r.setProperty('--dish-name-size','3.2vw'); r.setProperty('--dish-en-size','1.6vw'); r.setProperty('--icon-size','5.2vw'); r.setProperty('--icon-gap','0.55vw'); r.setProperty('--dish-pad','1.6vw'); r.setProperty('--legend-icon','2.6vw'); r.setProperty('--legend-text','1.2vw'); }
-  else if (n <= 6)  { r.setProperty('--dish-name-size','2.8vw'); r.setProperty('--dish-en-size','1.4vw'); r.setProperty('--icon-size','4.6vw'); r.setProperty('--icon-gap','0.5vw');  r.setProperty('--dish-pad','1.2vw'); r.setProperty('--legend-icon','2.3vw'); r.setProperty('--legend-text','1.1vw'); }
-  else if (n <= 8)  { r.setProperty('--dish-name-size','2.3vw'); r.setProperty('--dish-en-size','1.2vw'); r.setProperty('--icon-size','3.9vw'); r.setProperty('--icon-gap','0.4vw');  r.setProperty('--dish-pad','0.9vw'); r.setProperty('--legend-icon','2.0vw'); r.setProperty('--legend-text','0.95vw'); }
-  else if (n <= 10) { r.setProperty('--dish-name-size','1.9vw'); r.setProperty('--dish-en-size','1.0vw'); r.setProperty('--icon-size','3.3vw'); r.setProperty('--icon-gap','0.35vw'); r.setProperty('--dish-pad','0.7vw'); r.setProperty('--legend-icon','1.8vw'); r.setProperty('--legend-text','0.85vw'); }
-  else               { r.setProperty('--dish-name-size','1.6vw'); r.setProperty('--dish-en-size','0.9vw'); r.setProperty('--icon-size','2.8vw'); r.setProperty('--icon-gap','0.3vw');  r.setProperty('--dish-pad','0.6vw'); r.setProperty('--legend-icon','1.6vw'); r.setProperty('--legend-text','0.78vw'); }
+let sizeResizeObserver = null;
+// Si desde gestión se fija un tamaño manual de letra para los platos, se
+// usa como punto de partida en vez de la fórmula automática — pero el
+// bucle de fitDishRows() lo sigue protegiendo contra cortes reales.
+let manualDishSize = null;
+function adjustSizes(rowsCount, rowHeight) {
+  const root = document.documentElement.style;
+  const headerH = document.querySelector('.header')?.getBoundingClientRect().height || window.innerHeight * 0.11;
+  const sidebarW = document.querySelector('.sidebar')?.getBoundingClientRect().width || window.innerWidth * 0.19;
+  const availH = Math.max(100, window.innerHeight - headerH - 40);
+  const availW = Math.max(200, window.innerWidth - sidebarW - 40);
+
+  let dishH = availH;
+  if (typeof rowHeight === 'number' && rowHeight > 0) {
+    dishH = Math.min(availH / Math.max(1, rowsCount), rowHeight * 2.2);
+  } else if (rowsCount > 0) {
+    dishH = Math.max(60, availH / rowsCount);
+  }
+
+  const nameFs = Math.max(16, Math.min(dishH * 0.45, availW * 0.040));
+  const enFs = Math.max(12, Math.min(nameFs * 0.42, 24));
+  const iconSize = Math.max(24, Math.min(dishH * 0.48, availW * 0.055));
+  const legendIcon = Math.max(18, Math.min(iconSize, 60));
+  const legendText = Math.max(12, Math.min(legendIcon * 0.40, 16));
+
+  root.setProperty('--dish-name-size', nameFs + 'px');
+  root.setProperty('--dish-en-size', enFs + 'px');
+  root.setProperty('--icon-size', iconSize + 'px');
+  root.setProperty('--icon-gap', Math.max(4, iconSize * 0.12) + 'px');
+  root.setProperty('--dish-pad', Math.max(8, dishH * 0.18) + 'px');
+  root.setProperty('--legend-icon', legendIcon + 'px');
+  root.setProperty('--legend-text', legendText + 'px');
+}
+function startSizeAutoAdjust() {
+  stopSizeAutoAdjust();
+  const mainCol = document.getElementById('main-col');
+  if (!mainCol) return;
+  const ro = new ResizeObserver(() => requestAnimationFrame(fitDishRows));
+  ro.observe(mainCol);
+  sizeResizeObserver = ro;
+}
+function stopSizeAutoAdjust() {
+  if (sizeResizeObserver) {
+    sizeResizeObserver.disconnect();
+    sizeResizeObserver = null;
+  }
+}
+
+// Comprueba si algo se está cortando de verdad: bien porque el nombre de
+// un plato necesita más de 2 líneas y el navegador lo recorta con "…",
+// bien porque las filas de platos en conjunto ya no caben en la columna
+// (lo que dejaría el último plato invisible fuera de pantalla — el peor
+// caso posible). Un elemento con line-clamp recortado siempre tiene
+// scrollHeight > clientHeight; es la forma estándar de detectarlo.
+function dishContentOverflows(mainCol, rows) {
+  if (mainCol.scrollHeight > mainCol.clientHeight + 1) return true;
+  return rows.some(r => {
+    const nameEl = r.querySelector('.dish-name-es');
+    const enEl = r.querySelector('.dish-name-en');
+    return (nameEl && nameEl.scrollHeight > nameEl.clientHeight + 1) ||
+           (enEl && enEl.scrollHeight > enEl.clientHeight + 1);
+  });
+}
+
+// Evita que el badge "Libre de alérgenos" se salga de su columna y tape el
+// nombre del plato. Se resetea a escala 1 en cada pasada y solo se reduce
+// si el ancho real del texto no cabe de verdad.
+function fitNoAllergenBadges() {
+  const badges = [...document.querySelectorAll('.no-allergen')];
+  if (!badges.length) return;
+  const root = document.documentElement.style;
+  root.setProperty('--no-allergen-scale', '1');
+  let scale = 1, guard = 0;
+  const overflowing = () => badges.some(b => b.scrollWidth > b.parentElement.clientWidth + 1);
+  while (overflowing() && guard++ < 12) {
+    scale *= 0.94;
+    root.setProperty('--no-allergen-scale', scale.toFixed(3));
+  }
+}
+
+// Punto de entrada único: calcula un tamaño de letra generoso como punto
+// de partida (adjustSizes) y luego lo reduce en pasos pequeños SOLO si
+// detecta un corte real, hasta que todo quepa sin perder texto ni platos.
+function fitDishRows() {
+  const mainCol = document.getElementById('main-col');
+  if (!mainCol) return;
+  const rows = [...mainCol.querySelectorAll('.dish-row')];
+  if (!rows.length) return;
+
+  adjustSizes(rows.length, rows[0].getBoundingClientRect().height);
+  if (manualDishSize) {
+    const root = document.documentElement.style;
+    if (manualDishSize.name) root.setProperty('--dish-name-size', manualDishSize.name);
+    if (manualDishSize.en) root.setProperty('--dish-en-size', manualDishSize.en);
+  }
+  fitAllergenIcons();
+  fitNoAllergenBadges();
+
+  let guard = 0;
+  while (dishContentOverflows(mainCol, rows) && guard++ < 16) {
+    const root = document.documentElement.style;
+    const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 20;
+    const enFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 12;
+    const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
+    root.setProperty('--dish-name-size', Math.max(13, nameFs * 0.94) + 'px');
+    root.setProperty('--dish-en-size', Math.max(10, enFs * 0.94) + 'px');
+    root.setProperty('--icon-size', Math.max(18, iconSize * 0.96) + 'px');
+    fitNoAllergenBadges();
+  }
+
+  fitLegend();
 }
 
 // ══════════════════════════════════════════════
@@ -533,7 +1013,7 @@ function buildLegend(usedIds) {
   const toShow = usedIds.length ? ALLERGENS.filter(a => usedIds.includes(a.id)) : ALLERGENS;
   list.innerHTML = toShow.map(a => `
     <div class="legend-item">
-      <div class="legend-circle" style="background:${a.color}">
+      <div class="legend-circle">
         <img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'">
       </div>
       <div class="legend-text-wrap">
@@ -549,7 +1029,7 @@ function buildLegend(usedIds) {
 function renderMenu(data) {
   // Se muestran solo los platos NO ocultos (el resto se gestionan pero no salen en TV)
   const platos = (data.platos || []).filter(p => !p.oculto);
-  adjustSizes(platos.length);
+  startSizeAutoAdjust();
   // La leyenda muestra SIEMPRE los 14 alérgenos oficiales (referencia completa para el cliente)
   buildLegend([]);
 
@@ -559,8 +1039,6 @@ function renderMenu(data) {
     col.innerHTML = '<div class="no-data"><span class="icon">🍽️</span><p>Menú no disponible</p><small>Menu not available yet</small></div>';
     return;
   }
-  col.classList.add('fade-update');
-  setTimeout(() => col.classList.remove('fade-update'), 500);
 
   platos.forEach(p => {
     const contiene = p.contiene||[], trazas = p.trazas||[];
@@ -573,18 +1051,24 @@ function renderMenu(data) {
             <path d="M8.3 12.1 l2.6 2.6 l4.8 -5.4" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </span>
-        <span class="no-allergen-txt"><span class="es">SIN ALÉRGENOS DECLARADOS</span><span class="en">No allergens declared</span></span>
+        <span class="no-allergen-txt"><span class="es">Libre de alérgenos</span><span class="en">Allergen-free</span></span>
       </div>`;
     } else {
-      if (contiene.length) algHtml += `<div class="allergen-row">${contiene.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap" style="background:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
-      if (trazas.length)   algHtml += `<div class="allergen-row"><span class="trace-label">⚠ TRAZAS</span>${trazas.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap trace-icon" style="background:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
+      if (contiene.length) algHtml += `<div class="allergen-row">${contiene.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
+      if (trazas.length)   algHtml += `<div class="allergen-row"><span class="trace-label">⚠ TRAZAS / May contain traces</span>${trazas.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap trace-icon" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
     }
+    const glutenNote = p.sinGluten ? `
+      <div class="dish-gluten-note">
+        <div class="dish-gluten-es">Hay opción sin gluten disponible. Pregunte al personal.</div>
+        <div class="dish-gluten-en">Gluten-free option available. Please ask staff.</div>
+      </div>` : '';
     const row = document.createElement('div');
     row.className = 'dish-row';
     row.innerHTML = `
       <div class="dish-info">
         <div class="dish-name-es">${escHtml(p.nombreEs||'PLATO SIN NOMBRE')}</div>
         <div class="dish-name-en">${escHtml(p.nombreEn||'')}</div>
+        ${glutenNote}
       </div>
       <div class="dish-allergens">${algHtml}</div>`;
     col.appendChild(row);
@@ -594,8 +1078,9 @@ function renderMenu(data) {
   document.getElementById('footer-updated').textContent = `Actualizado a las ${now}`;
   document.getElementById('header-date').textContent = formatDateEs(data.fecha);
 
-  // Ajuste fino: dimensiona los iconos y la leyenda tras el layout para que nada se corte
-  requestAnimationFrame(() => { fitAllergenIcons(); fitLegend(); fitDishNames(); });
+  // Ajuste fino: dimensiona texto, iconos y leyenda tras el layout, comprobando
+  // de verdad que nada se corte (fitDishRows), no solo por una fórmula fija.
+  requestAnimationFrame(fitDishRows);
 }
 
 // ══════════════════════════════════════════════
@@ -634,34 +1119,45 @@ function fitAllergenIcons() {
 function fitLegend() {
   const list = document.getElementById('legend-list');
   if (!list) return;
-  const n = list.children.length;
-  if (!n) return;
-  const h = list.getBoundingClientRect().height;
-  if (!h) return;
-  const per = h / n;                 // altura por elemento
-  let ic = Math.min(per * 0.66, 52); ic = Math.max(14, ic);
+  const items = list.querySelectorAll('.legend-item');
+  if (!items.length) return;
+
+  const containerW = list.getBoundingClientRect().width;
+  const containerH = list.getBoundingClientRect().height;
+  if (!containerW || !containerH) return;
+
+  const per = containerH / items.length;
+  let ic = Math.min(per * 0.50, 46); ic = Math.max(14, ic);
   document.documentElement.style.setProperty('--legend-icon', ic + 'px');
-  let txt = Math.min(per * 0.30, 22); txt = Math.max(8, txt);
-  document.documentElement.style.setProperty('--legend-text', txt + 'px');
-}
-// Ajusta el tamaño de fuente de cada nombre para que quepa completo (máx. 2 líneas), sin recortes
-function fitDishNames() {
-  document.querySelectorAll('.dish-name-es, .dish-name-en').forEach(el => {
-    el.style.fontSize = '';                       // vuelve al tamaño base del CSS
-    let fs = parseFloat(getComputedStyle(el).fontSize);
-    if (!fs) return;
-    const minFs = el.classList.contains('dish-name-es') ? 14 : 10;
+
+  let txt = Math.min(per * 0.28, 18); txt = Math.max(10, txt);
+
+  items.forEach(item => {
+    const wrap = item.querySelector('.legend-text-wrap');
+    if (!wrap) return;
+    const esEl = wrap.querySelector('.legend-es');
+    if (!esEl) return;
+    let fs = txt;
+    esEl.style.fontSize = fs + 'px';
+    const enEl = wrap.querySelector('.legend-en');
+    if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
     let guard = 0;
-    // si el texto (a 2 líneas máx.) se sale, reduce la fuente hasta que quepa
-    while (el.scrollHeight > el.clientHeight + 1 && fs > minFs && guard++ < 40) {
-      fs *= 0.94;
-      el.style.fontSize = fs + 'px';
+    while (wrap.scrollWidth > containerW - 20 && fs > 9 && guard++ < 24) {
+      fs *= 0.90;
+      esEl.style.fontSize = fs + 'px';
+      if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
     }
   });
+  document.documentElement.style.setProperty('--legend-text', txt + 'px');
 }
-window.addEventListener('resize', () => { fitAllergenIcons(); fitLegend(); fitDishNames(); });
+window.addEventListener('resize', () => {
+  requestAnimationFrame(fitDishRows);
+  if (document.getElementById('turno-overlay')?.classList.contains('visible')) {
+    requestAnimationFrame(fitTurnoOverlay);
+  }
+});
 
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ══════════════════════════════════════════════
 //  FIREBASE
@@ -690,6 +1186,50 @@ function initFirebase() {
       }
     });
 
+    // Recordatorios listener
+    db.ref('recordatorios').on('value', snap => {
+      const data = snap.val();
+      if (data && Array.isArray(data)) {
+        // Old format: just an array
+        remindersConfig = data;
+        console.log(`[Recordatorios] ${remindersConfig.length} cargados.`);
+      } else if (data && typeof data === 'object' && data.reminders) {
+        // New format with carouselInterval
+        remindersConfig = data.reminders || [];
+        carouselInterval = data.carouselInterval || 15;
+        console.log(`[Recordatorios] ${remindersConfig.length} cargados, intervalo: ${carouselInterval}s.`);
+      } else {
+        remindersConfig = [];
+        carouselInterval = 15;
+      }
+    });
+
+    db.ref('cierreComedor').on('value', snap => {
+      cierreConfig = snap.val() || null;
+      refreshCierre();
+    }, err => console.error(err));
+
+    // Ajustes de tamaño de texto configurados desde el panel de gestión.
+    // Antes esto se leía de localStorage con un sondeo cada segundo, lo
+    // cual solo funcionaba si gestión y TV compartían el mismo navegador.
+    // Con un listener de Firebase llega en tiempo real desde cualquier
+    // dispositivo, que es el caso normal de uso (PC de gestión + TV aparte).
+    db.ref('tvSettings').on('value', snap => {
+      const settings = snap.val();
+      if (settings) {
+        applyTVSettings(settings);
+        localStorage.setItem('tvSettings', JSON.stringify(settings));
+      }
+    }, err => console.warn('tvSettings:', err));
+
+    // Periodic refresh as fallback to ensure TV updates without button press
+    setInterval(() => {
+      db.ref('menu/comedor').once('value').then(snap => {
+        latestComedorData = snap.val();
+        refreshMenuDisplay();
+      });
+    }, 30000);
+
   } catch(e) { console.error(e); showOfflineState(); }
 }
 
@@ -707,10 +1247,39 @@ function showOfflineState() {
 //  INIT
 // ══════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
+  applyTVSettingsFromStorage();
   buildLegend([]);
   initFirebase();
   updateClock();
+  startSizeAutoAdjust();
 });
+
+// ══════════════════════════════════════════════
+//  TV SETTINGS — tamaños configurados desde el panel de gestión
+// ══════════════════════════════════════════════
+function applyTVSettings(settings) {
+  if (!settings) return;
+  const root = document.documentElement.style;
+  if (settings.dishNameSize) root.setProperty('--dish-name-size', settings.dishNameSize);
+  if (settings.dishEnSize) root.setProperty('--dish-en-size', settings.dishEnSize);
+  if (settings.dishNameSize || settings.dishEnSize) {
+    manualDishSize = { name: settings.dishNameSize || null, en: settings.dishEnSize || null };
+  }
+  if (settings.turnoTitleSize) root.setProperty('--turno-title-size', settings.turnoTitleSize);
+  if (settings.turnoMsgEsSize) root.setProperty('--turno-msg-es-size', settings.turnoMsgEsSize);
+  if (settings.turnoMsgEnSize) root.setProperty('--turno-msg-en-size', settings.turnoMsgEnSize);
+  if (settings.turnoCountdownSize) root.setProperty('--turno-countdown-size', settings.turnoCountdownSize);
+  if (settings.carouselEsSize) root.setProperty('--carousel-es-size', settings.carouselEsSize);
+  if (settings.carouselEnSize) root.setProperty('--carousel-en-size', settings.carouselEnSize);
+
+  requestAnimationFrame(fitDishRows);
+}
+// Aplicación inmediata al cargar la página (por si Firebase tarda un
+// instante en conectar, o como único origen si no está configurado).
+function applyTVSettingsFromStorage() {
+  try { applyTVSettings(JSON.parse(localStorage.getItem('tvSettings') || '{}')); }
+  catch (e) { /* localStorage corrupto o inaccesible: se ignora */ }
+}
 </script>
 </body>
 </html>

@@ -193,6 +193,34 @@
       transition: all 0.15s; flex-shrink: 0;
     }
     .btn-remove-dish:hover { background: rgba(239,68,68,0.35); }
+    .dish-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto; }
+    .gluten-toggle {
+      position: relative; display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.28); color: #fff; cursor: pointer;
+      font-size: 0.84rem; font-weight: 700; white-space: nowrap;
+    }
+    .gluten-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .gluten-toggle-box {
+      width: 16px; height: 16px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.7);
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: rgba(255,255,255,0.12);
+    }
+    .gluten-toggle input:checked + .gluten-toggle-box {
+      background: #22c55e; border-color: #22c55e;
+    }
+    .gluten-toggle input:checked + .gluten-toggle-box::after {
+      content: '✓'; color: white; font-size: 0.8rem; font-weight: 900; line-height: 1;
+    }
+    .btn-move {
+      padding: 6px 10px; border-radius: 8px;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
+      color: #fff; cursor: pointer; font-size: 0.9rem; font-weight: 700;
+      transition: all 0.15s; flex-shrink: 0; display:flex; align-items:center; justify-content:center;
+    }
+    .btn-move:hover:not(.disabled) { background: rgba(255,255,255,0.28); }
+    .btn-move.disabled { opacity: 0.3; cursor: not-allowed; }
+    .dish-move { display:flex; gap:4px; }
     .btn-hide-dish {
       padding: 8px 14px; border-radius: 8px;
       background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
@@ -432,7 +460,42 @@
     }
     .turnos-info { font-size: 0.85rem; color: var(--muted); }
     .turnos-info strong { color: var(--text); }
-  </style>
+  /* ==================== Ajustes de Tamaños ==================== */
+#ajustes-config {
+  display: none;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  margin: 16px 0;
+}
+.ajuste-item {
+  margin-bottom: 16px;
+}
+.ajuste-item label {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.ajuste-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.size-control {
+  flex: 0 0 150px;
+  width: 150px;
+  margin: 0;
+}
+.size-display {
+  width: 60px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--primary);
+}
+</style>
 </head>
 <body>
 
@@ -450,10 +513,11 @@
   </div>
 
   <!-- TAB BAR -->
-  <div class="tab-bar">
-    <button class="tab-btn active"  id="tab-comedor"  onclick="switchMainTab('comedor')">🍽️&nbsp;&nbsp;Menú del Comedor</button>
-    <button class="tab-btn tab-turnos" id="tab-turnos" onclick="switchMainTab('turnos')">🔔&nbsp;&nbsp;Avisos de Turno</button>
-  </div>
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-comedor"  onclick="switchMainTab('comedor')">🍽️&nbsp;&nbsp;Menú del día</button>
+  <button class="tab-btn tab-turnos" id="tab-turnos" onclick="switchMainTab('turnos')">⚙️&nbsp;&nbsp;Gestión de Turnos</button>
+  <button class="tab-btn" id="tab-ajustes" onclick="switchMainTab('ajustes')">🔧&nbsp;&nbsp;Ajustes de Tamaños</button>
+</div>
 
   <!-- ─── MENU CONTROL BAR ─── -->
   <div class="control-bar" id="menu-control-bar">
@@ -464,6 +528,8 @@
       <span id="status-text">Publicado</span>
     </div>
     <div class="sep-bar"></div>
+    <span id="cierre-quick-status" style="font-size:.85rem;font-weight:700;color:#64748b;">Comedor abierto</span>
+    <button class="btn-publish-turnos" id="btn-cierre-quick" onclick="toggleCierre()" style="padding:10px 16px;">🚪 Cerrar comedor</button>
     <button class="btn-publish" onclick="publishMenu()" id="btn-publish">
       📺 &nbsp;PUBLICAR EN PANTALLA TV
     </button>
@@ -487,12 +553,6 @@
     <!-- MENÚ TAB CONTENT -->
     <div id="tab-content-menu" class="active">
       <div id="dish-list"></div>
-      <button class="btn-add-dish" onclick="addDish()">
-        <span class="plus">＋</span> Añadir plato
-      </button>
-      <button class="btn-add-dish" onclick="retranslateAll()" style="margin-top:12px; border-color:#c4b5fd; color:#5b21b6;">
-        <span class="plus">🌐</span> Retraducir todos los platos (traducción natural)
-      </button>
     </div>
 
     <!-- TURNOS TAB CONTENT -->
@@ -508,7 +568,140 @@
       <button class="btn-add-turno" onclick="addTurno()">
         <span class="plus">🔔</span> Añadir aviso de turno
       </button>
+
+      <!-- RECORDATORIOS DE CUENTA ATRÁS -->
+      <div class="turnos-intro" style="margin-top:24px;">
+        <div class="turnos-intro-icon">📋</div>
+        <div>
+          <h3>Recordatorios durante la Cuenta Atrás</h3>
+          <p>Durante la cuenta atrás del cambio de turno, se mostrarán estos recordatorios con imágenes en la pantalla del comedor (estilo carousel/notificaciones). Añade cuantos quieras: imagen + mensaje. La traducción al inglés es automática.</p>
+        </div>
+      </div>
+      <div class="turnos-control-bar" style="margin-top:16px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+        <div class="turno-field" style="min-width:180px;">
+          <label>⏱️ Rotación del carousel (segundos)</label>
+          <input type="number" id="carousel-interval" min="5" max="120" step="1" value="15"
+                 onchange="updateCarouselInterval(this.value)"
+                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:100px;">
+        </div>
+        <div class="sep-bar"></div>
+        <span style="color:#64748b; font-size:0.85rem;">Tiempo entre cada slide del carousel (mín 5s, máx 120s)</span>
+      </div>
+      <div id="reminder-list"></div>
+      <button class="btn-add-turno" onclick="addReminder()" style="margin-top:12px;">
+        <span class="plus">📋</span> Añadir recordatorio
+      </button>
+      <button class="btn-publish-turnos" id="btn-publish-reminders" onclick="publishReminders()" style="margin-top:12px; margin-left:8px;">
+        📋 &nbsp;GUARDAR RECORDATORIOS
+      </button>
+
+      <!-- CIERRE DE COMEDOR -->
+      <div class="turnos-intro" style="margin-top:24px;">
+        <div class="turnos-intro-icon">🚪</div>
+        <div>
+          <h3>Cierre de Comedor</h3>
+          <p>Configura el cierre del comedor. Cuando esté activo, la pantalla del comedor mostrará "Comedor cerrado" con la hora de reapertura en lugar de los alérgenos. Elige mensajes editables con traducción automática.</p>
+        </div>
+      </div>
+      <div class="turnos-control-bar" style="margin-top:16px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+        <div class="turno-field" style="min-width:180px;">
+          <label>🕐 Hora de cierre</label>
+          <input type="time" id="cierre-hora" onchange="updateCierre('hora', this.value)"
+                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:120px;">
+        </div>
+        <div class="turno-field" style="min-width:180px;">
+          <label>🕐 Hora de reapertura</label>
+          <input type="time" id="cierre-reapertura" onchange="updateCierre('reapertura', this.value)"
+                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:120px;">
+        </div>
+        <div class="sep-bar"></div>
+        <label style="display:flex;align-items:center;gap:8px;color:#334155;font-weight:700;font-size:.9rem;cursor:pointer;">
+          <input type="checkbox" id="cierre-programado" onchange="updateCierre('programado', this.checked)">
+          Activar cada día a esta hora
+        </label>
+      </div>
+      <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+        <div class="turno-field" style="flex:1;min-width:200px;">
+          <label>📝 Mensaje de cierre (español)</label>
+          <div class="msg-input-wrap">
+            <input class="msg-input" type="text" id="cierre-mensaje-es"
+                   placeholder="Ej: El comedor está cerrado. Volvemos a las 14:00"
+                   oninput="updateCierre('mensajeEs', this.value); autoTranslateCierre()">
+            <button class="msg-translate-btn" onclick="manualTranslateCierre()">🌐 Traducir</button>
+          </div>
+        </div>
+        <div class="msg-field" style="flex:1;min-width:200px;">
+          <label>🇬🇧 English message (auto)</label>
+          <input class="msg-input msg-en" type="text" id="cierre-mensaje-en"
+                 placeholder="Auto-translated"
+                 oninput="updateCierre('mensajeEn', this.value)">
+        </div>
+      </div>
+      <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+        <div class="turno-field" style="min-width:200px;">
+          <label>⏱️ Duración del cierre (minutos, 0 = manual)</label>
+          <input type="number" id="cierre-duracion" min="0" max="1440" step="1" value="0"
+                 onchange="updateCierre('duracion', this.value)"
+                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:100px;">
+        </div>
+        <div class="sep-bar"></div>
+        <span style="color:#64748b; font-size:0.85rem;">0 = cierre manual (hay que pulsar 'Reabrir'), >0 = reapertura automática tras X minutos</span>
+      </div>
+      <div class="turnos-control-bar" style="margin-top:12px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0; justify-content:center;">
+        <button class="btn-publish-turnos" id="btn-toggle-cierre" onclick="toggleCierre()" style="padding:14px 32px; font-size:1.05rem;">
+          🔒 <span id="cierre-btn-text">ACTIVAR CIERRE</span>
+        </button>
+        <span id="cierre-status" style="color:#64748b; font-weight:700; font-size:0.9rem;"></span>
+      </div>
     </div>
+
+    <!-- AJUSTES TAB CONTENT -->
+    <div id="tab-content-ajustes" class="turno-content">
+      <div id="ajustes-config">
+        <h3>Ajustes de Tamaños</h3>
+        
+        <div class="ajuste-item">
+          <label>Platos (Español) [vw]</label>
+          <div class="ajuste-row">
+            <input type="range" class="size-control" data-target="--dish-name-size" data-unit="vw" value="13">
+            <input type="number" class="size-display" data-display="--dish-name-size" value="13">
+          </div>
+        </div>
+        
+        <div class="ajuste-item">
+          <label>Platos (Inglés) [vw]</label>
+          <div class="ajuste-row">
+            <input type="range" class="size-control" data-target="--dish-en-size" data-unit="vw" value="5">
+            <input type="number" class="size-display" data-display="--dish-en-size" value="5">
+          </div>
+        </div>
+        
+        <div class="ajuste-item">
+          <label>Turnos (tamaño)</label>
+          <div class="ajuste-row">
+            <input type="range" class="size-control" data-target="--turno-title-size" data-unit="vw" value="2.4">
+            <input type="number" class="size-display" data-display="--turno-title-size" value="2.4">
+          </div>
+        </div>
+        
+        <div class="ajuste-item">
+          <label>Recordatorios (Español) [vw]</label>
+          <div class="ajuste-row">
+            <input type="range" class="size-control" data-target="--carousel-es-size" data-unit="vw" value="3">
+            <input type="number" class="size-display" data-display="--carousel-es-size" value="3">
+          </div>
+        </div>
+        
+        <div class="ajuste-item">
+          <label>Recordatorios (Inglés) [vw]</label>
+          <div class="ajuste-row">
+            <input type="range" class="size-control" data-target="--carousel-en-size" data-unit="vw" value="2">
+            <input type="number" class="size-display" data-display="--carousel-en-size" value="2">
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -561,6 +754,12 @@ let state = {
   comedor:  { fecha: todayStr(), platos: [] }
 };
 let turnosState = []; // array of turno objects
+let remindersState = []; // array of reminder objects {id, image, mensajeEs, mensajeEn}
+let carouselInterval = 15; // seconds between carousel slides
+let cierreState = {
+  activo: false, programado: false, hora: '', reapertura: '', duracion: 0,
+  mensajeEs: 'El comedor está cerrado', mensajeEn: 'The dining room is closed'
+};
 let dishCounter = 0;
 let fbReady = false;
 let unsaved = false;
@@ -590,6 +789,28 @@ function markSaved() {
   document.getElementById('status-text').textContent = 'Publicado en TV ✓';
 }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function normalizeAllergenList(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).map(v => String(v).trim()).filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return [value.trim()];
+  }
+  if (value && typeof value === 'object') {
+    return Object.values(value).filter(Boolean).map(v => (typeof v === 'string' ? v : (v && typeof v === 'object' && v.id ? String(v.id) : String(v)))).map(v => String(v).trim()).filter(Boolean);
+  }
+  return [];
+}
+function normalizeDish(plato) {
+  if (!plato || typeof plato !== 'object') return plato;
+  return {
+    ...plato,
+    contiene: normalizeAllergenList(plato.contiene),
+    trazas: normalizeAllergenList(plato.trazas),
+    oculto: Boolean(plato.oculto),
+    sinGluten: Boolean(plato.sinGluten)
+  };
+}
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   return `${r},${g},${b}`;
@@ -600,19 +821,30 @@ function hexToRgb(hex) {
 // ══════════════════════════════════════════════
 function switchMainTab(tab) {
   currentMainTab = tab;
-  ['comedor','turnos'].forEach(t => {
+  ['comedor','turnos','ajustes'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
   });
-  document.getElementById('tab-content-menu').classList.toggle('active', tab !== 'turnos');
+  document.getElementById('tab-content-menu').classList.toggle('active', tab === 'comedor');
   document.getElementById('tab-content-turnos').classList.toggle('active', tab === 'turnos');
+  document.getElementById('tab-content-ajustes').classList.toggle('active', tab === 'ajustes');
   document.getElementById('menu-control-bar').style.display   = tab !== 'turnos' ? 'flex' : 'none';
   document.getElementById('turnos-control-bar').style.display = tab === 'turnos' ? 'flex' : 'none';
+  document.getElementById('ajustes-config').style.display     = tab === 'ajustes' ? 'block' : 'none';
 
   if (tab === 'comedor') {
     currentMenuTab = 'comedor';
-    document.getElementById('date-input').value = state.comedor.fecha || todayStr();
-    renderCurrentTab();
-    if (unsaved) markUnsaved(); else markSaved();
+    const fecha = state.comedor.fecha || todayStr();
+    if (fecha !== todayStr()) {
+      state.comedor = { fecha: todayStr(), platos: [] };
+      document.getElementById('date-input').value = todayStr();
+      renderCurrentTab();
+      markUnsaved();
+      showToast('🔄 Nuevo día — los platos se han reiniciado', 'info');
+    } else {
+      document.getElementById('date-input').value = fecha;
+      renderCurrentTab();
+      if (unsaved) markUnsaved(); else markSaved();
+    }
   }
 }
 
@@ -633,31 +865,178 @@ function initFirebase() {
     document.getElementById('firebase-warn').classList.add('visible');
   }
 }
+// Firebase RTDB puede devolver un array anidado como objeto indexado
+// ({"0":{...}} en vez de [{...}]) — esto lo normaliza siempre a un array
+// real de JS, filtrando huecos nulos.
+function normalizePlatosArray(platos) {
+  if (Array.isArray(platos)) return platos;
+  if (platos && typeof platos === 'object') return Object.values(platos).filter(Boolean);
+  return [];
+}
+
 function loadFromFirebase() {
   if (!fbReady) return;
   const db = firebase.database();
-  db.ref('menu/comedor').once('value').then(snap => {
+  db.ref('menu/comedor').on('value', snap => {
     const data = snap.val();
-    // Reinicio automático diario: solo se cargan los platos si el menú es de HOY.
     if (data && data.fecha === todayStr()) {
+      // Firebase a veces devuelve un array anidado (como "platos" dentro de
+      // "comedor") como un objeto indexado ({"0":{...},"1":{...}}) en vez de
+      // un array real, sobre todo si en algún momento quedó con huecos.
+      // Sin esto, platos.push()/.forEach() dejaban de existir y "Añadir
+      // plato" (y el resto del render) fallaban en silencio.
+      data.platos = normalizePlatosArray(data.platos);
       state.comedor = data;
       renderCurrentTab();
       markSaved();
-    } else {
-      // Nuevo día → empezar en limpio (los alérgenos "se borran" solos)
+    } else if (data && data.fecha !== todayStr()) {
       state.comedor = { fecha: todayStr(), platos: [] };
       renderCurrentTab();
       markUnsaved();
     }
-  }).catch(console.warn);
-  db.ref('turnos').once('value').then(snap => {
+  }, err => console.warn(err));
+  db.ref('turnos').on('value', snap => {
     const data = snap.val();
     if (data && Array.isArray(data)) {
-      // Normaliza turnos antiguos (duracion en segundos → minutosAntes)
       turnosState = data.map(t => normalizeTurno(t));
       renderTurnos();
     }
-  }).catch(console.warn);
+  }, err => console.warn(err));
+db.ref('recordatorios').on('value', snap => {
+    const data = snap.val();
+    if (data && Array.isArray(data)) {
+      remindersState = data;
+      renderReminders();
+    } else if (data && typeof data === 'object' && data.reminders) {
+      // New format with carouselInterval
+      remindersState = data.reminders || [];
+      carouselInterval = data.carouselInterval || 15;
+      document.getElementById('carousel-interval').value = carouselInterval;
+      renderReminders();
+    } else {
+      remindersState = [
+        { id:`r${Date.now()}-${Math.random().toString(36).slice(2,6)}`, image:'./img/recordatorio_1.png', mensajeEs:'¡Recoge tu bandeja y vasos!', mensajeEn:'Pick up your tray and glasses!' },
+        { id:`r${Date.now()}-${Math.random().toString(36).slice(2,6)}`, image:'./img/recordatorio_2.png', mensajeEs:'Deja la mesa limpia para el siguiente turno', mensajeEn:'Leave the table clean for the next shift' }
+      ];
+      carouselInterval = 15;
+      document.getElementById('carousel-interval').value = carouselInterval;
+      renderReminders();
+    }
+  }, err => console.warn(err));
+  db.ref('cierreComedor').on('value', snap => {
+    cierreState = normalizeCierre(snap.val());
+    syncCierreUI();
+  }, err => console.warn(err));
+  // Sólo se lee una vez al abrir el panel (no con .on) para no pelear con
+  // los sliders mientras el usuario los está moviendo en este momento.
+  db.ref('tvSettings').once('value').then(snap => {
+    const settings = snap.val();
+    if (settings) applyLoadedTVSettings(settings);
+  }).catch(e => console.warn('tvSettings:', e));
+}
+
+function applyLoadedTVSettings(settings) {
+  const map = {
+    dishNameSize: '--dish-name-size',
+    dishEnSize: '--dish-en-size',
+    turnoTitleSize: '--turno-title-size',
+    turnoMsgEsSize: '--turno-msg-es-size',
+    turnoMsgEnSize: '--turno-msg-en-size',
+    turnoCountdownSize: '--turno-countdown-size',
+    carouselEsSize: '--carousel-es-size',
+    carouselEnSize: '--carousel-en-size'
+  };
+  Object.entries(map).forEach(([key, cssVar]) => {
+    if (!settings[key]) return;
+    document.documentElement.style.setProperty(cssVar, settings[key]);
+    const numericValue = parseFloat(settings[key]) || 0;
+    const slider = document.querySelector(`.size-control[data-target="${cssVar}"]`);
+    if (slider) slider.value = numericValue;
+    const display = document.querySelector(`.size-display[data-display="${cssVar}"]`);
+    if (display) display.value = numericValue;
+  });
+  localStorage.setItem('tvSettings', JSON.stringify(settings));
+}
+
+// ══════════════════════════════════════════════
+//  CIERRE DE COMEDOR
+// ══════════════════════════════════════════════
+function normalizeCierre(data) {
+  return Object.assign({
+    activo:false, programado:false, hora:'', reapertura:'', duracion:0,
+    mensajeEs:'El comedor está cerrado', mensajeEn:'The dining room is closed'
+  }, data || {}, { duracion: Math.max(0, Number((data || {}).duracion) || 0) });
+}
+function isCierreProgramadoAhora() {
+  if (!cierreState.programado || !cierreState.hora || !cierreState.duracion) return false;
+  const [h, m] = cierreState.hora.split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
+  const now = new Date();
+  const start = new Date(now); start.setHours(h, m, 0, 0);
+  const end = new Date(start.getTime() + cierreState.duracion * 60000);
+  return now >= start && now < end;
+}
+function cierreEstaActivo() { return !!cierreState.activo || isCierreProgramadoAhora(); }
+function syncCierreUI() {
+  const fields = {
+    'cierre-hora': cierreState.hora,
+    'cierre-reapertura': cierreState.reapertura,
+    'cierre-mensaje-es': cierreState.mensajeEs,
+    'cierre-mensaje-en': cierreState.mensajeEn,
+    'cierre-duracion': cierreState.duracion
+  };
+  Object.entries(fields).forEach(([id, value]) => { const el=document.getElementById(id); if(el) el.value=value || ''; });
+  const scheduled = document.getElementById('cierre-programado');
+  if (scheduled) scheduled.checked = !!cierreState.programado;
+  const active = cierreEstaActivo();
+  const buttonText = document.getElementById('cierre-btn-text');
+  if (buttonText) buttonText.textContent = active ? 'REABRIR COMEDOR' : 'ACTIVAR CIERRE AHORA';
+  const status = document.getElementById('cierre-status');
+  if (status) status.textContent = active ? `● Cerrado${cierreState.reapertura ? ` · reapertura ${cierreState.reapertura}` : ''}` : (cierreState.programado ? `Programado a las ${cierreState.hora || '--:--'}` : 'Comedor abierto');
+  const quickStatus = document.getElementById('cierre-quick-status');
+  const quickButton = document.getElementById('btn-cierre-quick');
+  if (quickStatus) { quickStatus.textContent = active ? '● Comedor cerrado' : '● Comedor abierto'; quickStatus.style.color = active ? '#dc2626' : '#059669'; }
+  if (quickButton) { quickButton.textContent = active ? '✓ Mostrar alérgenos' : '🚪 Cerrar comedor'; }
+}
+async function saveCierre({toast=false}={}) {
+  if (!fbReady) { if(toast) showToast('⚠️ Firebase no configurado', 'error'); return false; }
+  try { await firebase.database().ref('cierreComedor').set(cierreState); if(toast) showToast('✅ Configuración del cierre guardada', 'success'); return true; }
+  catch(e) { showToast('❌ Error: '+e.message, 'error'); return false; }
+}
+function updateCierre(field, value) {
+  cierreState[field] = field === 'duracion' ? Math.max(0, Math.min(1440, Number(value) || 0)) : value;
+  if (field === 'duracion' && cierreState.programado && cierreState.hora && !cierreState.reapertura) {
+    const [h,m] = cierreState.hora.split(':').map(Number);
+    if(Number.isFinite(h) && Number.isFinite(m)) {
+      const total = (h * 60 + m + cierreState.duracion) % 1440;
+      cierreState.reapertura = `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+    }
+  }
+  syncCierreUI();
+  saveCierre();
+}
+async function toggleCierre() {
+  cierreState.activo = !cierreEstaActivo();
+  // Si se reabre manualmente, también se pausa la programación para evitar que la TV se cierre de nuevo inmediatamente.
+  if (!cierreState.activo) cierreState.programado = false;
+  await saveCierre({toast:true});
+  syncCierreUI();
+}
+let cierreTranslateTimer;
+function autoTranslateCierre() { clearTimeout(cierreTranslateTimer); cierreTranslateTimer=setTimeout(manualTranslateCierre, 1400); }
+async function manualTranslateCierre() {
+  if (!cierreState.mensajeEs.trim()) return;
+  const geminiKey = firebaseConfig.geminiApiKey;
+  try {
+    let translated = '';
+    if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contents:[{parts:[{text:`Translate this Spanish dining-room closure message to natural English. Return ONLY the translation: ${cierreState.mensajeEs.trim()}`}]}]}) });
+      const data = await resp.json();
+      translated = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    }
+    if (!translated) { const json = await (await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(cierreState.mensajeEs.trim())}&langpair=es|en`)).json(); translated = json.responseStatus===200 ? json.responseData.translatedText : ''; }
+    if (translated) { cierreState.mensajeEn = translated; syncCierreUI(); saveCierre(); }
+  } catch(e) { console.warn('Closure translation:', e); }
 }
 
 // ══════════════════════════════════════════════
@@ -666,12 +1045,29 @@ function loadFromFirebase() {
 function initPanel() {
   document.getElementById('date-input').value = todayStr();
   initFirebase();
+  if (!fbReady) restoreLocalDraft();
   if (!state[currentMenuTab].platos.length) addDish();
+  renderCurrentTab();
   if (!turnosState.length) {
     // Default: one example turno
     turnosState.push(newTurnoObj('Turno 1', '13:30', '#1e3a5f', '#ffffff', 5, true, '¡Gracias por venir! Por favor, libera tu mesa.', 'Thank You! Please clear your table.'));
   }
   renderTurnos();
+  renderReminders();
+}
+
+// Recupera el menú guardado localmente cuando Firebase no está configurado.
+// Antes "publicar" con Firebase apagado guardaba en localStorage pero nada
+// lo volvía a leer nunca — el trabajo se perdía en cuanto se recargaba la
+// página. Ahora, si el borrador es de hoy, se recupera automáticamente.
+function restoreLocalDraft() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('fsdpt_menu') || 'null');
+    if (saved?.comedor?.fecha === todayStr() && saved.comedor.platos?.length) {
+      state.comedor = normalizeDish(saved.comedor);
+      showToast('📄 Borrador local recuperado (Firebase no configurado)', 'info');
+    }
+  } catch (e) { /* borrador corrupto: se ignora */ }
 }
 
 // ══════════════════════════════════════════════
@@ -679,15 +1075,40 @@ function initPanel() {
 // ══════════════════════════════════════════════
 function renderCurrentTab() {
   const container = document.getElementById('dish-list');
+  // Segunda capa de protección: si por lo que sea platos llegó como objeto
+  // en vez de array, se corrige aquí también (y se deja corregido en el
+  // propio state, para que push/forEach no vuelvan a fallar después).
+  state[currentMenuTab].platos = normalizePlatosArray(state[currentMenuTab].platos).map(normalizeDish);
+  const platos = state[currentMenuTab].platos;
   container.innerHTML = '';
-  const platos = state[currentMenuTab].platos || [];
+  
   if (!platos.length) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><p>Aún no hay platos. Pulsa "Añadir plato".</p></div>';
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🍽️</div>
+        <p>Aún no hay platos. Pulsa "Añadir plato".</p>
+      </div>
+    `;
+    // Re-add the button after empty state
+    const btn = document.createElement('button');
+    btn.className = 'btn-add-dish';
+    btn.onclick = addDish;
+    btn.innerHTML = '<span class="plus">＋</span> Añadir plato';
+    container.appendChild(btn);
     return;
   }
-  platos.forEach((p, idx) => renderDish(p, idx));
+  
+  const total = platos.length;
+  platos.forEach((p, idx) => renderDish(p, idx, total));
+  
+  // Add the "Añadir plato" button at the end
+  const btn = document.createElement('button');
+  btn.className = 'btn-add-dish';
+  btn.onclick = addDish;
+  btn.innerHTML = '<span class="plus">＋</span> Añadir plato';
+  container.appendChild(btn);
 }
-function renderDish(plato, idx) {
+function renderDish(plato, idx, total) {
   const container = document.getElementById('dish-list');
   const div = document.createElement('div');
   div.className = `dish-card${plato.oculto ? ' dish-hidden' : ''}`;
@@ -704,6 +1125,17 @@ function renderDish(plato, idx) {
                value="${escHtml(plato.nombreEn||'')}"
                oninput="updateField('${plato.id}','nombreEn',this.value); markUnsaved()">
       </div>
+      <div class="dish-meta">
+        <label class="gluten-toggle">
+          <input type="checkbox" ${plato.sinGluten ? 'checked' : ''} onchange="toggleSinGluten('${plato.id}', this.checked)">
+          <span class="gluten-toggle-box"></span>
+          <span>🌾 Sin gluten</span>
+        </label>
+      </div>
+      <div class="dish-move" style="display:flex; gap:4px;">
+        <button class="btn-move${idx === 0 ? ' disabled' : ''}" onclick="moveDish('${plato.id}', 'up')" title="Mover arriba" ${idx === 0 ? 'disabled' : ''}>⬆️</button>
+        <button class="btn-move${idx === total - 1 ? ' disabled' : ''}" onclick="moveDish('${plato.id}', 'down')" title="Mover abajo" ${idx === total - 1 ? 'disabled' : ''}>⬇️</button>
+      </div>
       <button class="btn-hide-dish${plato.oculto ? ' is-hidden' : ''}" id="hidebtn-${plato.id}"
               onclick="toggleDishHidden('${plato.id}')"
               title="Mostrar u ocultar este plato en la pantalla del comedor">
@@ -714,11 +1146,11 @@ function renderDish(plato, idx) {
     <div class="allergen-body">
       <div class="alg-section">
         <div class="alg-label"><span class="type-contains">● CONTIENE</span> / Contains:</div>
-        <div class="alg-grid">${ALLERGENS.map(a => buildAlgBtn(a, plato.id, 'contiene', plato.contiene||[])).join('')}</div>
+        <div class="alg-grid">${ALLERGENS.map(a => buildAlgBtn(a, plato.id, 'contiene', normalizeAllergenList(plato.contiene))).join('')}</div>
       </div>
       <div class="alg-section">
         <div class="alg-label"><span class="type-traces">⚠ TRAZAS</span> / May contain traces:</div>
-        <div class="alg-grid">${ALLERGENS.map(a => buildAlgBtn(a, plato.id, 'trazas', plato.trazas||[], true)).join('')}</div>
+        <div class="alg-grid">${ALLERGENS.map(a => buildAlgBtn(a, plato.id, 'trazas', normalizeAllergenList(plato.trazas), true)).join('')}</div>
       </div>
     </div>`;
   container.appendChild(div);
@@ -735,19 +1167,28 @@ function buildAlgBtn(a, dishId, type, selected, isTrace=false) {
 // ──────── DISH CRUD ────────
 function addDish() {
   const id = `d${Date.now()}`;
-  const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[], oculto:false };
+  const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[], oculto:false, sinGluten:false };
   state[currentMenuTab].platos.push(plato);
-  const emptyState = document.querySelector('#dish-list .empty-state');
-  if (emptyState) emptyState.remove();
-  renderDish(plato, state[currentMenuTab].platos.length - 1);
-  renumberDishes();
+  renderCurrentTab();
   markUnsaved();
   setTimeout(() => document.getElementById(`dish-card-${id}`)?.querySelector('.input-es')?.focus(), 50);
 }
 function removeDish(id) {
   state[currentMenuTab].platos = state[currentMenuTab].platos.filter(p => p.id !== id);
   const card = document.getElementById(`dish-card-${id}`);
-  if (card) { card.style.opacity='0'; card.style.transform='translateX(20px)'; card.style.transition='all .25s'; setTimeout(() => { card.remove(); renumberDishes(); if(!state[currentMenuTab].platos.length) document.getElementById('dish-list').innerHTML='<div class="empty-state"><div class="empty-icon">🍽️</div><p>Aún no hay platos.</p></div>'; }, 250); }
+  if (card) { card.style.opacity='0'; card.style.transform='translateX(20px)'; card.style.transition='all .25s'; setTimeout(() => { card.remove(); renderCurrentTab(); }, 250); }
+  markUnsaved();
+}
+function moveDish(dishId, direction) {
+  const platos = state[currentMenuTab].platos;
+  const idx = platos.findIndex(p => p.id === dishId);
+  if (idx === -1) return;
+  if (direction === 'up' && idx > 0) {
+    [platos[idx], platos[idx - 1]] = [platos[idx - 1], platos[idx]];
+  } else if (direction === 'down' && idx < platos.length - 1) {
+    [platos[idx], platos[idx + 1]] = [platos[idx + 1], platos[idx]];
+  } else return;
+  renderCurrentTab();
   markUnsaved();
 }
 function renumberDishes() { document.querySelectorAll('.dish-num').forEach((el,i) => el.textContent=i+1); }
@@ -762,148 +1203,189 @@ function toggleDishHidden(dishId) {
   showToast(d.oculto ? '🙈 Plato oculto en la pantalla TV' : '👁 Plato visible en la pantalla TV', 'info');
   markUnsaved();
 }
-function toggleAllergen(dishId, type, algId, btn) {
+function toggleAllergen(dishId, type, algId) {
   const dish = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!dish) return;
-  const arr = dish[type]; const idx = arr.indexOf(algId);
-  if(idx===-1){arr.push(algId); btn.classList.add('active');} else {arr.splice(idx,1); btn.classList.remove('active');}
+  const otherType = type === 'contiene' ? 'trazas' : 'contiene';
+  if (!Array.isArray(dish[type])) dish[type] = [];
+  if (!Array.isArray(dish[otherType])) dish[otherType] = [];
+  const arr = dish[type];
+  const otherArr = dish[otherType];
+  const idx = arr.indexOf(algId);
+  const otherIdx = otherArr.indexOf(algId);
+
+  if (idx === -1) {
+    arr.push(algId);
+    if (otherIdx !== -1) otherArr.splice(otherIdx, 1);
+  } else {
+    arr.splice(idx, 1);
+  }
+
+  markUnsaved();
+  renderCurrentTab();
+}
+function toggleSinGluten(dishId, checked) {
+  const dish = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!dish) return;
+  dish.sinGluten = checked;
   markUnsaved();
 }
 
 // ──────── TRANSLATION ────────
-// Glosario culinario ES→EN: traducciones NATURALES (no literales) de platos típicos
-// de comedor escolar. Claves normalizadas (minúsculas, sin acentos, sin dobles espacios).
-const GLOSARIO_PLATOS = {
-  // Primeros / legumbres / arroces / pastas
-  "lentejas":"Lentil stew","lentejas estofadas":"Lentil stew","lentejas guisadas":"Lentil stew",
-  "lentejas con chorizo":"Lentil stew with chorizo","garbanzos":"Chickpea stew","garbanzos guisados":"Chickpea stew",
-  "cocido":"Chickpea and meat stew","cocido madrileno":"Madrid-style chickpea stew","fabada":"Asturian bean stew",
-  "potaje":"Chickpea and spinach stew","judias blancas":"White bean stew","alubias":"Bean stew",
-  "arroz blanco":"White rice","arroz a la cubana":"Rice with tomato sauce and fried egg",
-  "arroz con tomate":"Rice in tomato sauce","paella":"Paella","paella de verduras":"Vegetable paella",
-  "arroz tres delicias":"Egg fried rice","macarrones":"Macaroni","macarrones con tomate":"Macaroni in tomato sauce",
-  "macarrones bolonesa":"Macaroni bolognese","macarrones a la bolonesa":"Macaroni bolognese",
-  "espaguetis":"Spaghetti","espaguetis bolonesa":"Spaghetti bolognese","espaguetis a la bolonesa":"Spaghetti bolognese",
-  "espaguetis con tomate":"Spaghetti in tomato sauce","canelones":"Cannelloni","lasana":"Lasagne","lasagna":"Lasagne",
-  "pasta":"Pasta","fideua":"Seafood noodle paella",
-  // Sopas / cremas / purés
-  "sopa":"Soup","sopa de fideos":"Noodle soup","sopa de picadillo":"Broth with ham and egg",
-  "caldo":"Broth","crema de verduras":"Cream of vegetable soup","crema de calabaza":"Cream of pumpkin soup",
-  "crema de calabacin":"Cream of courgette soup","pure de patata":"Mashed potato","pure de verduras":"Vegetable purée",
-  "gazpacho":"Gazpacho (cold tomato soup)","salmorejo":"Salmorejo (cold tomato soup)",
-  // Verduras
-  "menestra":"Mixed vegetables","menestra de verduras":"Mixed vegetables","verduras":"Vegetables",
-  "verduras salteadas":"Sautéed vegetables","judias verdes":"Green beans","judias verdes con tomate":"Green beans in tomato sauce",
-  "judias verdes rehogadas":"Sautéed green beans","espinacas":"Spinach","acelgas":"Chard","acelgas rehogadas":"Sautéed chard",
-  "guisantes":"Peas","guisantes con jamon":"Peas with ham","pisto":"Ratatouille","pisto de verduras":"Ratatouille",
-  "ensalada":"Salad","ensalada mixta":"Mixed salad","ensalada de pasta":"Pasta salad","patatas":"Potatoes",
-  "patatas asadas":"Roast potatoes","patatas fritas":"Chips","pure":"Purée",
-  // Carnes
-  "pollo asado":"Roast chicken","pollo al horno":"Roast chicken","pollo a la plancha":"Grilled chicken",
-  "muslo de pollo":"Chicken drumstick","pechuga de pollo":"Chicken breast","pollo en salsa":"Chicken in sauce",
-  "pollo empanado":"Breaded chicken","alitas de pollo":"Chicken wings","filete de pollo":"Chicken fillet",
-  "ternera":"Beef","ternera en salsa":"Beef in sauce","ternera guisada":"Beef stew","estofado de ternera":"Beef stew",
-  "carne guisada":"Meat stew","albondigas":"Meatballs","albondigas en salsa":"Meatballs in sauce",
-  "filete de cerdo":"Pork steak","filete aguja de cerdo":"Pork shoulder steak","lomo de cerdo":"Pork loin",
-  "lomo adobado":"Marinated pork loin","cinta de lomo":"Pork loin","chuleta de cerdo":"Pork chop",
-  "salchichas":"Sausages","chorizo":"Chorizo","hamburguesa":"Burger","san jacobo":"Ham and cheese schnitzel",
-  "flamenquin":"Pork and ham roll","escalope":"Escalope","pavo":"Turkey","cordero":"Lamb",
-  // Pescados / huevos
-  "merluza":"Hake","merluza a la romana":"Battered hake","merluza en salsa verde":"Hake in green sauce",
-  "merluza al horno":"Baked hake","bacalao":"Cod","varitas de merluza":"Fish fingers","varitas de pescado":"Fish fingers",
-  "pescado":"Fish","pescado al horno":"Baked fish","pescado a la plancha":"Grilled fish","salmon":"Salmon",
-  "atun":"Tuna","calamares":"Squid","calamares a la romana":"Battered squid rings","gambas":"Prawns",
-  "tortilla":"Omelette","tortilla de patatas":"Spanish potato omelette","tortilla francesa":"Plain omelette",
-  "huevos":"Eggs","huevos fritos":"Fried eggs","revuelto":"Scrambled eggs","croquetas":"Croquettes",
-  "croquetas caseras":"Homemade croquettes","empanadillas":"Small pasties",
-  // Postres / pan / fruta
-  "pan":"Bread","fruta":"Fruit","fruta del tiempo":"Seasonal fruit","fruta de temporada":"Seasonal fruit",
-  "yogur":"Yoghurt","flan":"Crème caramel","natillas":"Custard","arroz con leche":"Rice pudding",
-  "gelatina":"Jelly","helado":"Ice cream","galletas":"Biscuits","bizcocho":"Sponge cake","tarta":"Cake",
-  "eclairs":"Éclairs","platano":"Banana","manzana":"Apple","naranja":"Orange","pera":"Pear","melon":"Melon",
-  "sandia":"Watermelon","pina":"Pineapple","macedonia":"Fruit salad","macedonia de frutas":"Fruit salad",
-  "queso":"Cheese","aceitunas":"Olives","pan integral":"Wholemeal bread"
+// Glosario de corrección post-traducción: corrige errores comunes de Gemini
+// cuando confunde términos culinarios con otros significados en inglés
+const CORRECTOR_PLATOS = {
+  'berlina': 'doughnut',
+  'berlinas': 'doughnuts',
+  'donut': 'doughnut',
+  'donuts': 'doughnuts',
+  'sedán': 'sedan',
+  'sedanes': 'sedans',
+  'tortilla española': 'Spanish omelette',
+  'tortilla de patatas': 'Spanish omelette',
+  'croqueta': 'croquette',
+  'croquetas': 'croquettes',
+  'empanadilla': 'pastry',
+  'empanadillas': 'pastries',
+  'alitas de pollo': 'chicken wings',
+  'varita de merluza': 'fish finger',
+  'varitas de merluza': 'fish fingers',
+  'filete': 'steak',
+  'filetes': 'steaks',
+  'hamburguesa': 'burger',
+  'hamburguesas': 'burgers',
+  'sándwich': 'sandwich',
+  'sándwiches': 'sandwiches',
+  'bocadillo': 'sandwich',
+  'bocadillos': 'sandwiches',
+  'ensaladilla': 'salad',
+  'ensaladillas': 'salads',
+  'patata frita': 'fries',
+  'patatas fritas': 'fries',
+  'patatas bravas': 'braised potatoes',
+  'pimientos de padrón': 'padron peppers',
+  'jamón serrano': 'serrano ham',
+  'jamón ibérico': 'iberian ham',
+  'chorizo': 'chorizo',
+  'salchicha': 'sausage',
+  'salchichas': 'sausages',
+  'calamares': 'squid',
+  'calamar': 'squid',
+  'gamba': 'prawn',
+  'gambas': 'prawns',
+  'langostino': 'prawn',
+  'langostinos': 'prawns',
+  'mejillón': 'mussel',
+  'mejillones': 'mussels',
+  'almeja': 'clam',
+  'almejas': 'clams',
+  'ostra': 'oyster',
+  'ostras': 'oysters',
+  'bacalao': 'cod',
+  'merluza': 'hake',
+  'salmonete': 'red mullet',
+  'dorada': 'sea bream',
+  'lubina': 'sea bass',
+  'bacaladilla': 'cod fillet',
+  'boquerón': 'anchovy',
+  'boquerones': 'anchovies',
+  'sardina': 'sardine',
+  'sardinas': 'sardines',
+  'atún': 'tuna',
+  'atunes': 'tunas',
+  'caballa': 'mackerel',
+  'caballas': 'mackerels',
+  'besugo': 'sea bream',
+  'besugos': 'sea breams',
+  'gallo': 'rooster',
+  'gallina': 'hen',
+  'pollo': 'chicken',
+  'pollos': 'chickens',
+  'pavo': 'turkey',
+  'cordero': 'lamb',
+  'cerdo': 'pork',
+  'ternera': 'beef',
+  'conejo': 'rabbit',
+  'conejos': 'rabbits',
+  'pato': 'duck',
+  'patos': 'ducks',
+  'yogur': 'yoghurt',
+  'flan': 'crème caramel',
+  'natilla': 'custard',
+  'arroz con leche': 'rice pudding',
+  'gelatina': 'jelly',
+  'macedonia': 'fruit salad',
+  'macedonia de frutas': 'fruit salad',
+  'bizcocho': 'sponge cake',
+  'bizcochos': 'sponge cakes',
+  'tarta': 'cake',
+  'tortas': 'cakes',
+  'galleta': 'biscuit',
+  'galletas': 'biscuits',
+  'helado': 'ice cream',
+  'helados': 'ice creams',
+  'sorbete': 'sorbet',
+  'sorbetes': 'sorbets',
+  'batido': 'milkshake',
+  'batidos': 'milkshakes',
+  'zumo': 'juice',
+  'zumos': 'juices',
+  'refresco': 'soft drink',
+  'refrescos': 'soft drinks',
+  'agua': 'water',
+  'aguas': 'waters',
+  'pan': 'bread',
+  'panes': 'breads',
+  'tostada': 'toast',
+  'tostadas': 'toasts',
+  'croissant': 'croissant',
+  'croissants': 'croissants',
+  'bollería': 'pastry',
+  'bollerías': 'pastries',
+  'brazo de gitano': 'jelly roll',
+  'pionono': 'pionono',
+  'rosquilla': 'doughnut',
+  'rosquillas': 'doughnuts',
+  'churro': 'churro',
+  'churros': 'churros',
+  'buñuelo': 'fritter',
+  'buñuelos': 'fritters',
+  'pancake': 'pancake',
+  'pancakes': 'pancakes',
+  'waffle': 'waffle',
+  'waffles': 'waffles',
+  'bagel': 'bagel',
+  'bagels': 'bagels',
+  'muffin': 'muffin',
+  'muffins': 'muffins',
+  'tostada con tomate': 'tomato toast',
+  'pan con tomate': 'tomato bread',
+  'pa amb tomàquet': 'tomato bread',
 };
 
-// Ingredientes / sustantivos (para construir platos compuestos "X con Y")
-const GLOSARIO_TERMINOS = {
-  "pollo":"chicken","cerdo":"pork","ternera":"beef","pavo":"turkey","cordero":"lamb","conejo":"rabbit",
-  "jamon":"ham","chorizo":"chorizo","bacon":"bacon","salchichas":"sausages","carne":"meat",
-  "merluza":"hake","bacalao":"cod","atun":"tuna","salmon":"salmon","gambas":"prawns","calamares":"squid","pescado":"fish",
-  "huevo":"egg","huevos":"eggs","tortilla":"omelette","queso":"cheese",
-  "patata":"potato","patatas":"potatoes","tomate":"tomato","tomates":"tomato","judias verdes":"green beans",
-  "judias":"beans","alubias":"beans","lentejas":"lentils","garbanzos":"chickpeas","guisantes":"peas",
-  "arroz":"rice","pasta":"pasta","macarrones":"macaroni","espaguetis":"spaghetti","fideos":"noodles",
-  "ensalada":"salad","sopa":"soup","crema":"cream soup","pure":"purée","verdura":"vegetables","verduras":"vegetables",
-  "zanahoria":"carrot","zanahorias":"carrots","espinacas":"spinach","acelgas":"chard","calabacin":"courgette",
-  "calabaza":"pumpkin","champinones":"mushrooms","setas":"mushrooms","cebolla":"onion","pimiento":"pepper",
-  "pimientos":"peppers","lechuga":"lettuce","pepino":"cucumber","maiz":"sweetcorn","aceitunas":"olives",
-  "pan":"bread","fruta":"fruit","yogur":"yoghurt","platano":"banana","manzana":"apple","naranja":"orange","pera":"pear"
+// Correcciones en inglés directo para errores comunes de Gemini
+const CORRECTOR_INGLES = {
+  'sedans': 'doughnuts',
+  'sedan': 'doughnut',
+  'sedans filled': 'doughnuts filled',
+  'sedan filled': 'doughnut filled',
 };
 
-// Preparaciones multi-palabra (se traducen y se anteponen)
-const GLOSARIO_PREP_MULTI = {
-  "a la plancha":"grilled","al horno":"baked","a la romana":"battered","en salsa verde":"in green sauce",
-  "en salsa":"in sauce","al ajillo":"garlic","a la bolonesa":"bolognese"
-};
-// Preparaciones de una palabra (adjetivo final → se antepone en inglés)
-const GLOSARIO_PREP = {
-  "asado":"roast","asada":"roast","asados":"roast","asadas":"roast","frito":"fried","frita":"fried",
-  "fritos":"fried","fritas":"fried","empanado":"breaded","empanada":"breaded","empanados":"breaded",
-  "rebozado":"battered","rebozada":"battered","guisado":"stewed","guisada":"stewed","estofado":"stewed",
-  "estofada":"stewed","salteado":"sautéed","salteada":"sautéed","salteados":"sautéed","salteadas":"sautéed",
-  "rehogado":"sautéed","rehogada":"sautéed","rehogadas":"sautéed","cocido":"boiled","cocida":"boiled",
-  "bolonesa":"bolognese"
-};
-const _CONECTORES = ['de','del','la','el','los','las','al','a','en','y'];
-
-function _norm(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim(); }
-
-// Traduce un grupo de sustantivos (permite frases de hasta 3 palabras del glosario)
-function _translateNoun(s){
-  s = s.trim(); if(!s) return '';
-  if (GLOSARIO_PLATOS[s]) return GLOSARIO_PLATOS[s].toLowerCase();
-  const words = s.split(' ').filter(Boolean); let i=0; const out=[];
-  while(i<words.length){
-    let matched=false;
-    for(let len=Math.min(3,words.length-i); len>=1; len--){
-      const cand = words.slice(i,i+len).join(' ');
-      if(GLOSARIO_TERMINOS[cand]){ out.push(GLOSARIO_TERMINOS[cand]); i+=len; matched=true; break; }
-    }
-    if(!matched){
-      if(_CONECTORES.includes(words[i])){ i++; continue; }
-      return null; // palabra desconocida → usar API
+function correctTranslation(text) {
+  if (!text) return text;
+  let corrected = text;
+  const lower = text.toLowerCase();
+  for (const [wrong, right] of Object.entries(CORRECTOR_PLATOS)) {
+    const pattern = new RegExp('\\b' + wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+    if (pattern.test(lower)) {
+      corrected = corrected.replace(pattern, right);
     }
   }
-  return out.join(' ');
-}
-
-// Traduce un segmento (posible plato con preparación)
-function _translateSegment(seg){
-  let s = _norm(seg);
-  if(GLOSARIO_PLATOS[s]) return GLOSARIO_PLATOS[s].toLowerCase();
-  let prep='';
-  for(const k of Object.keys(GLOSARIO_PREP_MULTI)){
-    if(s.includes(k)){ prep = GLOSARIO_PREP_MULTI[k]; s = s.replace(k,'').replace(/\s+/g,' ').trim(); break; }
+  for (const [wrong, right] of Object.entries(CORRECTOR_INGLES)) {
+    const pattern = new RegExp('\\b' + wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+    if (pattern.test(lower)) {
+      corrected = corrected.replace(pattern, right);
+    }
   }
-  let toks = s.split(' ').filter(Boolean);
-  if(!prep && toks.length>1 && GLOSARIO_PREP[toks[toks.length-1]]){ prep = GLOSARIO_PREP[toks[toks.length-1]]; toks = toks.slice(0,-1); }
-  const noun = _translateNoun(toks.join(' '));
-  if(noun===null) return null;
-  // "garlic" y "bolognese"/"battered" van pospuestos de forma natural
-  if(prep==='garlic') return (noun+' in garlic').trim();
-  if(prep==='bolognese'||prep==='in sauce'||prep==='in green sauce'||prep==='battered'&&/romana/.test(seg)) return (noun+' '+prep).trim();
-  if(prep.startsWith('in ')) return (noun+' '+prep).trim();
-  return (prep? prep+' ':'')+noun;
-}
-
-// Traducción local del plato completo (null si no se puede → fallback API)
-function translateDishLocal(raw){
-  const norm=_norm(raw);
-  if(GLOSARIO_PLATOS[norm]) return GLOSARIO_PLATOS[norm];
-  const parts = norm.split(' con ');
-  const segs = parts.map(_translateSegment);
-  if(segs.every(x=>x)) return toTitleCaseSmart(segs.join(' with '));
-  return null;
+  return corrected;
 }
 
 function _applyTranslation(dishId, dish, en){
@@ -913,32 +1395,26 @@ function _applyTranslation(dishId, dish, en){
   markUnsaved();
 }
 
-// Retraduce todos los platos del menú actual con el glosario natural (y API si hace falta)
-async function retranslateAll() {
-  const platos = (state[currentMenuTab].platos || []).filter(p => p.nombreEs && p.nombreEs.trim());
-  if (!platos.length) { showToast('No hay platos que traducir', 'info'); return; }
-  showToast('🌐 Retraduciendo platos...', 'info');
-  let n = 0;
-  for (const p of platos) {
-    const local = translateDishLocal(p.nombreEs.trim());
-    if (local) { _applyTranslation(p.id, p, local); n++; continue; }
-    try {
-      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(p.nombreEs.trim())}&langpair=es|en`;
-      const json = await (await fetch(url)).json();
-      if (json.responseStatus===200) { _applyTranslation(p.id, p, toTitleCaseSmart(json.responseData.translatedText)); n++; }
-    } catch(e){ console.warn(e); }
-  }
-  showToast(`✅ ${n} plato(s) retraducidos. Recuerda pulsar "PUBLICAR EN PANTALLA TV".`, 'success');
-}
-
 let translateTimers = {};
 function autoTranslate(dishId) { markUnsaved(); clearTimeout(translateTimers[dishId]); translateTimers[dishId] = setTimeout(()=>manualTranslate(dishId), 1400); }
 async function manualTranslate(dishId) {
   const dish = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!dish||!dish.nombreEs.trim()) return;
-  // 1º intentar glosario culinario (traducción natural)
-  const local = translateDishLocal(dish.nombreEs.trim());
-  if(local){ _applyTranslation(dishId, dish, local); return; }
-  // 2º fallback: API MyMemory
+  const geminiKey = firebaseConfig.geminiApiKey;
+  if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: `You are translating Spanish dish names from a school cafeteria menu. Many Spanish food words have double meanings in English (e.g. "berlina" = doughnut, NOT sedan; "croqueta" = croquette, NOT anything else). Always choose the culinary meaning. Return ONLY the translation, nothing else, no explanations: ${dish.nombreEs.trim()}` }] }] })
+      });
+      const data = await resp.json();
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+       const en = correctTranslation(data.candidates[0].content.parts[0].text.trim());
+         _applyTranslation(dishId, dish, en);
+        return;
+      }
+    } catch(e){ console.warn('Gemini translation failed:', e); }
+  }
   try {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(dish.nombreEs.trim())}&langpair=es|en`;
     const json = await (await fetch(url)).json();
@@ -1004,6 +1480,196 @@ function removeTurno(id) {
 
 function renumberTurnos() {
   document.querySelectorAll('.turno-num').forEach((el,i) => el.textContent = i+1);
+}
+
+// ══════════════════════════════════════════════
+//  RECORDATORIOS DE CUENTA ATRÁS
+// ══════════════════════════════════════════════
+function newReminderObj(image='./img/recordatorio_1.png', mensajeEs='', mensajeEn='') {
+  return { id:`r${Date.now()}${Math.random().toString(36).slice(2,6)}`, image, mensajeEs, mensajeEn };
+}
+
+function addReminder() {
+  const reminder = newReminderObj();
+  remindersState.push(reminder);
+  renderReminderCard(reminder);
+  showToast('📋 Nuevo recordatorio añadido', 'info');
+}
+
+function removeReminder(id) {
+  remindersState = remindersState.filter(r=>r.id!==id);
+  const card = document.getElementById(`reminder-card-${id}`);
+  if(card){card.style.opacity='0';card.style.transform='translateX(20px)';card.style.transition='all .25s';setTimeout(()=>{card.remove();},250);}
+  showToast('🗑 Recordatorio eliminado', 'info');
+}
+
+function renderReminders() {
+  document.getElementById('reminder-list').innerHTML = '';
+  remindersState.forEach(r => renderReminderCard(r));
+}
+
+function renderReminderCard(reminder) {
+  const container = document.getElementById('reminder-list');
+  const div = document.createElement('div');
+  div.className = 'turno-card';
+  div.id = `reminder-card-${reminder.id}`;
+  div.innerHTML = `
+    <div class="turno-header" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">
+      <div class="turno-num" style="color:#fff">${remindersState.findIndex(r=>r.id===reminder.id)+1}</div>
+      <div class="turno-header-title" style="color:#fff">
+        <div class="turno-label">Recordatorio ${remindersState.findIndex(r=>r.id===reminder.id)+1}</div>
+        <div class="turno-time-badge" style="color:#fff">📋 Con imagen</div>
+      </div>
+      <div class="turno-toggle-wrap">
+        <span class="turno-toggle-label" style="color:rgba(255,255,255,0.8)"></span>
+      </div>
+      <button class="btn-remove-turno" onclick="removeReminder('${reminder.id}')">🗑 Eliminar</button>
+    </div>
+    <div class="turno-body">
+      <div class="turno-row">
+        <div class="turno-field" style="flex:1;min-width:160px;">
+          <label>🖼️ Imagen</label>
+          <div class="color-picker-wrap" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <img src="${reminder.image}" alt="Preview" style="max-width:200px;max-height:120px;border-radius:8px;border:2px solid #e2e8f0;cursor:pointer;" onclick="document.getElementById('reminder-img-${reminder.id}').click()" id="reminder-img-preview-${reminder.id}">
+            <input type="file" accept="image/*" id="reminder-img-${reminder.id}" style="display:none;" onchange="updateReminderImage('${reminder.id}',this)">
+            <small style="color:#64748b;">Click en la imagen para cambiarla</small>
+          </div>
+        </div>
+      </div>
+      <div class="turno-row">
+        <div class="msg-field">
+          <label>🇪🇸 Mensaje en español</label>
+          <div class="msg-input-wrap">
+            <input class="msg-input" type="text"
+                   value="${escHtml(reminder.mensajeEs)}"
+                   placeholder="Ej: ¡Recoge tu bandeja!"
+                   oninput="updateReminder('${reminder.id}','mensajeEs',this.value); autoTranslateReminder('${reminder.id}')">
+            <button class="msg-translate-btn" onclick="manualTranslateReminder('${reminder.id}')">🌐 Traducir</button>
+          </div>
+        </div>
+        <div class="msg-field">
+          <label>🇬🇧 English message (auto-translated)</label>
+          <input class="msg-input msg-en" type="text"
+                 value="${escHtml(reminder.mensajeEn)}"
+                 placeholder="Auto-translated"
+                 oninput="updateReminder('${reminder.id}','mensajeEn',this.value)">
+        </div>
+      </div>
+    </div>`;
+  container.appendChild(div);
+}
+
+function updateReminder(id, field, value) {
+  const r = remindersState.find(r=>r.id===id);
+  if(r){ r[field]=value; markUnsaved(); }
+}
+
+// Redimensiona y comprime una imagen en el propio navegador antes de
+// convertirla a base64. Sin esto, una foto de móvil sin optimizar (varios
+// MB) se guardaba entera en Realtime Database y viajaba completa cada vez
+// que la TV sincronizaba los recordatorios, con el consiguiente retraso.
+function compressImageFile(file, maxWidth = 1000, quality = 0.78) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('No se pudo leer la imagen'));
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        // PNG con transparencia se mantiene en PNG; el resto se comprime como JPEG.
+        const isPng = file.type === 'image/png';
+        resolve(canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function updateReminderImage(id, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const preview = document.getElementById(`reminder-img-preview-${id}`);
+  try {
+    const dataUrl = await compressImageFile(file);
+    const r = remindersState.find(r => r.id === id);
+    if (r) {
+      r.image = dataUrl;
+      if (preview) preview.src = dataUrl;
+      markUnsaved();
+    }
+  } catch (e) {
+    console.warn('Compresión de imagen falló, se usa el archivo original:', e);
+    // Fallback: si algo falla al comprimir (navegador antiguo, formato raro...)
+    // se usa el archivo tal cual para no bloquear al usuario.
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const r = remindersState.find(r => r.id === id);
+      if (r) {
+        r.image = ev.target.result;
+        if (preview) preview.src = ev.target.result;
+        markUnsaved();
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function updateCarouselInterval(value) {
+  const seconds = parseInt(value) || 15;
+  carouselInterval = Math.max(5, Math.min(120, seconds));
+  document.getElementById('carousel-interval').value = carouselInterval;
+  markUnsaved();
+  showToast(`⏱️ Rotación del carousel: ${carouselInterval}s`, 'info');
+}
+
+
+let reminderTranslateTimers = {};
+function autoTranslateReminder(id) {
+  clearTimeout(reminderTranslateTimers[id]);
+  reminderTranslateTimers[id] = setTimeout(() => {
+    const r = remindersState.find(x => x.id === id);
+    if (r && r.mensajeEs.trim()) manualTranslateReminder(id);
+  }, 1400);
+}
+
+async function manualTranslateReminder(id) {
+  const r = remindersState.find(x => x.id === id);
+  if (!r || !r.mensajeEs.trim()) return;
+  const geminiKey = firebaseConfig.geminiApiKey;
+  if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: `Translate this Spanish reminder message to English naturally. Return ONLY the translation, nothing else: ${r.mensajeEs.trim()}` }] }] })
+      });
+      const data = await resp.json();
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+        r.mensajeEn = data.candidates[0].content.parts[0].text.trim();
+        const card = document.getElementById(`reminder-card-${id}`);
+        if(card) card.querySelector('.msg-en').value = r.mensajeEn;
+        markUnsaved();
+        return;
+      }
+    } catch(e){ console.warn('Gemini translation failed:', e); }
+  }
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(r.mensajeEs.trim())}&langpair=es|en`;
+    const json = await (await fetch(url)).json();
+    if(json.responseStatus===200) {
+      r.mensajeEn = json.responseData.translatedText;
+      const card = document.getElementById(`reminder-card-${id}`);
+      if(card) card.querySelector('.msg-en').value = r.mensajeEn;
+      markUnsaved();
+    }
+  } catch(e){ console.warn(e); }
 }
 
 function updateTurno(id, field, value) {
@@ -1184,13 +1850,30 @@ function autoTranslateTurno(id) {
 }
 async function manualTranslateTurno(id) {
   const t = turnosState.find(t=>t.id===id); if(!t||!t.mensajeEs.trim()) return;
+  const geminiKey = firebaseConfig.geminiApiKey;
+  if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: `You are translating Spanish messages for a school cafeteria TV screen. Always choose the culinary/food context when words have double meanings. Return ONLY the translation, nothing else, no explanations: ${t.mensajeEs.trim()}` }] }] })
+      });
+      const data = await resp.json();
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+       t.mensajeEn = correctTranslation(data.candidates[0].content.parts[0].text.trim());
+         const card = document.getElementById(`turno-card-${id}`);
+         if(card) card.querySelector('.msg-en').value = t.mensajeEn;
+         updateTurnoPreview(id);
+         return;
+      }
+    } catch(e){ console.warn('Gemini translation failed:', e); }
+  }
   try {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(t.mensajeEs.trim())}&langpair=es|en`;
     const json = await (await fetch(url)).json();
     if(json.responseStatus===200) {
-      t.mensajeEn = json.responseData.translatedText;
-      // update input field
-      const card = document.getElementById(`turno-card-${id}`);
+      t.mensajeEn = correctTranslation(json.responseData.translatedText);
+       const card = document.getElementById(`turno-card-${id}`);
       if(card) card.querySelector('.msg-en').value = t.mensajeEn;
       updateTurnoPreview(id);
     }
@@ -1209,14 +1892,118 @@ async function publishTurnos() {
   finally { btn.disabled=false; btn.innerHTML='🔔 &nbsp;GUARDAR AVISOS EN TV'; }
 }
 
+async function publishReminders() {
+  const btn = document.getElementById('btn-publish-reminders');
+  btn.disabled=true; btn.textContent='⏳ Guardando...';
+  if(!fbReady){ showToast('⚠️ Firebase no configurado', 'error'); btn.disabled=false; btn.innerHTML='📋 &nbsp;GUARDAR RECORDATORIOS'; return; }
+  try {
+    await firebase.database().ref('recordatorios').set({
+      reminders: remindersState,
+      carouselInterval: carouselInterval
+    });
+    showToast('✅ Recordatorios guardados en TV', 'success');
+  } catch(e){ showToast('❌ Error: '+e.message, 'error'); }
+  finally { btn.disabled=false; btn.innerHTML='📋 &nbsp;GUARDAR RECORDATORIOS'; }
+}
+
 // ══════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
-  // Acceso libre: se muestra el panel directamente, sin contraseña.
-  document.getElementById('panel').classList.add('visible');
+function initApp() {
+  const panel = document.getElementById('panel');
+  if (panel) panel.classList.add('visible');
   initPanel();
-});
+  initSizeControls();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+
+// Initialize size control sliders
+function initSizeControls() {
+  // Load current values from document.documentElement
+  document.querySelectorAll('.size-control').forEach(ctrl => {
+    const target = ctrl.dataset.target;
+    const unit = ctrl.dataset.unit || '';
+    const currentValue = getComputedStyle(document.documentElement).getPropertyValue(target).trim();
+    const numericValue = parseFloat(currentValue) || 0;
+    ctrl.value = numericValue;
+    // Update display
+    const displayCtrl = document.querySelector(`.size-display[data-display="${target}"]`);
+    if (displayCtrl) displayCtrl.value = numericValue;
+  });
+
+  // Handle slider changes
+  document.querySelectorAll('.size-control').forEach(ctrl => {
+    ctrl.addEventListener('input', handleSizeChange);
+  });
+
+  // Handle number input changes
+  document.querySelectorAll('.size-display').forEach(input => {
+    input.addEventListener('input', handleSizeChange);
+  });
+}
+
+function handleSizeChange(e) {
+  const ctrl = e.target;
+  const target = ctrl.dataset.target || ctrl.closest('.ajuste-row').querySelector('.size-control').dataset.target;
+  let value = parseFloat(ctrl.value) || 0;
+  const unit = ctrl.dataset.unit || '';
+  
+  // Ensure minimum values
+  if (ctrl.classList.contains('size-control')) {
+    value = Math.max(0.1, Math.min(30, value));
+    ctrl.value = value;
+    // Sync display
+    const displayCtrl = document.querySelector(`.size-display[data-display="${target}"]`);
+    if (displayCtrl) displayCtrl.value = value;
+  } else {
+    value = Math.max(0.1, Math.min(30, value));
+    // Sync slider
+    const sliderCtrl = document.querySelector(`.size-control[data-target="${target}"]`);
+    if (sliderCtrl) sliderCtrl.value = value;
+  }
+  
+  // Apply to CSS (vista previa instantánea dentro de este mismo panel)
+  document.documentElement.style.setProperty(target, `${value}${unit}`);
+  
+  // Guarda en localStorage al instante (por si gestión y TV comparten
+  // navegador) y en Firebase con un pequeño debounce, para que la TV
+  // reciba el cambio en tiempo real aunque esté en otro dispositivo —
+  // que es el caso normal de uso (PC de gestión + televisor aparte).
+  saveTVSettings();
+}
+
+let tvSettingsSaveTimer = null;
+function saveTVSettings() {
+  const settings = {
+    dishNameSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size').trim(),
+    dishEnSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size').trim(),
+    turnoTitleSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-title-size').trim(),
+    turnoMsgEsSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-msg-es-size').trim(),
+    turnoMsgEnSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-msg-en-size').trim(),
+    turnoCountdownSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-countdown-size').trim(),
+    carouselEsSize: getComputedStyle(document.documentElement).getPropertyValue('--carousel-es-size').trim(),
+    carouselEnSize: getComputedStyle(document.documentElement).getPropertyValue('--carousel-en-size').trim()
+  };
+  localStorage.setItem('tvSettings', JSON.stringify(settings));
+
+  // Debounce del guardado en Firebase: los sliders disparan este evento en
+  // cada tick del arrastre, y no queremos escribir en la base de datos
+  // decenas de veces por segundo.
+  clearTimeout(tvSettingsSaveTimer);
+  tvSettingsSaveTimer = setTimeout(() => {
+    if (!fbReady) return;
+    firebase.database().ref('tvSettings').set(settings).catch(e => console.warn('tvSettings:', e));
+  }, 400);
+}
+(function ensurePanelVisible() {
+  const panel = document.getElementById('panel');
+  if (panel && !panel.classList.contains('visible')) panel.classList.add('visible');
+})();
 </script>
 </body>
 </html>

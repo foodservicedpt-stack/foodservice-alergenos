@@ -10,5 +10,6 @@ const firebaseConfig = {
   projectId:         "foodservice-alergenos-5fe9b",
   storageBucket:     "foodservice-alergenos-5fe9b.firebasestorage.app",
   messagingSenderId: "653432937402",
-  appId:             "1:653432937402:web:4b9abbe72ae59d700c5b83"
+  appId:             "1:653432937402:web:4b9abbe72ae59d700c5b83",
+  geminiApiKey:      "AQ.Ab8RN6Kdc6-QCITz_VMVaZMQvVYab6raEvAdTSeLlhfTptQMEw"
 };
