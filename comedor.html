@@ -27,6 +27,7 @@
       --carousel-en-size: 1.8vw;
       --carousel-farewell-es-size: 4.2vw;
       --carousel-farewell-en-size: 2.2vw;
+      --no-allergen-scale: 1;
     }
 
     html, body {
@@ -107,17 +108,21 @@
     .no-allergen {
       background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 12px;
       padding: 0.55vw 1.1vw; color: #065f46; font-weight: 800;
-      font-size: calc(var(--dish-en-size) * 1.05);
+      font-size: calc(var(--dish-en-size) * 1.05 * var(--no-allergen-scale));
       display: flex; flex-direction: row; align-items: center; gap: 0.7vw;
+      /* Respaldo duro: si por lo que sea el ajuste por JS no llega a
+         ejecutarse a tiempo, esto evita que el badge se salga de su
+         columna y tape el nombre del plato (el bug que reportó Rubén). */
+      max-width: 100%; box-sizing: border-box;
     }
     .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
     .no-allergen .shield-ok svg {
       width: calc(var(--dish-name-size) * 1.15); height: calc(var(--dish-name-size) * 1.15);
       filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
     }
-    .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.1; }
-    .no-allergen-txt .es { white-space: nowrap; }
-    .no-allergen .en { font-style: italic; font-size: 0.82em; opacity: 0.7; font-weight: 600; white-space: nowrap; }
+    .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+    .no-allergen-txt .es { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .no-allergen .en { font-style: italic; font-size: 0.82em; opacity: 0.7; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
@@ -888,7 +893,10 @@ function adjustSizes(rowsCount, rowHeight) {
     dishH = Math.max(60, availH / rowsCount);
   }
 
-  const nameFs = Math.max(16, Math.min(dishH * 0.55, availW * 0.045));
+  // Punto de partida "grande a propósito": el bucle de fitDishRows() de
+  // abajo se encarga de recortarlo SOLO lo justo y necesario si algo no
+  // llega a caber, así que aquí podemos partir de un tamaño generoso.
+  const nameFs = Math.max(16, Math.min(dishH * 0.62, availW * 0.052));
   const enFs = Math.max(12, nameFs * 0.38);
   const iconSize = Math.max(24, Math.min(dishH * 0.55, availW * 0.06));
   const legendIcon = Math.max(18, Math.min(iconSize, 70));
@@ -902,16 +910,58 @@ function adjustSizes(rowsCount, rowHeight) {
   root.setProperty('--legend-icon', legendIcon + 'px');
   root.setProperty('--legend-text', legendText + 'px');
 }
+
+// Comprueba si algo se está cortando de verdad: bien porque el nombre de
+// un plato necesita más de 2 líneas y el navegador lo recorta con "…",
+// bien porque las filas de platos en conjunto ya no caben en la columna
+// (lo que dejaría el último plato invisible fuera de pantalla — el peor
+// caso posible). Un elemento con line-clamp recortado siempre tiene
+// scrollHeight > clientHeight; es la forma estándar de detectarlo.
+function dishContentOverflows(mainCol, rows) {
+  if (mainCol.scrollHeight > mainCol.clientHeight + 1) return true;
+  return rows.some(r => {
+    const nameEl = r.querySelector('.dish-name-es');
+    const enEl = r.querySelector('.dish-name-en');
+    return (nameEl && nameEl.scrollHeight > nameEl.clientHeight + 1) ||
+           (enEl && enEl.scrollHeight > enEl.clientHeight + 1);
+  });
+}
+
+// Punto de entrada único: calcula un tamaño de letra grande como punto de
+// partida y luego lo reduce en pasos pequeños SOLO si hace falta, hasta
+// que absolutamente todo quepa (nombres de plato, badges de alérgenos e
+// iconos) sin que se corte ni una fila. Así se aprovecha el espacio al
+// máximo sin arriesgarse a perder texto o platos enteros fuera de pantalla.
+function fitDishRows() {
+  const mainCol = document.getElementById('main-col');
+  if (!mainCol) return;
+  const rows = [...mainCol.querySelectorAll('.dish-row')];
+  if (!rows.length) return;
+
+  adjustSizes(rows.length, rows[0].getBoundingClientRect().height);
+  fitAllergenIcons();
+  fitNoAllergenBadges();
+
+  let guard = 0;
+  while (dishContentOverflows(mainCol, rows) && guard++ < 16) {
+    const root = document.documentElement.style;
+    const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 20;
+    const enFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 12;
+    const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
+    root.setProperty('--dish-name-size', Math.max(13, nameFs * 0.94) + 'px');
+    root.setProperty('--dish-en-size', Math.max(10, enFs * 0.94) + 'px');
+    root.setProperty('--icon-size', Math.max(18, iconSize * 0.96) + 'px');
+    fitNoAllergenBadges();
+  }
+
+  fitLegend();
+}
+
 function startSizeAutoAdjust() {
   stopSizeAutoAdjust();
   const mainCol = document.getElementById('main-col');
   if (!mainCol) return;
-  const ro = new ResizeObserver(() => {
-    const rows = mainCol.querySelectorAll('.dish-row');
-    const first = rows[0];
-    const h = first ? first.getBoundingClientRect().height : 0;
-    adjustSizes(rows.length, h);
-  });
+  const ro = new ResizeObserver(() => requestAnimationFrame(fitDishRows));
   ro.observe(mainCol);
   sizeResizeObserver = ro;
 }
@@ -968,7 +1018,7 @@ function renderMenu(data) {
             <path d="M8.3 12.1 l2.6 2.6 l4.8 -5.4" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </span>
-        <span class="no-allergen-txt"><span class="es">SIN ALÉRGENOS DECLARADOS</span><span class="en">No allergens declared</span></span>
+        <span class="no-allergen-txt"><span class="es">LIBRE DE ALÉRGENOS</span><span class="en">Allergen-free</span></span>
       </div>`;
     } else {
       if (contiene.length) algHtml += `<div class="allergen-row">${contiene.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap" style="background:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
@@ -990,7 +1040,7 @@ function renderMenu(data) {
   document.getElementById('header-date').textContent = formatDateEs(data.fecha);
 
   // Ajuste fino: dimensiona los iconos y la leyenda tras el layout para que nada se corte
-  requestAnimationFrame(() => { fitAllergenIcons(); fitLegend(); });
+  requestAnimationFrame(fitDishRows);
 }
 
 // ══════════════════════════════════════════════
@@ -1024,6 +1074,23 @@ function fitAllergenIcons() {
   icon = Math.max(24, Math.min(icon, 120));
   document.documentElement.style.setProperty('--icon-size', icon + 'px');
   document.documentElement.style.setProperty('--icon-gap', gap + 'px');
+}
+
+// Evita que el badge "LIBRE DE ALÉRGENOS" se salga de su columna y tape el
+// nombre del plato (el problema que reportó Rubén con "Salmorejo/Gazpacho").
+// Se resetea a escala 1 y solo se reduce si el ancho real del texto supera
+// el ancho disponible de verdad.
+function fitNoAllergenBadges() {
+  const badges = [...document.querySelectorAll('.no-allergen')];
+  if (!badges.length) return;
+  const root = document.documentElement.style;
+  root.setProperty('--no-allergen-scale', '1');
+  let scale = 1, guard = 0;
+  const overflowing = () => badges.some(b => b.scrollWidth > b.parentElement.clientWidth + 1);
+  while (overflowing() && guard++ < 12) {
+    scale *= 0.94;
+    root.setProperty('--no-allergen-scale', scale.toFixed(3));
+  }
 }
 
 function fitLegend() {
@@ -1061,8 +1128,7 @@ function fitLegend() {
   document.documentElement.style.setProperty('--legend-text', txt + 'px');
 }
 window.addEventListener('resize', () => {
-  fitAllergenIcons();
-  fitLegend();
+  requestAnimationFrame(fitDishRows);
   if (document.getElementById('turno-overlay')?.classList.contains('visible')) {
     requestAnimationFrame(fitTurnoOverlay);
   }
