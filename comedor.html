@@ -66,19 +66,11 @@
       padding: var(--dish-pad) calc(var(--dish-pad) * 1.2);
       display: flex; align-items: flex-start;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      flex: 1; min-height: 6vw; flex-shrink: 0;
       border-left: 5px solid transparent;
       overflow: hidden;
       gap: 0.7vw;
       min-height: 6vw;
-      /* Sin esto, si el contenido total no cabe en .main-col, flexbox
-         encoge cada fila por debajo de lo que necesita su propio
-         contenido (en vez de dejar que el conjunto desborde la columna),
-         y como la fila tiene overflow:hidden, cada plato recorta su
-         propio texto/badges por dentro. Con flex-shrink:0 las filas
-         mantienen su altura real, así el desbordamiento ocurre a nivel
-         de .main-col — que es justo lo que fitDishRows() sabe detectar
-         y corregir reduciendo el tamaño de letra. */
-      flex-shrink: 0;
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
     .dish-row:nth-child(even) { border-left-color: #10b981; }
@@ -112,8 +104,8 @@
     }
 
     /* ─── ALLERGEN ICONS ─── */
-    .dish-allergens { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: min(32%, 320px); max-width: 320px; margin-left: 0.4vw; }
-    .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; }
+    .dish-allergens { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: min(32%, 320px); max-width: 320px; margin-left: 0.4vw; }
+    .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: wrap; justify-content: flex-start; max-width: 100%; }
     .alg-icon-wrap {
       width: var(--icon-size); height: var(--icon-size); overflow: hidden;
       display: flex; align-items: center; justify-content: center;
@@ -124,7 +116,7 @@
     .trace-label {
       font-size: calc(var(--icon-size) * 0.28); font-weight: 800; color: #92400e;
       background: #fef3c7; border: 2px solid #fcd34d; border-radius: 50px;
-      padding: 0.2vw 0.7vw; letter-spacing: 0.5px; white-space: normal;
+      padding: 0.2vw 0.7vw; letter-spacing: 0.5px; white-space: nowrap;
       line-height: 1.1; text-align: left; max-width: 100%;
     }
     .no-allergen {
@@ -132,7 +124,7 @@
       padding: 0.55vw 1.1vw; color: #065f46; font-weight: 800;
       font-size: calc(var(--dish-en-size) * 1.05 * var(--no-allergen-scale, 1));
       display: flex; flex-direction: row; align-items: center; gap: 0.7vw;
-      max-width: 100%; width: auto; flex-wrap: wrap;
+      max-width: 100%; width: auto; flex-wrap: nowrap;
     }
     .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
     .no-allergen .shield-ok svg {
@@ -145,19 +137,65 @@
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
-      width: 20vw; background: white; border-radius: 14px;
+      flex: 0 0 min(260px, 24vw);
+      width: min(25vw, 360px);
+      max-width: 380px;
+      background: white; border-radius: 14px;
       padding: 1vw 0.8vw; display: flex; flex-direction: column;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06); overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
     }
     .legend-title { font-size: 1.2vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5vw; margin-bottom: 0.6vw; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
-    .legend-list { display: flex; flex-direction: column; justify-content: space-between; flex: 1; overflow: hidden; }
-    .legend-item { display: flex; align-items: center; gap: 0.45vw; }
-    .legend-circle { width: 3.4vw; height: 3.4vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .legend-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 0.8vw;
+      align-content: start;
+      justify-items: start;
+      flex: 1;
+    }
+    .legend-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55vw;
+      min-width: 0;
+      width: 100%;
+    }
+    .legend-circle {
+      width: var(--legend-icon);
+      height: var(--legend-icon);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-    .legend-text-wrap { line-height: 1.15; min-width: 0; }
-    .legend-es { font-size: 1.1vw; font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; }
-    .legend-en { font-size: 0.92vw; color: #64748b; font-style: italic; display: block; }
+    .legend-text-wrap {
+      line-height: 1.15;
+      min-width: 0;
+      width: calc(100% - var(--legend-icon) - 0.55vw);
+      overflow-wrap: anywhere;
+    }
+    .legend-es {
+      font-size: var(--legend-text);
+      font-weight: 700;
+      color: #1e293b;
+      text-transform: uppercase;
+      display: block;
+      white-space: normal;
+    }
+    .legend-en {
+      font-size: calc(var(--legend-text) * 0.85);
+      color: #64748b;
+      font-style: italic;
+      display: block;
+      white-space: normal;
+    }
+    @media (max-width: 1100px) {
+      .body { flex-wrap: wrap; }
+      .sidebar { width: 100%; max-width: 100%; }
+    }
 
     /* ─── FOOTER ─── */
     .footer { background: #0b1f3a; padding: 0.5vw 2.5vw; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
@@ -960,8 +998,10 @@ function dishContentOverflows(mainCol, rows) {
   return rows.some(r => {
     const nameEl = r.querySelector('.dish-name-es');
     const enEl = r.querySelector('.dish-name-en');
+    const allergensEl = r.querySelector('.dish-allergens');
     return (nameEl && nameEl.scrollHeight > nameEl.clientHeight + 1) ||
-           (enEl && enEl.scrollHeight > enEl.clientHeight + 1);
+           (enEl && enEl.scrollHeight > enEl.clientHeight + 1) ||
+           (allergensEl && allergensEl.scrollHeight > allergensEl.clientHeight + 1);
   });
 }
 
@@ -1064,7 +1104,7 @@ function renderMenu(data) {
       </div>`;
     } else {
       if (contiene.length) algHtml += `<div class="allergen-row">${contiene.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
-      if (trazas.length)   algHtml += `<div class="allergen-row"><span class="trace-label">⚠ TRAZAS / May contain traces</span>${trazas.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap trace-icon" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
+      if (trazas.length)   algHtml += `<div class="allergen-row"><span class="trace-label">⚠ TRAZAS</span>${trazas.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap trace-icon" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
     }
     const glutenNote = p.sinGluten ? `
       <div class="dish-gluten-note">
@@ -1105,6 +1145,14 @@ function fitAllergenIcons() {
 
   // Máx. de iconos en una misma fila y máx. de filas de alérgenos por plato
   let maxIcons = 1, maxRows = 1;
+
+  // Check if any dish has traces
+  let hasTraces = false;
+  rows.forEach(r => {
+    if (r.querySelector('.trace-label')) {
+      hasTraces = true;
+    }
+  });
   rows.forEach(r => {
     const ars = r.querySelectorAll('.allergen-row');
     if (ars.length > maxRows) maxRows = ars.length;
@@ -1116,9 +1164,13 @@ function fitAllergenIcons() {
   });
 
   // Ancho disponible para la columna de alérgenos (≈42% del ancho de la fila)
-  const allergenW = rowW * 0.42;
+  const allergenW = rowW * (hasTraces ? 0.40 : 0.50);
   const byWidth  = (allergenW - gap * (maxIcons - 1)) / maxIcons;
-  const byHeight = (rowH * 0.80 - gap * (maxRows - 1)) / maxRows;
+  // Altura disponible para las filas de alérgenos
+  // Si no hay trazas, usar más altura (hasta 90% de la altura de la fila)
+  // Si hay trazas, ser más conservador (75% de la altura de la fila)
+  const availableHeight = rowH * (hasTraces ? 0.75 : 0.90);
+  const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
   let icon = Math.min(byWidth, byHeight);
   icon = Math.max(24, Math.min(icon, 120));
   document.documentElement.style.setProperty('--icon-size', icon + 'px');
@@ -1135,11 +1187,12 @@ function fitLegend() {
   const containerH = list.getBoundingClientRect().height;
   if (!containerW || !containerH) return;
 
-  const per = containerH / items.length;
-  let ic = Math.min(per * 0.50, 46); ic = Math.max(14, ic);
+  const per = containerH / Math.ceil(items.length / 2);
+  let ic = Math.min(per * 0.48, 46); ic = Math.max(14, ic);
   document.documentElement.style.setProperty('--legend-icon', ic + 'px');
 
-  let txt = Math.min(per * 0.28, 18); txt = Math.max(10, txt);
+  let txt = Math.min(per * 0.26, 18); txt = Math.max(10, txt);
+  document.documentElement.style.setProperty('--legend-text', txt + 'px');
 
   items.forEach(item => {
     const wrap = item.querySelector('.legend-text-wrap');
@@ -1150,14 +1203,14 @@ function fitLegend() {
     esEl.style.fontSize = fs + 'px';
     const enEl = wrap.querySelector('.legend-en');
     if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
+
     let guard = 0;
-    while (wrap.scrollWidth > containerW - 20 && fs > 9 && guard++ < 24) {
-      fs *= 0.90;
+    while (wrap.scrollWidth > item.getBoundingClientRect().width - 12 && fs > 9 && guard++ < 24) {
+      fs *= 0.92;
       esEl.style.fontSize = fs + 'px';
       if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
     }
   });
-  document.documentElement.style.setProperty('--legend-text', txt + 'px');
 }
 window.addEventListener('resize', () => {
   requestAnimationFrame(fitDishRows);
