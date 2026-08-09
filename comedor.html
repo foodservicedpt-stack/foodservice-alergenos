@@ -970,16 +970,16 @@ function adjustSizes(rowsCount, rowHeight) {
   const availH = Math.max(100, window.innerHeight - headerH - 40);
   const availW = Math.max(200, window.innerWidth - sidebarW - 40);
 
-  let dishH = availH;
-  if (typeof rowHeight === 'number' && rowHeight > 0) {
-    dishH = Math.min(availH / Math.max(1, rowsCount), rowHeight * 2.2);
-  } else if (rowsCount > 0) {
-    dishH = Math.max(60, availH / rowsCount);
-  }
+  // Antes esto se limitaba a "la altura actual de la fila * 2.2", pero esa
+  // altura actual podía venir ya reducida de una pasada anterior — con eso,
+  // el tamaño nunca podía volver a crecer aunque sobrara espacio de sobra.
+  // Ahora se calcula siempre a partir del espacio realmente disponible; si
+  // algo no cabe de verdad, fitDishRows() ya se encarga de reducirlo después.
+  const dishH = Math.max(60, availH / Math.max(1, rowsCount));
 
-  const nameFs = Math.max(16, Math.min(dishH * 0.45, availW * 0.040));
-  const enFs = Math.max(12, Math.min(nameFs * 0.42, 24));
-  const iconSize = Math.max(24, Math.min(dishH * 0.48, availW * 0.055));
+  const nameFs = Math.max(18, Math.min(dishH * 0.5, availW * 0.044));
+  const enFs = Math.max(13, Math.min(nameFs * 0.42, 26));
+  const iconSize = Math.max(26, Math.min(dishH * 0.42, availW * 0.05));
   const legendIcon = Math.max(18, Math.min(iconSize, 60));
   const legendText = Math.max(12, Math.min(legendIcon * 0.40, 16));
 
@@ -1063,15 +1063,30 @@ function fitDishRows() {
   fitNoAllergenBadges();
 
   let guard = 0;
+  // Fase 1: reducir solo los iconos de alérgenos (y lo que dependa de su
+  // tamaño). Casi siempre es un icono envolviendo a una segunda línea lo
+  // que obliga a una fila a pedir más alto, no el nombre del plato — así
+  // que se prioriza encoger eso primero, dejando el nombre a tamaño
+  // completo mientras sea posible.
+  while (dishContentOverflows(mainCol, rows) && guard++ < 14) {
+    const root = document.documentElement.style;
+    const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
+    const iconGap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-gap')) || 6;
+    if (iconSize <= 18) break; // ya no hay más margen aquí, se pasa a la fase 2
+    root.setProperty('--icon-size', Math.max(18, iconSize * 0.93) + 'px');
+    root.setProperty('--icon-gap', Math.max(3, iconGap * 0.93) + 'px');
+    fitNoAllergenBadges();
+  }
+
+  // Fase 2: si con los iconos ya al mínimo la fila sigue sin caber (nombre
+  // de plato realmente largo), entonces sí se reduce el nombre y el "en".
   while (dishContentOverflows(mainCol, rows) && guard++ < 16) {
     const root = document.documentElement.style;
     const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 20;
     const enFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 12;
-    const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
     const glutenScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-gluten-scale')) || 1;
     root.setProperty('--dish-name-size', Math.max(13, nameFs * 0.94) + 'px');
     root.setProperty('--dish-en-size', Math.max(10, enFs * 0.94) + 'px');
-    root.setProperty('--icon-size', Math.max(18, iconSize * 0.96) + 'px');
     root.setProperty('--dish-gluten-scale', Math.max(0.55, glutenScale * 0.92).toFixed(3));
     fitNoAllergenBadges();
   }
