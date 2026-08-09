@@ -27,6 +27,8 @@
       --carousel-en-size: 1.8vw;
       --carousel-farewell-es-size: 4.2vw;
       --carousel-farewell-en-size: 2.2vw;
+      --no-allergen-scale: 1;
+      --dish-gluten-scale: 1;
     }
 
     html, body {
@@ -67,13 +69,11 @@
       display: flex; align-items: flex-start;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       flex: 1; min-height: 6vw; flex-shrink: 0;
-      border-left: 5px solid transparent;
+      border-left: 5px solid #1a3a6e;
       overflow: hidden;
       gap: 0.7vw;
       min-height: 6vw;
     }
-    .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
-    .dish-row:nth-child(even) { border-left-color: #10b981; }
     @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
 
     .dish-info { flex: 1; padding-right: 0.4vw; min-width: 0; display: flex; flex-direction: column; gap: 0.45vw; }
@@ -96,16 +96,16 @@
     }
     .dish-gluten-icon { flex-shrink: 0; display: flex; }
     .dish-gluten-icon svg {
-      width: calc(var(--dish-en-size) * 1.5); height: calc(var(--dish-en-size) * 1.5);
+      width: calc(var(--dish-en-size) * 1.5 * var(--dish-gluten-scale, 1)); height: calc(var(--dish-en-size) * 1.5 * var(--dish-gluten-scale, 1));
       filter: drop-shadow(0 1px 2px rgba(0,0,0,0.12));
     }
     .dish-gluten-txt { display: flex; flex-direction: column; line-height: 1.18; min-width: 0; }
     .dish-gluten-es {
-      font-size: clamp(12px, 0.95vw, 18px); font-weight: 800; color: #1e40af;
+      font-size: calc(clamp(12px, 0.95vw, 18px) * var(--dish-gluten-scale, 1)); font-weight: 800; color: #1e40af;
       overflow-wrap: anywhere;
     }
     .dish-gluten-en {
-      font-size: clamp(10px, 0.8vw, 14px); font-style: italic; color: #3b5fad;
+      font-size: calc(clamp(10px, 0.8vw, 14px) * var(--dish-gluten-scale, 1)); font-style: italic; color: #3b5fad;
       overflow-wrap: anywhere; opacity: 0.85;
     }
 
@@ -149,6 +149,11 @@
       background: white; border-radius: 14px;
       padding: 1vw 0.8vw; display: flex; flex-direction: column;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      /* Sin min-height:0, un hijo flex se niega a encogerse por debajo del
+         tamaño de su contenido — con 14 alérgenos eso empujaba la leyenda
+         fuera del recuadro blanco, por debajo del pie de página. */
+      min-height: 0;
+      overflow: hidden;
     }
     .legend-title { font-size: 1.2vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5vw; margin-bottom: 0.6vw; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
@@ -159,6 +164,8 @@
       align-content: start;
       justify-items: start;
       flex: 1;
+      min-height: 0;
+      overflow-y: auto;
     }
     .legend-item {
       display: flex;
@@ -1008,12 +1015,15 @@ function stopSizeAutoAdjust() {
 function dishContentOverflows(mainCol, rows) {
   if (mainCol.scrollHeight > mainCol.clientHeight + 1) return true;
   return rows.some(r => {
+    // La fila en sí tiene overflow:hidden — si su contenido real (nombre +
+    // idioma + nota de "sin gluten" + alérgenos) no cabe en su propia
+    // altura, esto lo detecta sin depender de vigilar cada elemento hijo
+    // por separado uno a uno.
+    if (r.scrollHeight > r.clientHeight + 1) return true;
     const nameEl = r.querySelector('.dish-name-es');
     const enEl = r.querySelector('.dish-name-en');
-    const allergensEl = r.querySelector('.dish-allergens');
     return (nameEl && nameEl.scrollHeight > nameEl.clientHeight + 1) ||
-           (enEl && enEl.scrollHeight > enEl.clientHeight + 1) ||
-           (allergensEl && allergensEl.scrollHeight > allergensEl.clientHeight + 1);
+           (enEl && enEl.scrollHeight > enEl.clientHeight + 1);
   });
 }
 
@@ -1048,6 +1058,7 @@ function fitDishRows() {
     if (manualDishSize.name) root.setProperty('--dish-name-size', manualDishSize.name);
     if (manualDishSize.en) root.setProperty('--dish-en-size', manualDishSize.en);
   }
+  document.documentElement.style.setProperty('--dish-gluten-scale', '1');
   fitAllergenIcons();
   fitNoAllergenBadges();
 
@@ -1057,9 +1068,11 @@ function fitDishRows() {
     const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 20;
     const enFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 12;
     const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
+    const glutenScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-gluten-scale')) || 1;
     root.setProperty('--dish-name-size', Math.max(13, nameFs * 0.94) + 'px');
     root.setProperty('--dish-en-size', Math.max(10, enFs * 0.94) + 'px');
     root.setProperty('--icon-size', Math.max(18, iconSize * 0.96) + 'px');
+    root.setProperty('--dish-gluten-scale', Math.max(0.55, glutenScale * 0.92).toFixed(3));
     fitNoAllergenBadges();
   }
 
@@ -1202,35 +1215,57 @@ function fitAllergenIcons() {
 function fitLegend() {
   const list = document.getElementById('legend-list');
   if (!list) return;
-  const items = list.querySelectorAll('.legend-item');
+  const items = [...list.querySelectorAll('.legend-item')];
   if (!items.length) return;
 
   const containerW = list.getBoundingClientRect().width;
   const containerH = list.getBoundingClientRect().height;
   if (!containerW || !containerH) return;
 
-  const per = containerH / Math.ceil(items.length / 2);
-  let ic = Math.min(per * 0.48, 46); ic = Math.max(14, ic);
-  document.documentElement.style.setProperty('--legend-icon', ic + 'px');
+  // Punto de partida: se calcula suponiendo una sola columna (lo habitual
+  // con el ancho real del sidebar), y el bucle de abajo corrige el
+  // resultado si al final el grid encaja más de una columna o menos.
+  let ic = Math.min(containerH / items.length * 0.62, 46);
+  ic = Math.max(13, ic);
+  let txt = Math.min(ic * 0.55, 18);
+  txt = Math.max(10, txt);
 
-  let txt = Math.min(per * 0.26, 18); txt = Math.max(10, txt);
-  document.documentElement.style.setProperty('--legend-text', txt + 'px');
+  const applySize = (iconPx, textPx) => {
+    document.documentElement.style.setProperty('--legend-icon', iconPx + 'px');
+    document.documentElement.style.setProperty('--legend-text', textPx + 'px');
+    items.forEach(item => {
+      const esEl = item.querySelector('.legend-es');
+      const enEl = item.querySelector('.legend-en');
+      if (esEl) esEl.style.fontSize = textPx + 'px';
+      if (enEl) enEl.style.fontSize = Math.max(8, textPx * 0.85) + 'px';
+    });
+  };
+  applySize(ic, txt);
 
+  // Ajuste real: si los 14 alérgenos en conjunto no caben en el alto
+  // disponible (list.scrollHeight > list.clientHeight), reduce icono y
+  // texto en pasos pequeños hasta que quepan todos sin recortar ninguno
+  // y sin necesidad de scroll.
+  let guard = 0;
+  while (list.scrollHeight > list.clientHeight + 1 && guard++ < 20) {
+    ic = Math.max(11, ic * 0.94);
+    txt = Math.max(8, txt * 0.94);
+    applySize(ic, txt);
+  }
+
+  // Ajuste horizontal: si algún nombre de alérgeno concreto no cabe en el
+  // ancho de su fila (p. ej. "CRUSTÁCEOS"), se reduce solo ese texto.
   items.forEach(item => {
     const wrap = item.querySelector('.legend-text-wrap');
-    if (!wrap) return;
-    const esEl = wrap.querySelector('.legend-es');
-    if (!esEl) return;
+    const esEl = wrap?.querySelector('.legend-es');
+    const enEl = wrap?.querySelector('.legend-en');
+    if (!wrap || !esEl) return;
     let fs = txt;
-    esEl.style.fontSize = fs + 'px';
-    const enEl = wrap.querySelector('.legend-en');
-    if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
-
-    let guard = 0;
-    while (wrap.scrollWidth > item.getBoundingClientRect().width - 12 && fs > 9 && guard++ < 24) {
+    let guard2 = 0;
+    while (wrap.scrollWidth > item.getBoundingClientRect().width - 12 && fs > 8 && guard2++ < 24) {
       fs *= 0.92;
       esEl.style.fontSize = fs + 'px';
-      if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
+      if (enEl) enEl.style.fontSize = Math.max(7, fs * 0.85) + 'px';
     }
   });
 }
