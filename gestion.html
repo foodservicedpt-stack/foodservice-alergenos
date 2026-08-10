@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Food Service DPT — Gestión de Alérgenos</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="./firebase-config.js"></script>
   <style>
@@ -499,6 +500,21 @@
 </head>
 <body>
 
+<!-- ══════════════════════ LOGIN SCREEN ══════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <img src="./img/Encabezado.png" alt="FSD" onerror="this.style.display='none'">
+    <div class="brand">FOOD SERVICE DPT</div>
+    <div class="sub">Gestión de Alérgenos</div>
+    <div class="login-error" id="login-error"></div>
+    <div class="pwd-wrap">
+      <input type="password" id="login-password" placeholder="Contraseña" onkeypress="if(event.key==='Enter') handleLogin()">
+      <button class="pwd-toggle" onclick="togglePwdVisibility()" aria-label="Mostrar contraseña">👁️</button>
+    </div>
+    <button class="btn-login" onclick="handleLogin()">Entrar</button>
+  </div>
+</div>
+
 <!-- ══════════════════════ PANEL ══════════════════════ -->
 <div id="panel">
   <div class="topbar">
@@ -506,7 +522,7 @@
     <span class="brand-text">FOOD SERVICE DPT</span>
     <div class="sep"></div>
     <div class="topbar-actions">
-      <a href="./index.html" class="btn-logout">🏠 Inicio</a>
+      <button onclick="logout()" class="btn-logout">🚪 Cerrar sesión</button>
       <a href="./comedor.html" target="_blank" class="btn-tv">📺 Ver pantalla TV</a>
       <a href="./desayuno.html" target="_blank" class="btn-print">☕ Gestión desayuno</a>
     </div>
@@ -849,8 +865,11 @@ function switchMainTab(tab) {
 }
 
 // ══════════════════════════════════════════════
-//  FIREBASE
+//  FIREBASE + AUTH
 // ══════════════════════════════════════════════
+
+let currentUser = null;
+
 function initFirebase() {
   try {
     if (!window.firebaseConfig || window.firebaseConfig.apiKey === 'TU_API_KEY_AQUI') {
@@ -859,7 +878,21 @@ function initFirebase() {
     }
     firebase.initializeApp(window.firebaseConfig);
     fbReady = true;
-    loadFromFirebase();
+    
+    // Configurar listener de auth
+    firebase.auth().onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) {
+        // Usuario logueado - mostrar panel
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('panel').classList.add('visible');
+        loadFromFirebase();
+      } else {
+        // Usuario no logueado - mostrar login
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('panel').classList.remove('visible');
+      }
+    });
   } catch(e) {
     console.warn('Firebase:', e);
     document.getElementById('firebase-warn').classList.add('visible');
@@ -1042,6 +1075,54 @@ async function manualTranslateCierre() {
 // ══════════════════════════════════════════════
 //  PANEL INIT
 // ══════════════════════════════════════════════
+
+function logout() {
+  if (firebase.auth().currentUser) {
+    firebase.auth().signOut().then(() => {
+      showToast('👋 Sesión cerrada', 'info');
+    }).catch(err => {
+      console.warn('Error al cerrar sesión:', err);
+    });
+  }
+}
+
+function login(email, password) {
+  firebase.auth().signInWithEmailAndPassword(email, password)
+    .then(userCredential => {
+      showToast('✅ Bienvenido', 'success');
+    })
+    .catch(error => {
+      const errorMsg = error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' 
+        ? '❌ Email o contraseña incorrectos' 
+        : '❌ Error: ' + error.message;
+      showToast(errorMsg, 'error');
+      document.querySelector('.login-error').textContent = errorMsg;
+    });
+}
+
+function handleLogin() {
+  const password = document.getElementById('login-password').value;
+  // Usamos un email fijo para autenticación simple
+  const email = 'admin@foodservice.com';
+  if (!password) {
+    document.querySelector('.login-error').textContent = '❌ Introduce la contraseña';
+    return;
+  }
+  login(email, password);
+}
+
+function togglePwdVisibility() {
+  const input = document.getElementById('login-password');
+  const btn = document.querySelector('.pwd-toggle');
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
 function initPanel() {
   document.getElementById('date-input').value = todayStr();
   initFirebase();
