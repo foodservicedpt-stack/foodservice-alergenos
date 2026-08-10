@@ -978,8 +978,8 @@ function adjustSizes(rowsCount, rowHeight) {
   const refRows = Math.min(Math.max(1, rowsCount), 8);
   const heightBudget = availH / refRows;
 
-  const nameFs = Math.max(30, Math.min(availW * 0.06, heightBudget * 0.62, 100));
-  const enFs = Math.max(16, Math.min(nameFs * 0.4, 36));
+  const nameFs = Math.max(32, Math.min(availW * 0.066, heightBudget * 0.66, 110));
+  const enFs = Math.max(17, Math.min(nameFs * 0.4, 38));
   const iconSize = Math.max(48, Math.min(availW * 0.08, heightBudget * 0.62, 104));
   const legendIcon = Math.max(30, Math.min(iconSize * 0.85, 60));
   const legendText = Math.max(14, Math.min(legendIcon * 0.40, 20));
@@ -1211,16 +1211,16 @@ function fitAllergenIcons() {
     });
   });
 
-  // Ancho disponible para la columna de alérgenos (≈42% del ancho de la fila)
-  const allergenW = rowW * (hasTraces ? 0.40 : 0.50);
+  // Ancho disponible para la columna de alérgenos (≈46-58% del ancho de la fila)
+  const allergenW = rowW * (hasTraces ? 0.46 : 0.58);
   const byWidth  = (allergenW - gap * (maxIcons - 1)) / maxIcons;
   // Altura disponible para las filas de alérgenos
-  // Si no hay trazas, usar más altura (hasta 90% de la altura de la fila)
-  // Si hay trazas, ser más conservador (75% de la altura de la fila)
-  const availableHeight = rowH * (hasTraces ? 0.75 : 0.90);
+  const availableHeight = rowH * (hasTraces ? 0.85 : 0.95);
   const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
   let icon = Math.min(byWidth, byHeight);
-  icon = Math.max(24, Math.min(icon, 120));
+  // Los iconos de alérgeno son información de seguridad: deben leerse bien
+  // desde lejos, así que el mínimo se sube considerablemente (antes 24px).
+  icon = Math.max(48, Math.min(icon, 130));
   document.documentElement.style.setProperty('--icon-size', icon + 'px');
   document.documentElement.style.setProperty('--icon-gap', gap + 'px');
 }
@@ -1238,10 +1238,10 @@ function fitLegend() {
   // Punto de partida: se calcula suponiendo una sola columna (lo habitual
   // con el ancho real del sidebar), y el bucle de abajo corrige el
   // resultado si al final el grid encaja más de una columna o menos.
-  let ic = Math.min(containerH / items.length * 0.62, 46);
-  ic = Math.max(13, ic);
-  let txt = Math.min(ic * 0.55, 18);
-  txt = Math.max(10, txt);
+  let ic = Math.min(containerH / items.length * 0.8, 62);
+  ic = Math.max(26, ic);
+  let txt = Math.min(ic * 0.5, 22);
+  txt = Math.max(12, txt);
 
   const applySize = (iconPx, textPx) => {
     document.documentElement.style.setProperty('--legend-icon', iconPx + 'px');
