@@ -1346,19 +1346,100 @@ function attemptAutoLogin() {
   const storedEmail = localStorage.getItem('fs_email');
   const storedPass = localStorage.getItem('fs_password');
   
+  console.log('[AutoLogin] Email guardado:', storedEmail ? 'Sí' : 'No');
+  console.log('[AutoLogin] Contraseña guardada:', storedPass ? 'Sí' : 'No');
+  
   if (storedEmail && storedPass) {
+    console.log('[AutoLogin] Intentando inicio de sesión automático...');
     firebase.auth().signInWithEmailAndPassword(storedEmail, storedPass)
-      .then(() => {
-        console.log('[Auth] Inicio de sesión automático exitoso');
+      .then((userCredential) => {
+        console.log('[Auth] Inicio de sesión automático exitoso para:', userCredential.user.email);
       })
       .catch(err => {
         console.error('[Auth] Error en inicio de sesión automático:', err.code, err.message);
-        showOfflineState('Error de autenticación: ' + err.message + '. Por favor, inicia sesión desde el panel de gestión.');
+        // Limpiar credenciales inválidas
+        localStorage.removeItem('fs_email');
+        localStorage.removeItem('fs_password');
+        
+        // Mostrar formulario de login manual en lugar de solo un mensaje de error
+        showLoginForm();
       });
   } else {
-    showOfflineState('No hay sesión iniciada. Por favor, accede primero desde el panel de gestión (gestion.html) para autenticarte.');
+    console.log('[AutoLogin] No hay credenciales guardadas, mostrando formulario de login');
+    showLoginForm();
   }
 }
+
+// Mostrar formulario de login manual
+function showLoginForm() {
+  // Crear overlay de login si no existe
+  let loginOverlay = document.getElementById('login-overlay');
+  if (!loginOverlay) {
+    loginOverlay = document.createElement('div');
+    loginOverlay.id = 'login-overlay';
+    loginOverlay.style.cssText = `
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+    `;
+    
+    loginOverlay.innerHTML = `
+      <div style="background: white; padding: 2.5vw; border-radius: 16px; max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+        <h2 style="margin-bottom: 1.5vw; color: #0b1f3a; font-size: 1.8vw; text-align: center;">Autenticación Requerida</h2>
+        <p style="margin-bottom: 1.5vw; color: #64748b; font-size: 1vw; text-align: center;">Introduce tus credenciales de Firebase</p>
+        <form id="manual-login-form" style="display: flex; flex-direction: column; gap: 1vw;">
+          <input type="email" id="login-email" placeholder="Correo electrónico" required 
+            style="padding: 0.8vw; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1vw;"/>
+          <input type="password" id="login-password" placeholder="Contraseña" required 
+            style="padding: 0.8vw; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1vw;"/>
+          <button type="submit" 
+            style="padding: 0.8vw; background: #1a3a6e; color: white; border: none; border-radius: 8px; font-size: 1.1vw; font-weight: 700; cursor: pointer; margin-top: 0.5vw;">
+            Iniciar Sesión
+          </button>
+        </form>
+        <p id="login-error" style="margin-top: 1vw; color: #dc2626; font-size: 0.9vw; text-align: center;"></p>
+      </div>
+    `;
+    
+    document.body.appendChild(loginOverlay);
+    
+    // Manejar envío del formulario
+    document.getElementById('manual-login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const pass = document.getElementById('login-password').value;
+      const errorEl = document.getElementById('login-error');
+      
+      errorEl.textContent = 'Iniciando sesión...';
+      
+      firebase.auth().signInWithEmailAndPassword(email, pass)
+        .then(() => {
+          // Guardar credenciales
+          localStorage.setItem('fs_email', email);
+          localStorage.setItem('fs_password', pass);
+          console.log('[Login Manual] Éxito');
+          // El overlay se eliminará automáticamente cuando onAuthStateChanged detecte el usuario
+        })
+        .catch(err => {
+          errorEl.textContent = 'Error: ' + err.message;
+          console.error('[Login Manual] Error:', err);
+        });
+    });
+  }
+  
+  document.getElementById('login-overlay').style.display = 'flex';
+}
+
+// Ocultar formulario de login cuando se autentica
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    const loginOverlay = document.getElementById('login-overlay');
+    if (loginOverlay) {
+      loginOverlay.style.display = 'none';
+      loginOverlay.remove();
+    }
+  }
+});
 
 // Inicializar conexión a la base de datos (solo cuando hay usuario autenticado)
 function initDatabaseConnection() {
