@@ -513,6 +513,28 @@
       <button class="pwd-toggle" onclick="togglePwdVisibility()" aria-label="Mostrar contraseña">👁️</button>
     </div>
     <button class="btn-login" onclick="handleLogin()">Entrar</button>
+    <div style="margin-top:20px;font-size:0.85rem;color:#94a3b8;">
+      ¿Primer acceso? <a href="#" onclick="showRegister();return false;" style="color:#60a5fa;text-decoration:none;font-weight:700;">Crear cuenta administrador</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ REGISTER SCREEN ══════════════════════ -->
+<div id="register-screen" style="display:none;position:fixed;inset:0;z-index:1001;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#0f172a 100%);align-items:center;justify-content:center;">
+  <div class="login-card">
+    <img src="./img/Encabezado.png" alt="FSD" onerror="this.style.display='none'">
+    <div class="brand">FOOD SERVICE DPT</div>
+    <div class="sub">Crear Cuenta Administrador</div>
+    <div class="login-error" id="register-error"></div>
+    <input type="email" id="register-email" placeholder="Email del administrador" style="margin-bottom:12px;">
+    <div class="pwd-wrap">
+      <input type="password" id="register-password" placeholder="Contraseña (mínimo 6 caracteres)" onkeypress="if(event.key==='Enter') handleRegister()">
+      <button class="pwd-toggle" onclick="toggleRegisterPwdVisibility()" aria-label="Mostrar contraseña">👁️</button>
+    </div>
+    <button class="btn-login" onclick="handleRegister()">Crear cuenta</button>
+    <div style="margin-top:20px;font-size:0.85rem;color:#94a3b8;">
+      ¿Ya tienes cuenta? <a href="#" onclick="showLogin();return false;" style="color:#60a5fa;text-decoration:none;font-weight:700;">Iniciar sesión</a>
+    </div>
   </div>
 </div>
 
@@ -1126,6 +1148,61 @@ function togglePwdVisibility() {
     input.type = 'password';
     btn.textContent = '👁️';
   }
+}
+
+function toggleRegisterPwdVisibility() {
+  const input = document.getElementById('register-password');
+  const btn = document.querySelector('#register-screen .pwd-toggle');
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
+function showRegister() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('register-screen').style.display = 'flex';
+}
+
+function showLogin() {
+  document.getElementById('register-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function handleRegister() {
+  const email = document.getElementById('register-email').value.trim();
+  const password = document.getElementById('register-password').value;
+  
+  if (!email) {
+    document.getElementById('register-error').textContent = '❌ Introduce tu email';
+    return;
+  }
+  if (!password || password.length < 6) {
+    document.getElementById('register-error').textContent = '❌ La contraseña debe tener al menos 6 caracteres';
+    return;
+  }
+  
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then(userCredential => {
+      showToast('✅ Cuenta creada. ¡Bienvenido!', 'success');
+      document.getElementById('register-error').textContent = '';
+      // El listener onAuthStateChanged se encargará de mostrar el panel
+    })
+    .catch(error => {
+      let errorMsg = '❌ Error: ' + error.message;
+      if (error.code === 'auth/email-already-in-use') {
+        errorMsg = '❌ Este email ya está registrado';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMsg = '❌ Email inválido';
+      } else if (error.code === 'auth/weak-password') {
+        errorMsg = '❌ Contraseña demasiado débil';
+      }
+      document.getElementById('register-error').textContent = errorMsg;
+      showToast(errorMsg, 'error');
+    });
 }
 
 function initPanel() {
