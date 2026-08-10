@@ -138,7 +138,7 @@
     }
     .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
     .no-allergen-txt .es { white-space: normal; overflow-wrap: anywhere; }
-    .no-allergen .en { font-style: italic; font-size: 0.85em; opacity: 0.75; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
+    .no-allergen .en { font-style: italic; font-size: 0.75em; opacity: 0.75; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
@@ -150,8 +150,8 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       min-height: 0;
     }
-    .legend-title { 
-      font-size: clamp(18px, 2vw, 42px); 
+    .legend-title {
+      font-size: clamp(16px, 1.8vw, 32px); 
       font-weight: 800; 
       color: #64748b; 
       text-transform: uppercase; 
@@ -167,30 +167,32 @@
       font-weight: 400; 
       text-transform: none; 
       letter-spacing: 0; 
-      font-size: 0.85em;
+      font-size: 0.75em;
       margin-top: 0.3em;
     }
     .legend-list {
       display: flex;
-      flex-direction: column;
-      gap: 0.4vw;
-      align-content: start;
-      justify-items: start;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 0.6vw;
       flex: 1;
       min-height: 0;
       overflow: visible;
     }
     .legend-item {
       display: flex;
-      flex-wrap: nowrap;
+      flex-direction: row;
       align-items: center;
       gap: clamp(6px, 0.8vw, 16px);
       min-width: 0;
-      width: 100%;
+      width: auto;
+      flex: 0 0 calc(50% - 0.3vw);
+      max-width: calc(50% - 0.3vw);
       padding: clamp(4px, 0.5vw, 10px) clamp(2px, 0.3vw, 6px);
-      border-bottom: 1px solid #eef1f6;
+      border-bottom: none;
+      box-sizing: border-box;
     }
-    .legend-item:last-child { border-bottom: none; }
+    .legend-item:nth-child(odd) { margin-right: 0.6vw; }
     .legend-circle {
       width: var(--legend-icon);
       height: var(--legend-icon);
@@ -207,6 +209,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      overflow: hidden;
     }
     .legend-es {
       font-size: var(--legend-text);
@@ -214,19 +217,19 @@
       color: #1e293b;
       text-transform: uppercase;
       display: block;
-      white-space: normal;
-      overflow-wrap: break-word;
-      word-break: break-word;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       line-height: 1.15;
     }
     .legend-en {
-      font-size: calc(var(--legend-text) * 0.75);
+      font-size: calc(var(--legend-text) * 0.65);
       color: #64748b;
       font-style: italic;
       display: block;
-      white-space: normal;
-      overflow-wrap: break-word;
-      word-break: break-word;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       line-height: 1.2;
       margin-top: 0.15em;
     }
