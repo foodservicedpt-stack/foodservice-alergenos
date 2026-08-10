@@ -1,11 +1,70 @@
-# Node dependencies
+# Web project specific
+*.html.swp
+*.tmp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Dependencies
 node_modules/
+vendor/
 
-# Local test artifacts
-comedor-test.png
-test-comedor.js
+# Build artifacts
+dist/
+build/
+*.min.js
+*.min.css
 
-# OS / editor
-.DS_Store
+# Logs
+*.log
+
+# Editor
+.vscode/
+.idea/
 *.swp
-*~
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg-info/
+.eggs/
+
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
