@@ -213,18 +213,18 @@
 
     @media (min-width: 1600px), (min-height: 900px) {
       :root {
-        --dish-name-size: 6vw;
-        --dish-en-size: 2.6vw;
-        --icon-size: 6vw;
-        --icon-gap: 1vw;
-        --dish-pad: 1.8vw;
-        --legend-icon: 4.5vw;
-        --legend-text: 2vw;
+        --dish-name-size: 10vw;
+        --dish-en-size: 4.2vw;
+        --icon-size: 9vw;
+        --icon-gap: 1.3vw;
+        --dish-pad: 2.4vw;
+        --legend-icon: 6vw;
+        --legend-text: 3vw;
       }
-      .dish-allergens { width: min(38%, 460px); max-width: 460px; }
-      .allergen-row { gap: 1vw; }
-      .no-allergen { padding: 0.9vw 1.3vw; gap: 1vw; }
-      .legend-title { font-size: 1.4vw; padding-bottom: 0.7vw; margin-bottom: 0.8vw; }
+      .dish-allergens { width: min(34%, 560px); max-width: 560px; }
+      .allergen-row { gap: 1.2vw; }
+      .no-allergen { padding: 1.1vw 1.5vw; gap: 1.2vw; }
+      .legend-title { font-size: 1.8vw; padding-bottom: 0.9vw; margin-bottom: 1vw; }
     }
 
     /* ─── FOOTER ─── */
@@ -997,11 +997,11 @@ function adjustSizes(rowsCount, rowHeight) {
   const heightBudget = availH / refRows;
   const dishH = Math.max(80, Math.min(availH, heightBudget * (isLargeScreen ? 1.05 : 1)));
 
-  const nameFs = Math.max(22, Math.min(availW * 0.072 * sizeBoost, dishH * 0.70, 120));
-  const enFs = Math.max(16, Math.min(nameFs * 0.55, 42));
-  const iconSize = Math.max(40, Math.min(availW * 0.1, dishH * 0.75 * sizeBoost, 140));
-  const legendIcon = Math.max(28, Math.min(iconSize * 0.90, 100));
-  const legendText = Math.max(16, Math.min(legendIcon * 0.55, 28));
+  const nameFs = Math.max(28, Math.min(availW * 0.10 * sizeBoost, dishH * 0.90, 260));
+  const enFs = Math.max(20, Math.min(nameFs * 0.60, 70));
+  const iconSize = Math.max(50, Math.min(availW * 0.14, dishH * 0.90 * sizeBoost, 220));
+  const legendIcon = Math.max(36, Math.min(iconSize * 0.98, 160));
+  const legendText = Math.max(20, Math.min(legendIcon * 0.72, 44));
 
   root.setProperty('--dish-name-size', nameFs + 'px');
   root.setProperty('--dish-en-size', enFs + 'px');
@@ -1100,11 +1100,11 @@ function fitDishRows() {
     const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
     const iconGap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-gap')) || 6;
     const glutenScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-gluten-scale')) || 1;
-    root.setProperty('--dish-name-size', Math.max(16, nameFs * 0.95) + 'px');
-    root.setProperty('--dish-en-size', Math.max(11, enFs * 0.95) + 'px');
-    root.setProperty('--icon-size', Math.max(22, iconSize * 0.95) + 'px');
-    root.setProperty('--icon-gap', Math.max(3, iconGap * 0.95) + 'px');
-    root.setProperty('--dish-gluten-scale', Math.max(0.6, glutenScale * 0.95).toFixed(3));
+    root.setProperty('--dish-name-size', Math.max(18, nameFs * 0.98) + 'px');
+    root.setProperty('--dish-en-size', Math.max(14, enFs * 0.98) + 'px');
+    root.setProperty('--icon-size', Math.max(28, iconSize * 0.98) + 'px');
+    root.setProperty('--icon-gap', Math.max(5, iconGap * 0.98) + 'px');
+    root.setProperty('--dish-gluten-scale', Math.max(0.75, glutenScale * 0.98).toFixed(3));
     fitNoAllergenBadges();
   }
 

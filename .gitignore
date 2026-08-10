@@ -1,0 +1,11 @@
+# Node dependencies
+node_modules/
+
+# Local test artifacts
+comedor-test.png
+test-comedor.js
+
+# OS / editor
+.DS_Store
+*.swp
+*~
