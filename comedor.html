@@ -27,6 +27,8 @@
       --carousel-en-size: 1.8vw;
       --carousel-farewell-es-size: 4.2vw;
       --carousel-farewell-en-size: 2.2vw;
+      --no-allergen-scale: 1;
+      --dish-gluten-scale: 1;
     }
 
     html, body {
@@ -66,13 +68,11 @@
       padding: var(--dish-pad) calc(var(--dish-pad) * 1.2);
       display: flex; align-items: flex-start;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      flex: 1; min-height: 6vw; flex-shrink: 0;
-      border-left: 5px solid transparent;
-      overflow: hidden;
+      flex: 1; flex-shrink: 0;
+      border-left: 5px solid #1a3a6e;
       gap: 0.7vw;
+      min-height: 6vw;
     }
-    .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
-    .dish-row:nth-child(even) { border-left-color: #10b981; }
     @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
 
     .dish-info { flex: 1; padding-right: 0.4vw; min-width: 0; display: flex; flex-direction: column; gap: 0.45vw; }
@@ -88,18 +88,24 @@
       display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
     }
     .dish-gluten-note {
-      display: flex; flex-direction: column; gap: 0.16vw;
-      padding: 0.45vw 0.6vw; border-radius: 0.7vw;
-      border: 1px solid #bbf7d0; background: #f0fdf4;
-      max-width: 100%; align-self: flex-start;
+      display: flex; flex-direction: row; align-items: center; gap: 0.6vw;
+      padding: 0.4vw 0.7vw; border-radius: 10px;
+      border: 1.5px solid #93c5fd; background: #eff6ff;
+      max-width: 100%; align-self: flex-start; box-sizing: border-box;
     }
+    .dish-gluten-icon { flex-shrink: 0; display: flex; }
+    .dish-gluten-icon svg {
+      width: calc(var(--dish-en-size) * 1.5 * var(--dish-gluten-scale, 1)); height: calc(var(--dish-en-size) * 1.5 * var(--dish-gluten-scale, 1));
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.12));
+    }
+    .dish-gluten-txt { display: flex; flex-direction: column; line-height: 1.18; min-width: 0; }
     .dish-gluten-es {
-      font-size: clamp(13px, 1.05vw, 20px); font-weight: 800; color: #166534;
-      line-height: 1.16; overflow-wrap: anywhere;
+      font-size: calc(clamp(12px, 0.95vw, 18px) * var(--dish-gluten-scale, 1)); font-weight: 800; color: #1e40af;
+      overflow-wrap: anywhere;
     }
     .dish-gluten-en {
-      font-size: clamp(11px, 0.9vw, 16px); font-style: italic; color: #4d7c4d;
-      line-height: 1.15; overflow-wrap: anywhere;
+      font-size: calc(clamp(10px, 0.8vw, 14px) * var(--dish-gluten-scale, 1)); font-style: italic; color: #3b5fad;
+      overflow-wrap: anywhere; opacity: 0.85;
     }
 
     /* ─── ALLERGEN ICONS ─── */
@@ -136,24 +142,74 @@
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
-      width: 20vw; background: white; border-radius: 14px;
+      flex: 0 0 min(260px, 24vw);
+      width: min(25vw, 360px);
+      max-width: 380px;
+      background: white; border-radius: 14px;
       padding: 1vw 0.8vw; display: flex; flex-direction: column;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      /* Sin min-height:0, un hijo flex se niega a encogerse por debajo del
+         tamaño de su contenido — con 14 alérgenos eso empujaba la leyenda
+         fuera del recuadro blanco, por debajo del pie de página. */
+      min-height: 0;
+      overflow: hidden;
     }
-    .legend-title { font-size: 1.0vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4vw; margin-bottom: 0.5vw; }
+    .legend-title { font-size: 1.2vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5vw; margin-bottom: 0.6vw; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
-    .legend-list { 
-      display: grid; 
-      grid-template-columns: 1fr; 
-      gap: 0.35vw;
+    .legend-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
       align-content: start;
+      justify-items: start;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
     }
-    .legend-item { display: flex; align-items: center; gap: 0.35vw; }
-    .legend-circle { width: 2.2vw; height: 2.2vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .legend-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55vw;
+      min-width: 0;
+      width: 100%;
+      padding: 0.42vw 0.15vw;
+      border-bottom: 1px solid #eef1f6;
+    }
+    .legend-item:last-child { border-bottom: none; }
+    .legend-circle {
+      width: var(--legend-icon);
+      height: var(--legend-icon);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-    .legend-text-wrap { line-height: 1.15; min-width: 0; }
-    .legend-es { font-size: 0.85vw; font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; white-space: nowrap; }
-    .legend-en { font-size: 0.65vw; color: #64748b; font-style: italic; display: block; white-space: nowrap; }
+    .legend-text-wrap {
+      line-height: 1.15;
+      min-width: 0;
+      width: calc(100% - var(--legend-icon) - 0.55vw);
+    }
+    .legend-es {
+      font-size: var(--legend-text);
+      font-weight: 700;
+      color: #1e293b;
+      text-transform: uppercase;
+      display: block;
+      white-space: normal;
+    }
+    .legend-en {
+      font-size: calc(var(--legend-text) * 0.85);
+      color: #64748b;
+      font-style: italic;
+      display: block;
+      white-space: normal;
+    }
+    @media (max-width: 1100px) {
+      .body { flex-wrap: wrap; }
+      .sidebar { width: 100%; max-width: 100%; }
+    }
 
     /* ─── FOOTER ─── */
     .footer { background: #0b1f3a; padding: 0.5vw 2.5vw; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
@@ -909,24 +965,30 @@ function adjustSizes(rowsCount, rowHeight) {
   const availH = Math.max(100, window.innerHeight - headerH - 40);
   const availW = Math.max(200, window.innerWidth - sidebarW - 40);
 
-  let dishH = availH;
-  if (typeof rowHeight === 'number' && rowHeight > 0) {
-    dishH = Math.min(availH / Math.max(1, rowsCount), rowHeight * 2.2);
-  } else if (rowsCount > 0) {
-    dishH = Math.max(60, availH / rowsCount);
-  }
+  // El tamaño se basa sobre todo en el ANCHO disponible, que es igual para
+  // todas las filas. Antes se repartía la altura total entre el número de
+  // platos y esa media se aplicaba a TODOS por igual — así que un solo
+  // plato con más contenido (varios alérgenos + nota de sin gluten)
+  // empequeñecía el texto de TODOS los demás, aunque sobrara espacio de
+  // sobra (visible en la última captura: "FRUTA" y "ENSALADA" con hueco
+  // vacío). Se limita el "castigo por nº de platos" a un máximo de 6 filas
+  // de referencia: con menos platos no se agranda de forma desproporcionada,
+  // y con más no se sigue encogiendo sin límite por este cálculo — si de
+  // verdad no cupiera, el bucle de fitDishRows() lo corrige después.
+  const refRows = Math.min(Math.max(1, rowsCount), 8);
+  const heightBudget = availH / refRows;
 
-  const nameFs = Math.max(16, Math.min(dishH * 0.45, availW * 0.040));
-  const enFs = Math.max(12, Math.min(nameFs * 0.42, 24));
-  const iconSize = Math.max(24, Math.min(dishH * 0.48, availW * 0.055));
-  const legendIcon = Math.max(18, Math.min(iconSize, 60));
-  const legendText = Math.max(12, Math.min(legendIcon * 0.40, 16));
+  const nameFs = Math.max(32, Math.min(availW * 0.066, heightBudget * 0.66, 110));
+  const enFs = Math.max(17, Math.min(nameFs * 0.4, 38));
+  const iconSize = Math.max(48, Math.min(availW * 0.08, heightBudget * 0.62, 104));
+  const legendIcon = Math.max(30, Math.min(iconSize * 0.85, 60));
+  const legendText = Math.max(14, Math.min(legendIcon * 0.40, 20));
 
   root.setProperty('--dish-name-size', nameFs + 'px');
   root.setProperty('--dish-en-size', enFs + 'px');
   root.setProperty('--icon-size', iconSize + 'px');
   root.setProperty('--icon-gap', Math.max(4, iconSize * 0.12) + 'px');
-  root.setProperty('--dish-pad', Math.max(8, dishH * 0.18) + 'px');
+  root.setProperty('--dish-pad', Math.max(8, heightBudget * 0.16) + 'px');
   root.setProperty('--legend-icon', legendIcon + 'px');
   root.setProperty('--legend-text', legendText + 'px');
 }
@@ -952,14 +1014,19 @@ function stopSizeAutoAdjust() {
 // caso posible). Un elemento con line-clamp recortado siempre tiene
 // scrollHeight > clientHeight; es la forma estándar de detectarlo.
 function dishContentOverflows(mainCol, rows) {
+  // Ya no hace falta vigilar cada fila por separado: al quitar
+  // overflow:hidden de .dish-row, una fila nunca recorta su propio
+  // contenido — como mucho crece más de lo ideal. El único desbordamiento
+  // real posible es que el CONJUNTO de filas no quepa en la columna
+  // (mainCol sigue teniendo overflow:hidden, ese es el límite físico de
+  // la pantalla), o que un nombre de plato muy largo se trunque con "…"
+  // por su propio line-clamp (un recorte visible, no silencioso).
   if (mainCol.scrollHeight > mainCol.clientHeight + 1) return true;
   return rows.some(r => {
     const nameEl = r.querySelector('.dish-name-es');
     const enEl = r.querySelector('.dish-name-en');
-    const allergensEl = r.querySelector('.dish-allergens');
     return (nameEl && nameEl.scrollHeight > nameEl.clientHeight + 1) ||
-           (enEl && enEl.scrollHeight > enEl.clientHeight + 1) ||
-           (allergensEl && allergensEl.scrollHeight > allergensEl.clientHeight + 1);
+           (enEl && enEl.scrollHeight > enEl.clientHeight + 1);
   });
 }
 
@@ -994,29 +1061,32 @@ function fitDishRows() {
     if (manualDishSize.name) root.setProperty('--dish-name-size', manualDishSize.name);
     if (manualDishSize.en) root.setProperty('--dish-en-size', manualDishSize.en);
   }
+  document.documentElement.style.setProperty('--dish-gluten-scale', '1');
   fitAllergenIcons();
   fitNoAllergenBadges();
 
-  // Phase 1: Shrink icons and badges (and gap) to try to fix overflow
-  let guard1 = 0;
-  while (dishContentOverflows(mainCol, rows) && guard1++ < 16) {
-    const root = document.documentElement.style;
-    const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
-    const newIconSize = Math.max(18, iconSize * 0.96);
-    root.setProperty('--icon-size', newIconSize + 'px');
-    // Update gap to be proportional to the new icon size
-    root.setProperty('--icon-gap', Math.max(4, newIconSize * 0.12) + 'px');
-    fitNoAllergenBadges();
-  }
-
-  // Phase 2: If still overflow, shrink dish name and English size
-  let guard2 = 0;
-  while (dishContentOverflows(mainCol, rows) && guard2++ < 16) {
+  let guard = 0;
+  // Un único bucle equilibrado: nombre, iconos y badge de sin gluten se
+  // reducen juntos y en pasos pequeños. Antes se hacía en dos fases que
+  // encogían primero los iconos hasta un mínimo de 18px — pero en una
+  // pantalla de alérgenos los iconos son tan importantes de leer como el
+  // nombre del plato, así que no tiene sentido sacrificar unos por otro.
+  // Como las filas ya no pueden recortar contenido en silencio (ver
+  // dishContentOverflows), este bucle es solo el mejor esfuerzo para que
+  // todo quepa cómodo en la pantalla sin necesitar más espacio del real.
+  while (dishContentOverflows(mainCol, rows) && guard++ < 18) {
     const root = document.documentElement.style;
     const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 20;
     const enFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 12;
-    root.setProperty('--dish-name-size', Math.max(13, nameFs * 0.94) + 'px');
-    root.setProperty('--dish-en-size', Math.max(10, enFs * 0.94) + 'px');
+    const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
+    const iconGap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-gap')) || 6;
+    const glutenScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-gluten-scale')) || 1;
+    root.setProperty('--dish-name-size', Math.max(16, nameFs * 0.95) + 'px');
+    root.setProperty('--dish-en-size', Math.max(11, enFs * 0.95) + 'px');
+    root.setProperty('--icon-size', Math.max(22, iconSize * 0.95) + 'px');
+    root.setProperty('--icon-gap', Math.max(3, iconGap * 0.95) + 'px');
+    root.setProperty('--dish-gluten-scale', Math.max(0.6, glutenScale * 0.95).toFixed(3));
+    fitNoAllergenBadges();
   }
 
   fitLegend();
@@ -1076,8 +1146,18 @@ function renderMenu(data) {
     }
     const glutenNote = p.sinGluten ? `
       <div class="dish-gluten-note">
-        <div class="dish-gluten-es">Hay opción sin gluten disponible. Pregunte al personal.</div>
-        <div class="dish-gluten-en">Gluten-free option available. Please ask staff.</div>
+        <span class="dish-gluten-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="11" fill="#2563eb"/>
+            <path d="M12 4 V19 M8.5 6.8 L12 8.8 L15.5 6.8 M8.5 10.6 L12 12.6 L15.5 10.6 M8.5 14.4 L12 16.4 L15.5 14.4"
+                  fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="5.5" y1="18.5" x2="18.5" y2="5.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="dish-gluten-txt">
+          <span class="dish-gluten-es">Opción sin gluten disponible. Pregunta al personal.</span>
+          <span class="dish-gluten-en">Gluten-free option available. Ask staff.</span>
+        </span>
       </div>` : '';
     const row = document.createElement('div');
     row.className = 'dish-row';
@@ -1131,16 +1211,16 @@ function fitAllergenIcons() {
     });
   });
 
-  // Ancho disponible para la columna de alérgenos (≈42% del ancho de la fila)
-  const allergenW = rowW * (hasTraces ? 0.40 : 0.50);
+  // Ancho disponible para la columna de alérgenos (≈46-58% del ancho de la fila)
+  const allergenW = rowW * (hasTraces ? 0.46 : 0.58);
   const byWidth  = (allergenW - gap * (maxIcons - 1)) / maxIcons;
   // Altura disponible para las filas de alérgenos
-  // Si no hay trazas, usar más altura (hasta 90% de la altura de la fila)
-  // Si hay trazas, ser más conservador (75% de la altura de la fila)
-  const availableHeight = rowH * (hasTraces ? 0.75 : 0.90);
+  const availableHeight = rowH * (hasTraces ? 0.85 : 0.95);
   const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
   let icon = Math.min(byWidth, byHeight);
-  icon = Math.max(24, Math.min(icon, 120));
+  // Los iconos de alérgeno son información de seguridad: deben leerse bien
+  // desde lejos, así que el mínimo se sube considerablemente (antes 24px).
+  icon = Math.max(48, Math.min(icon, 130));
   document.documentElement.style.setProperty('--icon-size', icon + 'px');
   document.documentElement.style.setProperty('--icon-gap', gap + 'px');
 }
@@ -1148,36 +1228,59 @@ function fitAllergenIcons() {
 function fitLegend() {
   const list = document.getElementById('legend-list');
   if (!list) return;
-  const items = list.querySelectorAll('.legend-item');
+  const items = [...list.querySelectorAll('.legend-item')];
   if (!items.length) return;
 
   const containerW = list.getBoundingClientRect().width;
   const containerH = list.getBoundingClientRect().height;
   if (!containerW || !containerH) return;
 
-  const per = containerH / items.length;
-  let ic = Math.min(per * 0.50, 46); ic = Math.max(14, ic);
-  document.documentElement.style.setProperty('--legend-icon', ic + 'px');
+  // Punto de partida: se calcula suponiendo una sola columna (lo habitual
+  // con el ancho real del sidebar), y el bucle de abajo corrige el
+  // resultado si al final el grid encaja más de una columna o menos.
+  let ic = Math.min(containerH / items.length * 0.8, 62);
+  ic = Math.max(26, ic);
+  let txt = Math.min(ic * 0.5, 22);
+  txt = Math.max(12, txt);
 
-  let txt = Math.min(per * 0.28, 18); txt = Math.max(10, txt);
+  const applySize = (iconPx, textPx) => {
+    document.documentElement.style.setProperty('--legend-icon', iconPx + 'px');
+    document.documentElement.style.setProperty('--legend-text', textPx + 'px');
+    items.forEach(item => {
+      const esEl = item.querySelector('.legend-es');
+      const enEl = item.querySelector('.legend-en');
+      if (esEl) esEl.style.fontSize = textPx + 'px';
+      if (enEl) enEl.style.fontSize = Math.max(8, textPx * 0.85) + 'px';
+    });
+  };
+  applySize(ic, txt);
 
+  // Ajuste real: si los 14 alérgenos en conjunto no caben en el alto
+  // disponible (list.scrollHeight > list.clientHeight), reduce icono y
+  // texto en pasos pequeños hasta que quepan todos sin recortar ninguno
+  // y sin necesidad de scroll.
+  let guard = 0;
+  while (list.scrollHeight > list.clientHeight + 1 && guard++ < 20) {
+    ic = Math.max(11, ic * 0.94);
+    txt = Math.max(8, txt * 0.94);
+    applySize(ic, txt);
+  }
+
+  // Ajuste horizontal: si algún nombre de alérgeno concreto no cabe en el
+  // ancho de su fila (p. ej. "CRUSTÁCEOS"), se reduce solo ese texto.
   items.forEach(item => {
     const wrap = item.querySelector('.legend-text-wrap');
-    if (!wrap) return;
-    const esEl = wrap.querySelector('.legend-es');
-    if (!esEl) return;
+    const esEl = wrap?.querySelector('.legend-es');
+    const enEl = wrap?.querySelector('.legend-en');
+    if (!wrap || !esEl) return;
     let fs = txt;
-    esEl.style.fontSize = fs + 'px';
-    const enEl = wrap.querySelector('.legend-en');
-    if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
-    let guard = 0;
-    while (wrap.scrollWidth > containerW - 20 && fs > 9 && guard++ < 24) {
-      fs *= 0.90;
+    let guard2 = 0;
+    while (wrap.scrollWidth > item.getBoundingClientRect().width - 12 && fs > 8 && guard2++ < 24) {
+      fs *= 0.92;
       esEl.style.fontSize = fs + 'px';
-      if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
+      if (enEl) enEl.style.fontSize = Math.max(7, fs * 0.85) + 'px';
     }
   });
-  document.documentElement.style.setProperty('--legend-text', txt + 'px');
 }
 window.addEventListener('resize', () => {
   requestAnimationFrame(fitDishRows);
