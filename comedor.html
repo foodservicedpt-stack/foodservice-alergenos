@@ -1188,8 +1188,8 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 // ══════════════════════════════════════════════
 function initFirebase() {
   try {
-    if (!firebaseConfig || firebaseConfig.apiKey === 'TU_API_KEY_AQUI') { showOfflineState(); return; }
-    firebase.initializeApp(firebaseConfig);
+    if (!window.firebaseConfig || window.firebaseConfig.apiKey === 'TU_API_KEY_AQUI') { showOfflineState(); return; }
+    firebase.initializeApp(window.firebaseConfig);
     const db = firebase.database();
 
     // Menu listener — reinicio automático diario:
