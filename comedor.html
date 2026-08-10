@@ -184,11 +184,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f8fafc;
-      border-radius: 50%;
-      box-shadow: inset 0 0 0 1px #eef1f6;
     }
-    .legend-circle img { width: 76%; height: 76%; object-fit: contain; border-radius: 50%; }
+    .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
     .legend-text-wrap {
       line-height: 1.15;
       min-width: 0;
@@ -983,9 +980,9 @@ function adjustSizes(rowsCount, rowHeight) {
 
   const nameFs = Math.max(30, Math.min(availW * 0.06, heightBudget * 0.62, 100));
   const enFs = Math.max(16, Math.min(nameFs * 0.4, 36));
-  const iconSize = Math.max(38, Math.min(availW * 0.065, heightBudget * 0.52, 84));
-  const legendIcon = Math.max(20, Math.min(iconSize * 0.65, 46));
-  const legendText = Math.max(14, Math.min(legendIcon * 0.44, 20));
+  const iconSize = Math.max(48, Math.min(availW * 0.08, heightBudget * 0.62, 104));
+  const legendIcon = Math.max(30, Math.min(iconSize * 0.85, 60));
+  const legendText = Math.max(14, Math.min(legendIcon * 0.40, 20));
 
   root.setProperty('--dish-name-size', nameFs + 'px');
   root.setProperty('--dish-en-size', enFs + 'px');
