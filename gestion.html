@@ -6,6 +6,7 @@
   <title>Food Service DPT — Gestión de Alérgenos</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="./firebase-config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -52,17 +53,17 @@
     .login-card img { height: 72px; object-fit: contain; margin-bottom: 20px; filter: drop-shadow(0 0 16px rgba(96,165,250,0.4)); }
     .login-card .brand { font-size: 1.5rem; font-weight: 800; color: #f0f9ff; letter-spacing: 2px; }
     .login-card .sub { font-size: 0.82rem; color: #94a3b8; letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; margin-bottom: 36px; }
-    .pwd-wrap { position: relative; margin-bottom: 16px; }
-    .pwd-wrap input {
-      width: 100%; padding: 16px 50px 16px 20px;
+    .login-input-wrap { position: relative; margin-bottom: 14px; text-align: left; }
+    .login-input-wrap label { display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .login-input-wrap input {
+      width: 100%; padding: 14px 16px;
       border: 2px solid rgba(255,255,255,0.15); border-radius: 12px;
       background: rgba(255,255,255,0.07); color: white;
-      font-size: 1.05rem; outline: none; transition: border 0.2s;
+      font-size: 1rem; outline: none; transition: border 0.2s;
     }
-    .pwd-wrap input::placeholder { color: #64748b; }
-    .pwd-wrap input:focus { border-color: #3b82f6; }
-    .pwd-toggle { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1.2rem; }
-    .login-error { color: #fca5a5; font-size: 0.85rem; margin-bottom: 12px; min-height: 20px; }
+    .login-input-wrap input::placeholder { color: #64748b; }
+    .login-input-wrap input:focus { border-color: #3b82f6; }
+    .login-error { color: #fca5a5; font-size: 0.85rem; margin-bottom: 16px; min-height: 20px; }
     .btn-login {
       width: 100%; padding: 15px;
       background: linear-gradient(135deg, #1d4ed8, #3b82f6);
@@ -72,6 +73,8 @@
       box-shadow: 0 4px 16px rgba(59,130,246,0.4);
     }
     .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.5); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .login-help { font-size: 0.75rem; color: #64748b; margin-top: 16px; line-height: 1.4; }
 
     /* ─── PANEL ─── */
     #panel { display: none; flex-direction: column; min-height: 100vh; }
@@ -499,14 +502,41 @@
 </head>
 <body>
 
+<!-- ══════════════════════ LOGIN SCREEN ══════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <img src="./img/Encabezado.png" alt="FSD" onerror="this.style.display='none'">
+    <div class="brand">FOOD SERVICE DPT</div>
+    <div class="sub">Gestión de Alérgenos</div>
+    
+    <div class="login-input-wrap">
+      <label for="login-email">📧 Email</label>
+      <input type="email" id="login-email" placeholder="admin@ejemplo.com" autocomplete="email">
+    </div>
+    
+    <div class="login-input-wrap">
+      <label for="login-password">🔒 Contraseña</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    
+    <div class="login-error" id="login-error"></div>
+    
+    <button class="btn-login" id="btn-login" onclick="handleLogin()">🔐 Iniciar Sesión</button>
+    
+    <div class="login-help">
+      ¿No tienes cuenta? Contacta con el administrador para que te cree una en Firebase Console.
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════════ PANEL ══════════════════════ -->
-<div id="panel">
+<div id="panel" style="display:none;">
   <div class="topbar">
     <img src="./img/Encabezado.png" alt="FSD" onerror="this.style.display='none'">
     <span class="brand-text">FOOD SERVICE DPT</span>
     <div class="sep"></div>
     <div class="topbar-actions">
-      <a href="./index.html" class="btn-logout">🏠 Inicio</a>
+      <button class="btn-logout" onclick="handleLogout()" style="background:none;border:none;cursor:pointer;font-size:0.82rem;">🚪 Cerrar Sesión</button>
       <a href="./comedor.html" target="_blank" class="btn-tv">📺 Ver pantalla TV</a>
       <a href="./desayuno.html" target="_blank" class="btn-print">☕ Gestión desayuno</a>
     </div>
@@ -849,9 +879,11 @@ function switchMainTab(tab) {
 }
 
 // ══════════════════════════════════════════════
-//  FIREBASE
+//  FIREBASE AUTH
 // ══════════════════════════════════════════════
-function initFirebase() {
+let authListener = null;
+
+function initFirebaseAuth() {
   try {
     if (!firebaseConfig || firebaseConfig.apiKey === 'TU_API_KEY_AQUI') {
       document.getElementById('firebase-warn').classList.add('visible');
@@ -859,12 +891,82 @@ function initFirebase() {
     }
     firebase.initializeApp(firebaseConfig);
     fbReady = true;
-    loadFromFirebase();
+    
+    // Escuchar cambios en el estado de autenticación
+    const auth = firebase.auth();
+    authListener = auth.onAuthStateChanged(user => {
+      if (user) {
+        // Usuario autenticado - mostrar panel
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('panel').style.display = 'flex';
+        document.getElementById('panel').classList.add('visible');
+        loadFromFirebase();  // Esta función ya carga todo: menu, turnos, recordatorios, cierre, tvSettings
+      } else {
+        // Usuario no autenticado - mostrar login
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('panel').style.display = 'none';
+        document.getElementById('panel').classList.remove('visible');
+      }
+    });
   } catch(e) {
-    console.warn('Firebase:', e);
+    console.warn('Firebase Auth:', e);
     document.getElementById('firebase-warn').classList.add('visible');
   }
 }
+
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errorDiv = document.getElementById('login-error');
+  const btn = document.getElementById('btn-login');
+  
+  errorDiv.textContent = '';
+  
+  if (!email || !password) {
+    errorDiv.textContent = '⚠️ Por favor, introduce email y contraseña';
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ Iniciando sesión...';
+  
+  try {
+    await firebase.auth().signInWithEmailAndPassword(email, password);
+    // El éxito se maneja en onAuthStateChanged
+  } catch (error) {
+    console.error('Login error:', error);
+    let msg = '❌ Error al iniciar sesión';
+    if (error.code === 'auth/user-not-found') {
+      msg = '❌ Usuario no encontrado';
+    } else if (error.code === 'auth/wrong-password') {
+      msg = '❌ Contraseña incorrecta';
+    } else if (error.code === 'auth/invalid-email') {
+      msg = '❌ Email inválido';
+    } else if (error.code === 'auth/too-many-requests') {
+      msg = '⚠️ Demasiados intentos. Inténtalo más tarde';
+    } else if (error.code === 'auth/user-disabled') {
+      msg = '❌ Usuario deshabilitado';
+    }
+    errorDiv.textContent = msg;
+    btn.disabled = false;
+    btn.textContent = '🔐 Iniciar Sesión';
+  }
+}
+
+async function handleLogout() {
+  try {
+    await firebase.auth().signOut();
+    showToast('👋 Sesión cerrada correctamente', 'info');
+  } catch (error) {
+    console.error('Logout error:', error);
+    showToast('❌ Error al cerrar sesión', 'error');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  FIREBASE DATA
+// ══════════════════════════════════════════════
+// Nota: initFirebase() ya no se usa, ahora usamos initFirebaseAuth() que incluye auth
 // Firebase RTDB puede devolver un array anidado como objeto indexado
 // ({"0":{...}} en vez de [{...}]) — esto lo normaliza siempre a un array
 // real de JS, filtrando huecos nulos.
@@ -1044,7 +1146,8 @@ async function manualTranslateCierre() {
 // ══════════════════════════════════════════════
 function initPanel() {
   document.getElementById('date-input').value = todayStr();
-  initFirebase();
+  initFirebaseAuth();  // Ahora usa auth en lugar de solo initFirebase
+  // Nota: fbReady se establece en initFirebaseAuth, y los datos se cargan en onAuthStateChanged
   if (!fbReady) restoreLocalDraft();
   if (!state[currentMenuTab].platos.length) addDish();
   renderCurrentTab();
