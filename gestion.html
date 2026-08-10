@@ -1112,6 +1112,9 @@ function logout() {
 function login(email, password) {
   firebase.auth().signInWithEmailAndPassword(email, password)
     .then(userCredential => {
+      // Guardar credenciales en localStorage para auto-login en comedor.html
+      localStorage.setItem('fs_email', email);
+      localStorage.setItem('fs_password', password);
       showToast('✅ Bienvenido', 'success');
     })
     .catch(error => {
@@ -1187,6 +1190,9 @@ function handleRegister() {
   
   firebase.auth().createUserWithEmailAndPassword(email, password)
     .then(userCredential => {
+      // Guardar credenciales en localStorage para auto-login en comedor.html
+      localStorage.setItem('fs_email', email);
+      localStorage.setItem('fs_password', password);
       showToast('✅ Cuenta creada. ¡Bienvenido!', 'success');
       document.getElementById('register-error').textContent = '';
       // El listener onAuthStateChanged se encargará de mostrar el panel
