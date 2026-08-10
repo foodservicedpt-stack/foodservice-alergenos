@@ -11,13 +11,13 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --dish-name-size: 9vw;
-      --dish-en-size: 3.8vw;
-      --icon-size: 8.5vw;
-      --icon-gap: 1.2vw;
-      --dish-pad: 2vw;
-      --legend-icon: 5vw;
-      --legend-text: 2.2vw;
+      --dish-name-size: clamp(48px, 6.5vw, 180px);
+      --dish-en-size: clamp(28px, 3.2vw, 85px);
+      --icon-size: clamp(64px, 7vw, 160px);
+      --icon-gap: clamp(8px, 1vw, 24px);
+      --dish-pad: clamp(16px, 2vw, 48px);
+      --legend-icon: clamp(42px, 4.5vw, 110px);
+      --legend-text: clamp(22px, 2.8vw, 64px);
       --header-h: 11vh;
       --turno-title-size: 2.2vw;
       --turno-msg-es-size: 3.2vw;
@@ -71,21 +71,21 @@
       flex: 1; flex-shrink: 0;
       border-left: 5px solid #1a3a6e;
       gap: 1vw;
-      min-height: 8vw;
+      min-height: clamp(64px, 7vw, 160px);
     }
     @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
 
     .dish-info { flex: 1; padding-right: 0.4vw; min-width: 0; display: flex; flex-direction: column; gap: 0.5vw; }
     .dish-name-es {
       font-size: var(--dish-name-size); font-weight: 900; color: #0f172a;
-      text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.1;
+      text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.15;
       white-space: normal; overflow-wrap: break-word; word-break: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3;
     }
     .dish-name-en {
-      font-size: calc(var(--dish-en-size) * 1.15); color: #64748b; font-style: italic; line-height: 1.15;
+      font-size: calc(var(--dish-en-size) * 1.15); color: #64748b; font-style: italic; line-height: 1.2;
       white-space: normal; overflow-wrap: break-word; word-break: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3;
     }
     .dish-gluten-note {
       display: flex; flex-direction: row; align-items: center; gap: 0.8vw;
@@ -142,20 +142,17 @@
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
-      flex: 0 0 min(260px, 24vw);
-      width: min(25vw, 360px);
-      max-width: 380px;
+      flex: 0 0 min(280px, 26vw);
+      width: min(27vw, 400px);
+      max-width: 420px;
       background: white; border-radius: 14px;
-      padding: 1vw 0.8vw; display: flex; flex-direction: column;
+      padding: 1.2vw 1vw; display: flex; flex-direction: column;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      /* Sin min-height:0, un hijo flex se niega a encogerse por debajo del
-         tamaño de su contenido — con 14 alérgenos eso empujaba la leyenda
-         fuera del recuadro blanco, por debajo del pie de página. */
       min-height: 0;
       overflow: hidden;
     }
-    .legend-title { font-size: 1.4vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.6vw; margin-bottom: 0.8vw; }
-    .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
+    .legend-title { font-size: clamp(18px, 2vw, 42px); font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.8vw; margin-bottom: 1vw; }
+    .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.85em; }
     .legend-list {
       display: grid;
       grid-template-columns: 1fr;
@@ -170,10 +167,10 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 0.65vw;
+      gap: clamp(6px, 0.8vw, 16px);
       min-width: 0;
       width: 100%;
-      padding: 0.5vw 0.2vw;
+      padding: clamp(4px, 0.6vw, 12px) clamp(2px, 0.3vw, 6px);
       border-bottom: 1px solid #eef1f6;
     }
     .legend-item:last-child { border-bottom: none; }
@@ -187,9 +184,9 @@
     }
     .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
     .legend-text-wrap {
-      line-height: 1.2;
+      line-height: 1.25;
       min-width: 0;
-      width: calc(100% - var(--legend-icon) - 0.65vw);
+      flex: 1;
     }
     .legend-es {
       font-size: var(--legend-text);
@@ -198,33 +195,55 @@
       text-transform: uppercase;
       display: block;
       white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
     .legend-en {
-      font-size: calc(var(--legend-text) * 0.88);
+      font-size: calc(var(--legend-text) * 0.85);
       color: #64748b;
       font-style: italic;
       display: block;
       white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
     @media (max-width: 1100px) {
       .body { flex-wrap: wrap; }
       .sidebar { width: 100%; max-width: 100%; }
     }
 
-    @media (min-width: 1600px), (min-height: 900px) {
+    /* Pantallas grandes 70+ pulgadas / resoluciones altas */
+    @media (min-width: 1920px), (min-height: 1080px) {
       :root {
-        --dish-name-size: 11vw;
-        --dish-en-size: 4.8vw;
-        --icon-size: 10.5vw;
-        --icon-gap: 1.5vw;
-        --dish-pad: 2.8vw;
-        --legend-icon: 7vw;
-        --legend-text: 3.4vw;
+        --dish-name-size: clamp(72px, 8.5vw, 220px);
+        --dish-en-size: clamp(36px, 4.2vw, 110px);
+        --icon-size: clamp(80px, 9vw, 200px);
+        --icon-gap: clamp(12px, 1.4vw, 32px);
+        --dish-pad: clamp(24px, 2.8vw, 64px);
+        --legend-icon: clamp(56px, 6vw, 140px);
+        --legend-text: clamp(28px, 3.6vw, 80px);
       }
-      .dish-allergens { width: min(40%, 620px); max-width: 620px; }
-      .allergen-row { gap: 1.4vw; }
-      .no-allergen { padding: 1.2vw 1.7vw; gap: 1.4vw; }
-      .legend-title { font-size: 1.8vw; padding-bottom: 0.9vw; margin-bottom: 1vw; }
+      .dish-allergens { width: min(45%, 720px); max-width: 720px; }
+      .allergen-row { gap: 1.6vw; }
+      .no-allergen { padding: 1.4vw 2vw; gap: 1.6vw; }
+      .legend-title { font-size: 2.2vw; padding-bottom: 1vw; margin-bottom: 1.2vw; }
+    }
+
+    /* Pantallas ultra grandes 85+ pulgadas */
+    @media (min-width: 2560px), (min-height: 1440px) {
+      :root {
+        --dish-name-size: clamp(96px, 10vw, 280px);
+        --dish-en-size: clamp(44px, 5vw, 140px);
+        --icon-size: clamp(100px, 11vw, 260px);
+        --icon-gap: clamp(16px, 1.8vw, 40px);
+        --dish-pad: clamp(32px, 3.5vw, 80px);
+        --legend-icon: clamp(72px, 7.5vw, 180px);
+        --legend-text: clamp(36px, 4.5vw, 100px);
+      }
+      .dish-allergens { width: min(50%, 850px); max-width: 850px; }
+      .allergen-row { gap: 2vw; }
+      .no-allergen { padding: 1.8vw 2.4vw; gap: 2vw; }
+      .legend-title { font-size: 2.6vw; padding-bottom: 1.2vw; margin-bottom: 1.4vw; }
     }
 
     /* ─── FOOTER ─── */
@@ -997,11 +1016,11 @@ function adjustSizes(rowsCount, rowHeight) {
   const heightBudget = availH / refRows;
   const dishH = Math.max(80, Math.min(availH, heightBudget * (isLargeScreen ? 1.1 : 1)));
 
-  const nameFs = Math.max(28, Math.min(availW * 0.16 * sizeBoost, dishH * 0.98, 380));
-  const enFs = Math.max(20, Math.min(nameFs * 0.68, 100));
-  const iconSize = Math.max(50, Math.min(availW * 0.20 * sizeBoost, dishH * 0.98 * sizeBoost, 320));
-  const legendIcon = Math.max(36, Math.min(iconSize * 0.98, 200));
-  const legendText = Math.max(20, Math.min(legendIcon * 0.78, 60));
+  const nameFs = Math.max(36, Math.min(availW * 0.18 * sizeBoost, dishH * 0.95, 420));
+  const enFs = Math.max(24, Math.min(nameFs * 0.72, 140));
+  const iconSize = Math.max(64, Math.min(availW * 0.22 * sizeBoost, dishH * 0.95 * sizeBoost, 360));
+  const legendIcon = Math.max(42, Math.min(iconSize * 0.95, 220));
+  const legendText = Math.max(22, Math.min(legendIcon * 0.82, 80));
 
   root.setProperty('--dish-name-size', nameFs + 'px');
   root.setProperty('--dish-en-size', enFs + 'px');
@@ -1093,18 +1112,18 @@ function fitDishRows() {
   // Como las filas ya no pueden recortar contenido en silencio (ver
   // dishContentOverflows), este bucle es solo el mejor esfuerzo para que
   // todo quepa cómodo en la pantalla sin necesitar más espacio del real.
-  while (dishContentOverflows(mainCol, rows) && guard++ < 18) {
+  while (dishContentOverflows(mainCol, rows) && guard++ < 20) {
     const root = document.documentElement.style;
     const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 20;
     const enFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 12;
     const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
     const iconGap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-gap')) || 6;
     const glutenScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-gluten-scale')) || 1;
-    root.setProperty('--dish-name-size', Math.max(20, nameFs * 0.97) + 'px');
-    root.setProperty('--dish-en-size', Math.max(16, enFs * 0.97) + 'px');
-    root.setProperty('--icon-size', Math.max(32, iconSize * 0.97) + 'px');
-    root.setProperty('--icon-gap', Math.max(6, iconGap * 0.97) + 'px');
-    root.setProperty('--dish-gluten-scale', Math.max(0.78, glutenScale * 0.97).toFixed(3));
+    root.setProperty('--dish-name-size', Math.max(24, nameFs * 0.96) + 'px');
+    root.setProperty('--dish-en-size', Math.max(18, enFs * 0.96) + 'px');
+    root.setProperty('--icon-size', Math.max(42, iconSize * 0.96) + 'px');
+    root.setProperty('--icon-gap', Math.max(8, iconGap * 0.96) + 'px');
+    root.setProperty('--dish-gluten-scale', Math.max(0.75, glutenScale * 0.96).toFixed(3));
     fitNoAllergenBadges();
   }
 
@@ -1254,11 +1273,14 @@ function fitLegend() {
   const containerH = list.getBoundingClientRect().height;
   if (!containerW || !containerH) return;
 
-  const per = containerH / Math.ceil(items.length / 2);
-  let ic = Math.min(per * 0.62, 110); ic = Math.max(24, ic);
+  // Calcular tamaño base más generoso para pantallas grandes
+  const baseIcon = Math.min(containerH * 0.08, 120);
+  const baseText = Math.min(containerH * 0.05, 72);
+  
+  let ic = Math.max(42, Math.min(baseIcon, 140));
+  let txt = Math.max(22, Math.min(baseText, 80));
+  
   document.documentElement.style.setProperty('--legend-icon', ic + 'px');
-
-  let txt = Math.min(per * 0.38, 28); txt = Math.max(14, txt);
   document.documentElement.style.setProperty('--legend-text', txt + 'px');
 
   const applySize = (iconPx, textPx) => {
@@ -1268,35 +1290,41 @@ function fitLegend() {
       const esEl = item.querySelector('.legend-es');
       const enEl = item.querySelector('.legend-en');
       if (esEl) esEl.style.fontSize = textPx + 'px';
-      if (enEl) enEl.style.fontSize = Math.max(8, textPx * 0.85) + 'px';
+      if (enEl) enEl.style.fontSize = Math.max(14, textPx * 0.85) + 'px';
     });
   };
   applySize(ic, txt);
 
-  // Ajuste real: si los 14 alérgenos en conjunto no caben en el alto
-  // disponible (list.scrollHeight > list.clientHeight), reduce icono y
-  // texto en pasos pequeños hasta que quepan todos sin recortar ninguno
-  // y sin necesidad de scroll.
+  // Ajuste vertical: si los alérgenos no caben en el alto disponible
   let guard = 0;
-  while (list.scrollHeight > list.clientHeight + 1 && guard++ < 20) {
-    ic = Math.max(11, ic * 0.94);
-    txt = Math.max(8, txt * 0.94);
+  while (list.scrollHeight > list.clientHeight + 1 && guard++ < 25) {
+    ic = Math.max(32, ic * 0.95);
+    txt = Math.max(16, txt * 0.95);
     applySize(ic, txt);
   }
 
-  // Ajuste horizontal: si algún nombre de alérgeno concreto no cabe en el
-  // ancho de su fila (p. ej. "CRUSTÁCEOS"), se reduce solo ese texto.
+  // Ajuste horizontal por elemento: cada nombre debe caber en su fila
   items.forEach(item => {
     const wrap = item.querySelector('.legend-text-wrap');
     const esEl = wrap?.querySelector('.legend-es');
     const enEl = wrap?.querySelector('.legend-en');
     if (!wrap || !esEl) return;
+    
+    const availableWidth = item.getBoundingClientRect().width - ic - 20;
     let fs = txt;
     let guard2 = 0;
-    while (wrap.scrollWidth > item.getBoundingClientRect().width - 12 && fs > 8 && guard2++ < 24) {
-      fs *= 0.92;
+    
+    // Reducir hasta que tanto ES como EN quepan
+    while (guard2++ < 30) {
+      const esWidth = esEl.scrollWidth;
+      const enWidth = enEl ? enEl.scrollWidth : 0;
+      const maxWidth = Math.max(esWidth, enWidth);
+      
+      if (maxWidth <= availableWidth || fs < 14) break;
+      
+      fs *= 0.93;
       esEl.style.fontSize = fs + 'px';
-      if (enEl) enEl.style.fontSize = Math.max(7, fs * 0.85) + 'px';
+      if (enEl) enEl.style.fontSize = Math.max(12, fs * 0.85) + 'px';
     }
   });
 }
