@@ -142,8 +142,13 @@
     }
     .legend-title { font-size: 1.2vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5vw; margin-bottom: 0.6vw; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
-    .legend-list { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-content: space-between; flex: 1; }
-    .legend-item { display: flex; align-items: center; gap: 0.45vw; flex: 0 0 auto; }
+    .legend-list { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(9vw, 1fr)); 
+      gap: 0.6vw;
+      align-content: start;
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.45vw; }
     .legend-circle { width: 3.4vw; height: 3.4vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
     .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
     .legend-text-wrap { line-height: 1.15; min-width: 0; }
