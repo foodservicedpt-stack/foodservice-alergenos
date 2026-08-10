@@ -507,6 +507,7 @@
     <div class="brand">FOOD SERVICE DPT</div>
     <div class="sub">Gestión de Alérgenos</div>
     <div class="login-error" id="login-error"></div>
+    <input type="email" id="login-email" placeholder="Email" style="margin-bottom:12px;" onkeypress="if(event.key==='Enter') handleLogin()">
     <div class="pwd-wrap">
       <input type="password" id="login-password" placeholder="Contraseña" onkeypress="if(event.key==='Enter') handleLogin()">
       <button class="pwd-toggle" onclick="togglePwdVisibility()" aria-label="Mostrar contraseña">👁️</button>
@@ -1101,9 +1102,13 @@ function login(email, password) {
 }
 
 function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
-  // Usamos un email fijo para autenticación simple
-  const email = 'admin@foodservice.com';
+  
+  if (!email) {
+    document.querySelector('.login-error').textContent = '❌ Introduce tu email';
+    return;
+  }
   if (!password) {
     document.querySelector('.login-error').textContent = '❌ Introduce la contraseña';
     return;
