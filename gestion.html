@@ -54,14 +54,14 @@
     .login-card .brand { font-size: 1.5rem; font-weight: 800; color: #f0f9ff; letter-spacing: 2px; }
     .login-card .sub { font-size: 0.82rem; color: #94a3b8; letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; margin-bottom: 36px; }
     .pwd-wrap { position: relative; margin-bottom: 16px; }
-    .pwd-wrap input {
+    .pwd-wrap input, #login-email, #register-email, #register-password {
       width: 100%; padding: 16px 50px 16px 20px;
       border: 2px solid rgba(255,255,255,0.15); border-radius: 12px;
       background: rgba(255,255,255,0.07); color: white;
       font-size: 1.05rem; outline: none; transition: border 0.2s;
     }
-    .pwd-wrap input::placeholder { color: #64748b; }
-    .pwd-wrap input:focus { border-color: #3b82f6; }
+    .pwd-wrap input::placeholder, #login-email::placeholder, #register-email::placeholder, #register-password::placeholder { color: #64748b; }
+    .pwd-wrap input:focus, #login-email:focus, #register-email:focus, #register-password:focus { border-color: #3b82f6; }
     .pwd-toggle { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1.2rem; }
     .login-error { color: #fca5a5; font-size: 0.85rem; margin-bottom: 12px; min-height: 20px; }
     .btn-login {
