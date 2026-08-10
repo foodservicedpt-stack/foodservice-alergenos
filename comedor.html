@@ -11,13 +11,13 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --dish-name-size: 6vw;
-      --dish-en-size: 2.2vw;
-      --icon-size: 5.5vw;
-      --icon-gap: 0.6vw;
-      --dish-pad: 1.4vw;
-      --legend-icon: 3vw;
-      --legend-text: 1.4vw;
+      --dish-name-size: 7vw;
+      --dish-en-size: 2.8vw;
+      --icon-size: 6.5vw;
+      --icon-gap: 0.8vw;
+      --dish-pad: 1.6vw;
+      --legend-icon: 4vw;
+      --legend-text: 1.8vw;
       --header-h: 11vh;
       --turno-title-size: 2.2vw;
       --turno-msg-es-size: 3.2vw;
@@ -109,7 +109,7 @@
     }
 
     /* ─── ALLERGEN ICONS ─── */
-    .dish-allergens { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: min(32%, 320px); max-width: 320px; margin-left: 0.4vw; }
+    .dish-allergens { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: min(36%, 440px); max-width: 440px; margin-left: 0.4vw; }
     .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: wrap; justify-content: flex-start; max-width: 100%; }
     .alg-icon-wrap {
       width: var(--icon-size); height: var(--icon-size); overflow: hidden;
@@ -209,6 +209,22 @@
     @media (max-width: 1100px) {
       .body { flex-wrap: wrap; }
       .sidebar { width: 100%; max-width: 100%; }
+    }
+
+    @media (min-width: 1600px), (min-height: 900px) {
+      :root {
+        --dish-name-size: 6vw;
+        --dish-en-size: 2.6vw;
+        --icon-size: 6vw;
+        --icon-gap: 1vw;
+        --dish-pad: 1.8vw;
+        --legend-icon: 4.5vw;
+        --legend-text: 2vw;
+      }
+      .dish-allergens { width: min(38%, 460px); max-width: 460px; }
+      .allergen-row { gap: 1vw; }
+      .no-allergen { padding: 0.9vw 1.3vw; gap: 1vw; }
+      .legend-title { font-size: 1.4vw; padding-bottom: 0.7vw; margin-bottom: 0.8vw; }
     }
 
     /* ─── FOOTER ─── */
@@ -964,31 +980,34 @@ function adjustSizes(rowsCount, rowHeight) {
   const sidebarW = document.querySelector('.sidebar')?.getBoundingClientRect().width || window.innerWidth * 0.19;
   const availH = Math.max(100, window.innerHeight - headerH - 40);
   const availW = Math.max(200, window.innerWidth - sidebarW - 40);
+  const isLargeScreen = window.innerWidth >= 1600 || window.innerHeight >= 900;
+  const screenBoost = Math.min(1.35, Math.max(1, Math.min(window.innerWidth / 1920, window.innerHeight / 1080)));
+  const sizeBoost = isLargeScreen ? screenBoost : 1;
 
   // El tamaño se basa sobre todo en el ANCHO disponible, que es igual para
   // todas las filas. Antes se repartía la altura total entre el número de
   // platos y esa media se aplicaba a TODOS por igual — así que un solo
   // plato con más contenido (varios alérgenos + nota de sin gluten)
   // empequeñecía el texto de TODOS los demás, aunque sobrara espacio de
-  // sobra (visible en la última captura: "FRUTA" y "ENSALADA" con hueco
-  // vacío). Se limita el "castigo por nº de platos" a un máximo de 6 filas
+  // sobra. Se limita el "castigo por nº de platos" a un máximo de 8 filas
   // de referencia: con menos platos no se agranda de forma desproporcionada,
   // y con más no se sigue encogiendo sin límite por este cálculo — si de
   // verdad no cupiera, el bucle de fitDishRows() lo corrige después.
   const refRows = Math.min(Math.max(1, rowsCount), 8);
   const heightBudget = availH / refRows;
+  const dishH = Math.max(80, Math.min(availH, heightBudget * (isLargeScreen ? 1.05 : 1)));
 
-  const nameFs = Math.max(32, Math.min(availW * 0.066, heightBudget * 0.66, 110));
-  const enFs = Math.max(17, Math.min(nameFs * 0.4, 38));
-  const iconSize = Math.max(48, Math.min(availW * 0.08, heightBudget * 0.62, 104));
-  const legendIcon = Math.max(30, Math.min(iconSize * 0.85, 60));
-  const legendText = Math.max(14, Math.min(legendIcon * 0.40, 20));
+  const nameFs = Math.max(22, Math.min(availW * 0.072 * sizeBoost, dishH * 0.70, 120));
+  const enFs = Math.max(16, Math.min(nameFs * 0.55, 42));
+  const iconSize = Math.max(40, Math.min(availW * 0.1, dishH * 0.75 * sizeBoost, 140));
+  const legendIcon = Math.max(28, Math.min(iconSize * 0.90, 100));
+  const legendText = Math.max(16, Math.min(legendIcon * 0.55, 28));
 
   root.setProperty('--dish-name-size', nameFs + 'px');
   root.setProperty('--dish-en-size', enFs + 'px');
   root.setProperty('--icon-size', iconSize + 'px');
-  root.setProperty('--icon-gap', Math.max(4, iconSize * 0.12) + 'px');
-  root.setProperty('--dish-pad', Math.max(8, heightBudget * 0.16) + 'px');
+  root.setProperty('--icon-gap', Math.max(8, iconSize * 0.12) + 'px');
+  root.setProperty('--dish-pad', Math.max(12, dishH * 0.18) + 'px');
   root.setProperty('--legend-icon', legendIcon + 'px');
   root.setProperty('--legend-text', legendText + 'px');
 }
@@ -1219,8 +1238,8 @@ function fitAllergenIcons() {
   const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
   let icon = Math.min(byWidth, byHeight);
   // Los iconos de alérgeno son información de seguridad: deben leerse bien
-  // desde lejos, así que el mínimo se sube considerablemente (antes 24px).
-  icon = Math.max(48, Math.min(icon, 130));
+  // desde lejos, así que el mínimo se sube considerablemente.
+  icon = Math.max(40, Math.min(icon, 160));
   document.documentElement.style.setProperty('--icon-size', icon + 'px');
   document.documentElement.style.setProperty('--icon-gap', gap + 'px');
 }
@@ -1235,13 +1254,12 @@ function fitLegend() {
   const containerH = list.getBoundingClientRect().height;
   if (!containerW || !containerH) return;
 
-  // Punto de partida: se calcula suponiendo una sola columna (lo habitual
-  // con el ancho real del sidebar), y el bucle de abajo corrige el
-  // resultado si al final el grid encaja más de una columna o menos.
-  let ic = Math.min(containerH / items.length * 0.8, 62);
-  ic = Math.max(26, ic);
-  let txt = Math.min(ic * 0.5, 22);
-  txt = Math.max(12, txt);
+  const per = containerH / Math.ceil(items.length / 2);
+  let ic = Math.min(per * 0.55, 90); ic = Math.max(20, ic);
+  document.documentElement.style.setProperty('--legend-icon', ic + 'px');
+
+  let txt = Math.min(per * 0.32, 22); txt = Math.max(12, txt);
+  document.documentElement.style.setProperty('--legend-text', txt + 'px');
 
   const applySize = (iconPx, textPx) => {
     document.documentElement.style.setProperty('--legend-icon', iconPx + 'px');
