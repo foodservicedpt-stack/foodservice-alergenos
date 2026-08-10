@@ -220,7 +220,7 @@
     .no-data { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; gap: 16px; }
     .no-data .icon { font-size: 5vw; }
     .no-data p { font-size: 2vw; font-weight: 600; }
-    .no-data small { font-size: 1.2vw; opacity: 0.7; }
+    .no-data small { font-size: 1.2vw; opacity: 0.7; max-width: 60vw; text-align: center; line-height: 1.5; }
     .fade-update { animation: none; }
     @keyframes fadeUpdate { 0%{opacity:1;transform:scale(1)} 100%{opacity:1;transform:scale(1)} }
 
@@ -1296,8 +1296,28 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 // ══════════════════════════════════════════════
 function initFirebase() {
   try {
-    if (!window.firebaseConfig || window.firebaseConfig.apiKey === 'TU_API_KEY_AQUI') { showOfflineState(); return; }
-    firebase.initializeApp(window.firebaseConfig);
+    // 1. ¿Ha cargado el SDK de Firebase? Si gstatic.com está bloqueado o
+    //    tarda demasiado en la red del televisor, "firebase" no existe
+    //    aunque firebase-config.js esté perfecto — antes esto también
+    //    caía en el mensaje genérico de "Firebase no configurado",
+    //    llevando a "arreglar" algo que no era el problema real.
+    if (typeof firebase === 'undefined') {
+      showOfflineState('El SDK de Firebase no ha cargado. Revisa que este dispositivo tenga acceso a www.gstatic.com (puede estar bloqueado por la red o un proxy/firewall).');
+      return;
+    }
+    if (!window.firebaseConfig || window.firebaseConfig.apiKey === 'TU_API_KEY_AQUI') {
+      showOfflineState('firebase-config.js no tiene una configuración válida (falta o sigue con el valor de ejemplo).');
+      return;
+    }
+
+    // 2. ¿La configuración es válida para Firebase? (proyecto borrado,
+    //    apiKey revocada, restricciones de dominio en Google Cloud...)
+    try {
+      firebase.initializeApp(window.firebaseConfig);
+    } catch (initErr) {
+      showOfflineState('firebase.initializeApp() falló: ' + (initErr && initErr.message || initErr));
+      return;
+    }
     const db = firebase.database();
 
     // Menu listener — reinicio automático diario:
@@ -1305,7 +1325,14 @@ function initFirebase() {
     db.ref('menu/comedor').on('value', snap => {
       latestComedorData = snap.val();
       refreshMenuDisplay();
-    }, err => { console.error(err); showOfflineState(); });
+    }, err => {
+      // 3. La conexión a la base de datos falla de verdad (reglas de
+      //    seguridad, URL de base de datos incorrecta, proyecto sin
+      //    Realtime Database habilitada...). Este es el caso que más
+      //    fácil se confunde con "falta configurar" sin ver el error real.
+      console.error(err);
+      showOfflineState('No se pudo leer datos de Firebase (' + (err && err.code || 'error desconocido') + '): ' + (err && err.message || err));
+    });
 
     // Turnos listener (updates config in real time)
     db.ref('turnos').on('value', snap => {
@@ -1362,7 +1389,7 @@ function initFirebase() {
       });
     }, 30000);
 
-  } catch(e) { console.error(e); showOfflineState(); }
+  } catch(e) { console.error(e); showOfflineState('Error inesperado al iniciar: ' + (e && e.message || e)); }
 }
 
 function showNoData() {
@@ -1370,9 +1397,9 @@ function showNoData() {
     '<div class="no-data"><span class="icon">🍽️</span><p>Menú del día no publicado</p><small>Today\'s menu has not been published yet</small></div>';
   document.getElementById('header-date').textContent = formatDateEs(null);
 }
-function showOfflineState() {
+function showOfflineState(reason) {
   document.getElementById('main-col').innerHTML =
-    '<div class="no-data"><span class="icon">⚠️</span><p>Firebase no configurado</p><small>Edita firebase-config.js</small></div>';
+    `<div class="no-data"><span class="icon">⚠️</span><p>No se pudo conectar con Firebase</p><small>${escHtml(reason || 'Motivo desconocido — revisa la consola del navegador (F12).')}</small></div>`;
 }
 
 // ══════════════════════════════════════════════
