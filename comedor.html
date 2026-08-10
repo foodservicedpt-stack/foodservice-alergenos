@@ -158,7 +158,7 @@
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
     .legend-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      grid-template-columns: 1fr;
       gap: 0;
       align-content: start;
       justify-items: start;
@@ -193,7 +193,6 @@
       line-height: 1.15;
       min-width: 0;
       width: calc(100% - var(--legend-icon) - 0.55vw);
-      overflow-wrap: anywhere;
     }
     .legend-es {
       font-size: var(--legend-text);
@@ -979,14 +978,14 @@ function adjustSizes(rowsCount, rowHeight) {
   // de referencia: con menos platos no se agranda de forma desproporcionada,
   // y con más no se sigue encogiendo sin límite por este cálculo — si de
   // verdad no cupiera, el bucle de fitDishRows() lo corrige después.
-  const refRows = Math.min(Math.max(1, rowsCount), 6);
+  const refRows = Math.min(Math.max(1, rowsCount), 8);
   const heightBudget = availH / refRows;
 
-  const nameFs = Math.max(22, Math.min(availW * 0.043, heightBudget * 0.46, 76));
-  const enFs = Math.max(14, Math.min(nameFs * 0.4, 28));
-  const iconSize = Math.max(30, Math.min(availW * 0.05, heightBudget * 0.4, 66));
-  const legendIcon = Math.max(18, Math.min(iconSize, 60));
-  const legendText = Math.max(12, Math.min(legendIcon * 0.40, 16));
+  const nameFs = Math.max(30, Math.min(availW * 0.06, heightBudget * 0.62, 100));
+  const enFs = Math.max(16, Math.min(nameFs * 0.4, 36));
+  const iconSize = Math.max(38, Math.min(availW * 0.065, heightBudget * 0.52, 84));
+  const legendIcon = Math.max(20, Math.min(iconSize * 0.65, 46));
+  const legendText = Math.max(14, Math.min(legendIcon * 0.44, 20));
 
   root.setProperty('--dish-name-size', nameFs + 'px');
   root.setProperty('--dish-en-size', enFs + 'px');
