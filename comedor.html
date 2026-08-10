@@ -151,15 +151,16 @@
       min-height: 0;
     }
     .legend-title {
-      font-size: clamp(16px, 1.8vw, 32px); 
+      font-size: clamp(14px, 1.5vw, 28px); 
       font-weight: 800; 
       color: #64748b; 
       text-transform: uppercase; 
-      letter-spacing: 1.5px; 
+      letter-spacing: 1.2px; 
       border-bottom: 2px solid #e2e8f0; 
-      padding-bottom: 0.8vw; 
-      margin-bottom: 1vw;
+      padding-bottom: 0.6vw; 
+      margin-bottom: 0.8vw;
       line-height: 1.2;
+      white-space: nowrap;
     }
     .legend-title .en { 
       display: block; 
@@ -167,32 +168,32 @@
       font-weight: 400; 
       text-transform: none; 
       letter-spacing: 0; 
-      font-size: 0.75em;
-      margin-top: 0.3em;
+      font-size: 0.7em;
+      margin-top: 0.2em;
+      white-space: nowrap;
     }
     .legend-list {
       display: flex;
-      flex-wrap: wrap;
-      align-content: flex-start;
-      gap: 0.6vw;
+      flex-direction: column; /* UNA SOLA COLUMNA */
+      gap: 0.5vw;
       flex: 1;
       min-height: 0;
       overflow: visible;
+      justify-content: flex-start;
     }
     .legend-item {
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: clamp(6px, 0.8vw, 16px);
+      gap: clamp(4px, 0.6vw, 12px);
       min-width: 0;
-      width: auto;
-      flex: 0 0 calc(50% - 0.3vw);
-      max-width: calc(50% - 0.3vw);
-      padding: clamp(4px, 0.5vw, 10px) clamp(2px, 0.3vw, 6px);
+      width: 100%;
+      flex: 0 0 auto; /* Auto height for single column */
+      max-width: 100%;
+      padding: clamp(3px, 0.4vw, 8px) 0;
       border-bottom: none;
       box-sizing: border-box;
     }
-    .legend-item:nth-child(odd) { margin-right: 0.6vw; }
     .legend-circle {
       width: var(--legend-icon);
       height: var(--legend-icon);
