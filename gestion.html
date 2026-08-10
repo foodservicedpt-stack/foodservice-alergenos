@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Food Service DPT — Gestión de Alérgenos</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="./firebase-config.js"></script>
   <style>
@@ -33,50 +32,9 @@
       min-height: 100vh;
     }
 
-    /* ─── LOGIN ─── */
-    #login-screen {
-      position: fixed; inset: 0; z-index: 1000;
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
-      display: flex; align-items: center; justify-content: center;
-    }
-    #login-screen.hidden { display: none; }
-    .login-card {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.15);
-      backdrop-filter: blur(16px);
-      border-radius: 24px;
-      padding: 52px 48px;
-      width: 420px;
-      text-align: center;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
-    }
-    .login-card img { height: 72px; object-fit: contain; margin-bottom: 20px; filter: drop-shadow(0 0 16px rgba(96,165,250,0.4)); }
-    .login-card .brand { font-size: 1.5rem; font-weight: 800; color: #f0f9ff; letter-spacing: 2px; }
-    .login-card .sub { font-size: 0.82rem; color: #94a3b8; letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; margin-bottom: 36px; }
-    .pwd-wrap { position: relative; margin-bottom: 16px; }
-    .pwd-wrap input, #login-email, #register-email, #register-password {
-      width: 100%; padding: 16px 50px 16px 20px;
-      border: 2px solid rgba(255,255,255,0.15); border-radius: 12px;
-      background: rgba(255,255,255,0.07); color: white;
-      font-size: 1.05rem; outline: none; transition: border 0.2s;
-    }
-    .pwd-wrap input::placeholder, #login-email::placeholder, #register-email::placeholder, #register-password::placeholder { color: #64748b; }
-    .pwd-wrap input:focus, #login-email:focus, #register-email:focus, #register-password:focus { border-color: #3b82f6; }
-    .pwd-toggle { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1.2rem; }
-    .login-error { color: #fca5a5; font-size: 0.85rem; margin-bottom: 12px; min-height: 20px; }
-    .btn-login {
-      width: 100%; padding: 15px;
-      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-      color: white; border: none; border-radius: 12px;
-      font-size: 1rem; font-weight: 700; letter-spacing: 1.5px; cursor: pointer;
-      text-transform: uppercase; transition: all 0.2s;
-      box-shadow: 0 4px 16px rgba(59,130,246,0.4);
-    }
-    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.5); }
-
     /* ─── PANEL ─── */
-    #panel { display: none; flex-direction: column; min-height: 100vh; }
-    #panel.visible { display: flex; }
+    #panel { display: flex; flex-direction: column; min-height: 100vh; }
+    #panel.hidden { display: none; }
 
     /* ─── TOPBAR ─── */
     .topbar {
@@ -97,8 +55,6 @@
     .btn-tv:hover { background: rgba(16,185,129,0.3) !important; }
     .btn-print { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3) !important; }
     .btn-print:hover { background: rgba(245,158,11,0.3) !important; }
-    .btn-logout { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25) !important; }
-    .btn-logout:hover { background: rgba(239,68,68,0.25) !important; }
 
     /* ─── TAB BAR ─── */
     .tab-bar {
@@ -500,44 +456,6 @@
 </head>
 <body>
 
-<!-- ══════════════════════ LOGIN SCREEN ══════════════════════ -->
-<div id="login-screen">
-  <div class="login-card">
-    <img src="./img/Encabezado.png" alt="FSD" onerror="this.style.display='none'">
-    <div class="brand">FOOD SERVICE DPT</div>
-    <div class="sub">Gestión de Alérgenos</div>
-    <div class="login-error" id="login-error"></div>
-    <input type="email" id="login-email" placeholder="Email" style="margin-bottom:12px;" onkeypress="if(event.key==='Enter') handleLogin()">
-    <div class="pwd-wrap">
-      <input type="password" id="login-password" placeholder="Contraseña" onkeypress="if(event.key==='Enter') handleLogin()">
-      <button class="pwd-toggle" onclick="togglePwdVisibility()" aria-label="Mostrar contraseña">👁️</button>
-    </div>
-    <button class="btn-login" onclick="handleLogin()">Entrar</button>
-    <div style="margin-top:20px;font-size:0.85rem;color:#94a3b8;">
-      ¿Primer acceso? <a href="#" onclick="showRegister();return false;" style="color:#60a5fa;text-decoration:none;font-weight:700;">Crear cuenta administrador</a>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════ REGISTER SCREEN ══════════════════════ -->
-<div id="register-screen" style="display:none;position:fixed;inset:0;z-index:1001;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#0f172a 100%);align-items:center;justify-content:center;">
-  <div class="login-card">
-    <img src="./img/Encabezado.png" alt="FSD" onerror="this.style.display='none'">
-    <div class="brand">FOOD SERVICE DPT</div>
-    <div class="sub">Crear Cuenta Administrador</div>
-    <div class="login-error" id="register-error"></div>
-    <input type="email" id="register-email" placeholder="Email del administrador" style="margin-bottom:12px;">
-    <div class="pwd-wrap">
-      <input type="password" id="register-password" placeholder="Contraseña (mínimo 6 caracteres)" onkeypress="if(event.key==='Enter') handleRegister()">
-      <button class="pwd-toggle" onclick="toggleRegisterPwdVisibility()" aria-label="Mostrar contraseña">👁️</button>
-    </div>
-    <button class="btn-login" onclick="handleRegister()">Crear cuenta</button>
-    <div style="margin-top:20px;font-size:0.85rem;color:#94a3b8;">
-      ¿Ya tienes cuenta? <a href="#" onclick="showLogin();return false;" style="color:#60a5fa;text-decoration:none;font-weight:700;">Iniciar sesión</a>
-    </div>
-  </div>
-</div>
-
 <!-- ══════════════════════ PANEL ══════════════════════ -->
 <div id="panel">
   <div class="topbar">
@@ -545,7 +463,6 @@
     <span class="brand-text">FOOD SERVICE DPT</span>
     <div class="sep"></div>
     <div class="topbar-actions">
-      <button onclick="logout()" class="btn-logout">🚪 Cerrar sesión</button>
       <a href="./comedor.html" target="_blank" class="btn-tv">📺 Ver pantalla TV</a>
       <a href="./desayuno.html" target="_blank" class="btn-print">☕ Gestión desayuno</a>
     </div>
@@ -888,7 +805,7 @@ function switchMainTab(tab) {
 }
 
 // ══════════════════════════════════════════════
-//  FIREBASE + AUTH
+//  FIREBASE
 // ══════════════════════════════════════════════
 
 let currentUser = null;
@@ -902,20 +819,8 @@ function initFirebase() {
     firebase.initializeApp(window.firebaseConfig);
     fbReady = true;
     
-    // Configurar listener de auth
-    firebase.auth().onAuthStateChanged(user => {
-      currentUser = user;
-      if (user) {
-        // Usuario logueado - mostrar panel
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('panel').classList.add('visible');
-        loadFromFirebase();
-      } else {
-        // Usuario no logueado - mostrar login
-        document.getElementById('login-screen').classList.remove('hidden');
-        document.getElementById('panel').classList.remove('visible');
-      }
-    });
+    // Sin autenticación - cargar datos directamente
+    loadFromFirebase();
   } catch(e) {
     console.warn('Firebase:', e);
     document.getElementById('firebase-warn').classList.add('visible');
@@ -1098,118 +1003,6 @@ async function manualTranslateCierre() {
 // ══════════════════════════════════════════════
 //  PANEL INIT
 // ══════════════════════════════════════════════
-
-function logout() {
-  if (firebase.auth().currentUser) {
-    firebase.auth().signOut().then(() => {
-      showToast('👋 Sesión cerrada', 'info');
-    }).catch(err => {
-      console.warn('Error al cerrar sesión:', err);
-    });
-  }
-}
-
-function login(email, password) {
-  firebase.auth().signInWithEmailAndPassword(email, password)
-    .then(userCredential => {
-      // Guardar credenciales en localStorage para auto-login en comedor.html
-      localStorage.setItem('fs_email', email);
-      localStorage.setItem('fs_password', password);
-      showToast('✅ Bienvenido', 'success');
-    })
-    .catch(error => {
-      const errorMsg = error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' 
-        ? '❌ Email o contraseña incorrectos' 
-        : '❌ Error: ' + error.message;
-      showToast(errorMsg, 'error');
-      document.querySelector('.login-error').textContent = errorMsg;
-    });
-}
-
-function handleLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  
-  if (!email) {
-    document.querySelector('.login-error').textContent = '❌ Introduce tu email';
-    return;
-  }
-  if (!password) {
-    document.querySelector('.login-error').textContent = '❌ Introduce la contraseña';
-    return;
-  }
-  login(email, password);
-}
-
-function togglePwdVisibility() {
-  const input = document.getElementById('login-password');
-  const btn = document.querySelector('.pwd-toggle');
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    btn.textContent = '👁️';
-  }
-}
-
-function toggleRegisterPwdVisibility() {
-  const input = document.getElementById('register-password');
-  const btn = document.querySelector('#register-screen .pwd-toggle');
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    btn.textContent = '👁️';
-  }
-}
-
-function showRegister() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('register-screen').style.display = 'flex';
-}
-
-function showLogin() {
-  document.getElementById('register-screen').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-}
-
-function handleRegister() {
-  const email = document.getElementById('register-email').value.trim();
-  const password = document.getElementById('register-password').value;
-  
-  if (!email) {
-    document.getElementById('register-error').textContent = '❌ Introduce tu email';
-    return;
-  }
-  if (!password || password.length < 6) {
-    document.getElementById('register-error').textContent = '❌ La contraseña debe tener al menos 6 caracteres';
-    return;
-  }
-  
-  firebase.auth().createUserWithEmailAndPassword(email, password)
-    .then(userCredential => {
-      // Guardar credenciales en localStorage para auto-login en comedor.html
-      localStorage.setItem('fs_email', email);
-      localStorage.setItem('fs_password', password);
-      showToast('✅ Cuenta creada. ¡Bienvenido!', 'success');
-      document.getElementById('register-error').textContent = '';
-      // El listener onAuthStateChanged se encargará de mostrar el panel
-    })
-    .catch(error => {
-      let errorMsg = '❌ Error: ' + error.message;
-      if (error.code === 'auth/email-already-in-use') {
-        errorMsg = '❌ Este email ya está registrado';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMsg = '❌ Email inválido';
-      } else if (error.code === 'auth/weak-password') {
-        errorMsg = '❌ Contraseña demasiado débil';
-      }
-      document.getElementById('register-error').textContent = errorMsg;
-      showToast(errorMsg, 'error');
-    });
-}
 
 function initPanel() {
   document.getElementById('date-input').value = todayStr();
