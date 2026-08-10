@@ -142,25 +142,27 @@
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
-      flex: 0 0 min(280px, 26vw);
-      width: min(27vw, 400px);
-      max-width: 420px;
+      flex: 0 0 min(320px, 28vw);
+      width: min(28vw, 450px);
+      max-width: 480px;
       background: white; border-radius: 14px;
-      padding: 1.2vw 1vw; display: flex; flex-direction: column;
+      padding: 1.2vw 1.2vw; display: flex; flex-direction: column;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       min-height: 0;
     }
     .legend-title {
-      font-size: clamp(14px, 1.5vw, 28px); 
+      font-size: clamp(12px, 1.2vw, 22px); 
       font-weight: 800; 
       color: #64748b; 
       text-transform: uppercase; 
-      letter-spacing: 1.2px; 
+      letter-spacing: 0.8px; 
       border-bottom: 2px solid #e2e8f0; 
-      padding-bottom: 0.6vw; 
-      margin-bottom: 0.8vw;
+      padding-bottom: 0.4vw; 
+      margin-bottom: 0.6vw;
       line-height: 1.2;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .legend-title .en { 
       display: block; 
@@ -168,29 +170,32 @@
       font-weight: 400; 
       text-transform: none; 
       letter-spacing: 0; 
-      font-size: 0.7em;
-      margin-top: 0.2em;
+      font-size: 0.65em;
+      margin-top: 0.15em;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .legend-list {
       display: flex;
-      flex-direction: column; /* UNA SOLA COLUMNA */
-      gap: 0.5vw;
+      flex-direction: column; /* UNA SOLA COLUMNA SIEMPRE */
+      gap: 0.4vw;
       flex: 1;
       min-height: 0;
-      overflow: visible;
-      justify-content: flex-start;
+      overflow: hidden; /* Sin scroll */
+      justify-content: center; /* Centrar verticalmente si sobra espacio */
+      align-items: stretch;
     }
     .legend-item {
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: clamp(4px, 0.6vw, 12px);
+      gap: clamp(3px, 0.5vw, 10px);
       min-width: 0;
       width: 100%;
-      flex: 0 0 auto; /* Auto height for single column */
+      flex: 0 0 auto;
       max-width: 100%;
-      padding: clamp(3px, 0.4vw, 8px) 0;
+      padding: clamp(2px, 0.3vw, 6px) 0;
       border-bottom: none;
       box-sizing: border-box;
     }
@@ -204,7 +209,7 @@
     }
     .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
     .legend-text-wrap {
-      line-height: 1.2;
+      line-height: 1.15;
       min-width: 0;
       flex: 1;
       display: flex;
@@ -221,18 +226,18 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 1.15;
+      line-height: 1.1;
     }
     .legend-en {
-      font-size: calc(var(--legend-text) * 0.65);
+      font-size: calc(var(--legend-text) * 0.6);
       color: #64748b;
       font-style: italic;
       display: block;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 1.2;
-      margin-top: 0.15em;
+      line-height: 1.15;
+      margin-top: 0.1em;
     }
     @media (max-width: 1100px) {
       .body { flex-wrap: wrap; }
@@ -247,13 +252,14 @@
         --icon-size: clamp(80px, 9vw, 200px);
         --icon-gap: clamp(12px, 1.4vw, 32px);
         --dish-pad: clamp(24px, 2.8vw, 64px);
-        --legend-icon: clamp(56px, 6vw, 140px);
-        --legend-text: clamp(28px, 3.6vw, 80px);
+        --legend-icon: clamp(48px, 5vw, 120px);
+        --legend-text: clamp(20px, 2.8vw, 65px);
       }
       .dish-allergens { width: min(45%, 720px); max-width: 720px; }
       .allergen-row { gap: 1.6vw; }
       .no-allergen { padding: 1.4vw 2vw; gap: 1.6vw; }
-      .legend-title { font-size: 2.2vw; padding-bottom: 1vw; margin-bottom: 1.2vw; }
+      .legend-title { font-size: 1.6vw !important; padding-bottom: 0.6vw !important; margin-bottom: 0.8vw !important; }
+      .sidebar { flex: 0 0 min(350px, 30vw); width: min(30vw, 500px); max-width: 520px; }
     }
 
     /* Pantallas ultra grandes 85+ pulgadas */
@@ -264,13 +270,14 @@
         --icon-size: clamp(100px, 11vw, 260px);
         --icon-gap: clamp(16px, 1.8vw, 40px);
         --dish-pad: clamp(32px, 3.5vw, 80px);
-        --legend-icon: clamp(72px, 7.5vw, 180px);
-        --legend-text: clamp(36px, 4.5vw, 100px);
+        --legend-icon: clamp(56px, 6vw, 150px);
+        --legend-text: clamp(24px, 3.2vw, 75px);
       }
       .dish-allergens { width: min(50%, 850px); max-width: 850px; }
       .allergen-row { gap: 2vw; }
       .no-allergen { padding: 1.8vw 2.4vw; gap: 2vw; }
-      .legend-title { font-size: 2.6vw; padding-bottom: 1.2vw; margin-bottom: 1.4vw; }
+      .legend-title { font-size: 1.8vw !important; padding-bottom: 0.7vw !important; margin-bottom: 0.9vw !important; }
+      .sidebar { flex: 0 0 min(400px, 32vw); width: min(32vw, 550px); max-width: 580px; }
     }
 
     /* ─── FOOTER ─── */
