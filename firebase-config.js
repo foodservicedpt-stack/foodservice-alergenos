@@ -13,3 +13,6 @@ const firebaseConfig = {
   appId:             "1:653432937402:web:4b9abbe72ae59d700c5b83",
   geminiApiKey:      "AQ.Ab8RN6Kdc6-QCITz_VMVaZMQvVYab6raEvAdTSeLlhfTptQMEw"
 };
+
+// Hacer firebaseConfig disponible globalmente
+window.firebaseConfig = firebaseConfig;
