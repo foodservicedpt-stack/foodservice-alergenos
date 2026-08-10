@@ -853,11 +853,11 @@ function switchMainTab(tab) {
 // ══════════════════════════════════════════════
 function initFirebase() {
   try {
-    if (!firebaseConfig || firebaseConfig.apiKey === 'TU_API_KEY_AQUI') {
+    if (!window.firebaseConfig || window.firebaseConfig.apiKey === 'TU_API_KEY_AQUI') {
       document.getElementById('firebase-warn').classList.add('visible');
       return;
     }
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(window.firebaseConfig);
     fbReady = true;
     loadFromFirebase();
   } catch(e) {
@@ -1026,7 +1026,7 @@ let cierreTranslateTimer;
 function autoTranslateCierre() { clearTimeout(cierreTranslateTimer); cierreTranslateTimer=setTimeout(manualTranslateCierre, 1400); }
 async function manualTranslateCierre() {
   if (!cierreState.mensajeEs.trim()) return;
-  const geminiKey = firebaseConfig.geminiApiKey;
+  const geminiKey = window.firebaseConfig.geminiApiKey;
   try {
     let translated = '';
     if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
@@ -1399,7 +1399,7 @@ let translateTimers = {};
 function autoTranslate(dishId) { markUnsaved(); clearTimeout(translateTimers[dishId]); translateTimers[dishId] = setTimeout(()=>manualTranslate(dishId), 1400); }
 async function manualTranslate(dishId) {
   const dish = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!dish||!dish.nombreEs.trim()) return;
-  const geminiKey = firebaseConfig.geminiApiKey;
+  const geminiKey = window.firebaseConfig.geminiApiKey;
   if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
     try {
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
@@ -1642,7 +1642,7 @@ function autoTranslateReminder(id) {
 async function manualTranslateReminder(id) {
   const r = remindersState.find(x => x.id === id);
   if (!r || !r.mensajeEs.trim()) return;
-  const geminiKey = firebaseConfig.geminiApiKey;
+  const geminiKey = window.firebaseConfig.geminiApiKey;
   if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
     try {
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
@@ -1850,7 +1850,7 @@ function autoTranslateTurno(id) {
 }
 async function manualTranslateTurno(id) {
   const t = turnosState.find(t=>t.id===id); if(!t||!t.mensajeEs.trim()) return;
-  const geminiKey = firebaseConfig.geminiApiKey;
+  const geminiKey = window.firebaseConfig.geminiApiKey;
   if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
     try {
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
