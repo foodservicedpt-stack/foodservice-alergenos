@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Food Service DPT — Pantalla Comedor</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="./firebase-config.js"></script>
   <style>
@@ -1318,7 +1319,51 @@ function initFirebase() {
       showOfflineState('firebase.initializeApp() falló: ' + (initErr && initErr.message || initErr));
       return;
     }
-    const db = firebase.database();
+    
+    // 3. Verificar autenticación antes de acceder a la base de datos
+    const auth = firebase.auth();
+    
+    // Escuchar cambios en el estado de autenticación
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        // Usuario autenticado - inicializar conexión a la base de datos
+        initDatabaseConnection();
+      } else {
+        // No hay usuario autenticado - intentar inicio de sesión automático
+        // usando las credenciales almacenadas en localStorage
+        attemptAutoLogin();
+      }
+    });
+    
+  } catch (err) {
+    console.error(err);
+    showOfflineState('Error al inicializar Firebase: ' + (err && err.message || err));
+  }
+}
+
+// Intentar inicio de sesión automático con credenciales almacenadas
+function attemptAutoLogin() {
+  const storedEmail = localStorage.getItem('fs_email');
+  const storedPass = localStorage.getItem('fs_password');
+  
+  if (storedEmail && storedPass) {
+    firebase.auth().signInWithEmailAndPassword(storedEmail, storedPass)
+      .then(() => {
+        console.log('[Auth] Inicio de sesión automático exitoso');
+      })
+      .catch(err => {
+        console.error('[Auth] Error en inicio de sesión automático:', err.code, err.message);
+        showOfflineState('Error de autenticación: ' + err.message + '. Por favor, inicia sesión desde el panel de gestión.');
+      });
+  } else {
+    showOfflineState('No hay sesión iniciada. Por favor, accede primero desde el panel de gestión (gestion.html) para autenticarte.');
+  }
+}
+
+// Inicializar conexión a la base de datos (solo cuando hay usuario autenticado)
+function initDatabaseConnection() {
+  const db = firebase.database();
+  console.log('[Firebase] Usuario autenticado, inicializando conexión a la base de datos...');
 
     // Menu listener — reinicio automático diario:
     // solo se muestra el menú si su fecha es la de HOY; si no, se considera "no publicado".
@@ -1389,7 +1434,7 @@ function initFirebase() {
       });
     }, 30000);
 
-  } catch(e) { console.error(e); showOfflineState('Error inesperado al iniciar: ' + (e && e.message || e)); }
+} catch(e) { console.error(e); showOfflineState('Error inesperado al iniciar: ' + (e && e.message || e)); }
 }
 
 function showNoData() {
