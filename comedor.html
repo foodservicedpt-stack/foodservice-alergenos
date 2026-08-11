@@ -100,12 +100,12 @@
     }
     .dish-gluten-txt { display: flex; flex-direction: column; line-height: 1.18; min-width: 0; }
     .dish-gluten-es {
-      font-size: calc(clamp(12px, 0.95vw, 18px) * var(--dish-gluten-scale, 1)); font-weight: 800; color: #1e40af;
+      font-size: calc(var(--dish-en-size) * 1.35 * var(--dish-gluten-scale, 1)); font-weight: 800; color: #1e40af;
       overflow-wrap: anywhere;
     }
     .dish-gluten-en {
-      font-size: calc(clamp(10px, 0.8vw, 14px) * var(--dish-gluten-scale, 1)); font-style: italic; color: #3b5fad;
-      overflow-wrap: anywhere; opacity: 0.85;
+      font-size: calc(var(--dish-en-size) * 1.05 * var(--dish-gluten-scale, 1)); font-style: italic; color: #1e3a6e;
+      overflow-wrap: anywhere; opacity: 0.92;
     }
 
     /* ─── ALLERGEN ICONS ─── */
@@ -957,6 +957,28 @@ let sizeResizeObserver = null;
 // usa como punto de partida en vez de la fórmula automática — pero el
 // bucle de fitDishRows() lo sigue protegiendo contra cortes reales.
 let manualDishSize = null;
+// ══════════════════════════════════════════════
+//  DEBUG PANEL — activar con ?debug=1 en la URL. Muestra en la propia
+//  pantalla los valores reales que ve el navegador (resolución, tamaños
+//  calculados), para poder verificar sin depender de fotos ni de adivinar.
+// ══════════════════════════════════════════════
+const DEBUG_MODE = new URLSearchParams(location.search).get('debug') === '1';
+function updateDebugPanel(vals) {
+  if (!DEBUG_MODE) return;
+  let panel = document.getElementById('debug-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'debug-panel';
+    panel.style.cssText = 'position:fixed;bottom:40px;left:8px;z-index:9999;background:rgba(0,0,0,0.85);color:#0f0;font:12px monospace;padding:8px 12px;border-radius:6px;line-height:1.6;white-space:pre;pointer-events:none;';
+    document.body.appendChild(panel);
+  }
+  panel.textContent =
+    `window: ${window.innerWidth}x${window.innerHeight}\n` +
+    `platos: ${vals.rowsCount} | headerH: ${vals.headerH.toFixed(0)} | sidebarW: ${vals.sidebarW.toFixed(0)}\n` +
+    `availH: ${vals.availH.toFixed(0)} | availW: ${vals.availW.toFixed(0)} | budget/fila: ${vals.heightBudget.toFixed(0)}\n` +
+    `nombre: ${vals.nameFs.toFixed(0)}px | en: ${vals.enFs.toFixed(0)}px | icono: ${vals.iconSize.toFixed(0)}px`;
+}
+
 function adjustSizes(rowsCount, rowHeight) {
   const root = document.documentElement.style;
   const headerH = document.querySelector('.header')?.getBoundingClientRect().height || window.innerHeight * 0.11;
@@ -964,22 +986,18 @@ function adjustSizes(rowsCount, rowHeight) {
   const availH = Math.max(100, window.innerHeight - headerH - 40);
   const availW = Math.max(200, window.innerWidth - sidebarW - 40);
 
-  // El tamaño se basa PRINCIPALMENTE en el alto disponible por fila (lo que
-  // se estaba desperdiciando con pocos platos: mucho hueco en blanco bajo
-  // el nombre). Antes se tomaba el MÍNIMO entre lo que permite el alto y
-  // lo que permite el ancho, así que aunque sobrara alto de sobra, el
-  // ancho seguía capando el tamaño por adelantado. Ahora el ancho ya no
-  // limita aquí — el nombre de plato puede ocupar hasta 2 líneas
-  // (line-clamp en el CSS) y, si un nombre concreto es tan largo que ni
-  // así cabe, el bucle de seguridad de fitDishRows() ya lo detecta
-  // (scrollHeight > clientHeight) y lo reduce él solo, sin que haga falta
-  // adivinarlo aquí de antemano y penalizar a todos los platos por igual.
+  // El tamaño se basa en el alto disponible por fila. Se ha subido la
+  // fracción varias veces tras comprobar en fotos reales de la TV que
+  // seguía viéndose pequeño — así que ahora se sube de forma notable
+  // (0.5 -> 0.72) y se añade un panel de diagnóstico (?debug=1 en la URL)
+  // que muestra en pantalla los valores reales calculados, para no tener
+  // que seguir adivinando a partir de fotos.
   const refRows = Math.min(Math.max(1, rowsCount), 6);
   const heightBudget = availH / refRows;
 
-  const nameFs = Math.max(20, heightBudget * 0.5);
-  const enFs = Math.max(13, nameFs * 0.38);
-  const iconSize = Math.max(28, heightBudget * 0.42);
+  const nameFs = Math.max(24, heightBudget * 0.72);
+  const enFs = Math.max(14, nameFs * 0.36);
+  const iconSize = Math.max(32, heightBudget * 0.56);
   const legendIcon = Math.max(18, Math.min(iconSize, availW * 0.035));
   const legendText = Math.max(12, legendIcon * 0.4);
 
@@ -990,6 +1008,8 @@ function adjustSizes(rowsCount, rowHeight) {
   root.setProperty('--dish-pad', Math.max(8, heightBudget * 0.16) + 'px');
   root.setProperty('--legend-icon', legendIcon + 'px');
   root.setProperty('--legend-text', legendText + 'px');
+
+  updateDebugPanel({ rowsCount, headerH, sidebarW, availH, availW, heightBudget, nameFs, enFs, iconSize });
 }
 function startSizeAutoAdjust() {
   stopSizeAutoAdjust();
@@ -1077,14 +1097,18 @@ function fitDishRows() {
     const root = document.documentElement.style;
     const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 20;
     const enFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 12;
-    const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
-    const iconGap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-gap')) || 6;
     const glutenScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-gluten-scale')) || 1;
     root.setProperty('--dish-name-size', Math.max(16, nameFs * 0.95) + 'px');
     root.setProperty('--dish-en-size', Math.max(11, enFs * 0.95) + 'px');
-    root.setProperty('--icon-size', Math.max(22, iconSize * 0.95) + 'px');
-    root.setProperty('--icon-gap', Math.max(3, iconGap * 0.95) + 'px');
     root.setProperty('--dish-gluten-scale', Math.max(0.6, glutenScale * 0.95).toFixed(3));
+    // El icono ahora es una variable local por fila (ver fitAllergenIcons),
+    // así que se reduce cada una individualmente, no una única global.
+    rows.forEach(row => {
+      const iconSize = parseFloat(getComputedStyle(row).getPropertyValue('--icon-size')) || 30;
+      const iconGap = parseFloat(getComputedStyle(row).getPropertyValue('--icon-gap')) || 6;
+      row.style.setProperty('--icon-size', Math.max(22, iconSize * 0.95) + 'px');
+      row.style.setProperty('--icon-gap', Math.max(3, iconGap * 0.95) + 'px');
+    });
     fitNoAllergenBadges();
   }
 
@@ -1185,46 +1209,44 @@ function renderMenu(data) {
 function fitAllergenIcons() {
   const rows = [...document.querySelectorAll('.dish-row')];
   if (!rows.length) return;
-  const rowH = rows[0].getBoundingClientRect().height;
-  const rowW = rows[0].getBoundingClientRect().width;
-  if (!rowH || !rowW) return;
-  const gap = Math.max(4, Math.round(rowW * 0.006));
 
-  // Máx. de iconos en una misma fila y máx. de filas de alérgenos por plato
-  let maxIcons = 1, maxRows = 1;
+  // Cada fila calcula y aplica su PROPIO tamaño de icono (como variable
+  // CSS local en la propia fila, que sobrescribe la global solo para sus
+  // descendientes). Antes se usaba una única variable global calculada
+  // según la fila con MÁS alérgenos — así que un plato con un solo
+  // alérgeno (p.ej. "EDAMAME") se quedaba con el mismo icono pequeño que
+  // "PAN" (varios alérgenos + trazas), desaprovechando su propio espacio.
+  rows.forEach(row => {
+    const rowH = row.getBoundingClientRect().height;
+    const rowW = row.getBoundingClientRect().width;
+    if (!rowH || !rowW) return;
+    const gap = Math.max(4, Math.round(rowW * 0.006));
 
-  // Check if any dish has traces
-  let hasTraces = false;
-  rows.forEach(r => {
-    if (r.querySelector('.trace-label')) {
-      hasTraces = true;
-    }
-  });
-  rows.forEach(r => {
-    const ars = r.querySelectorAll('.allergen-row');
+    const hasTraces = !!row.querySelector('.trace-label');
+    let maxIcons = 1, maxRows = 1;
+    const ars = row.querySelectorAll('.allergen-row');
     if (ars.length > maxRows) maxRows = ars.length;
     ars.forEach(ar => {
       let cnt = ar.querySelectorAll('.alg-icon-wrap').length;
       if (ar.querySelector('.trace-label')) cnt += 2; // la etiqueta "TRAZAS" ocupa espacio
       if (cnt > maxIcons) maxIcons = cnt;
     });
-  });
 
-  // Ancho disponible para la columna de alérgenos (≈46-58% del ancho de la fila)
-  const allergenW = rowW * (hasTraces ? 0.46 : 0.58);
-  const byWidth  = (allergenW - gap * (maxIcons - 1)) / maxIcons;
-  // Altura disponible para las filas de alérgenos
-  const availableHeight = rowH * (hasTraces ? 0.85 : 0.95);
-  const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
-  let icon = Math.min(byWidth, byHeight);
-  // Los iconos de alérgeno son información de seguridad: deben leerse bien
-  // desde lejos. Sin techo fijo bajo — en una TV 4K real, byWidth/byHeight
-  // ya calculados a partir del tamaño real de la fila pueden ser
-  // perfectamente 150-200px, y caparlo a 130px los dejaba pequeños en
-  // proporción a la pantalla física.
-  icon = Math.max(24, Math.min(icon, 220));
-  document.documentElement.style.setProperty('--icon-size', icon + 'px');
-  document.documentElement.style.setProperty('--icon-gap', gap + 'px');
+    // Ancho disponible para la columna de alérgenos de ESTA fila (≈46-58%)
+    const allergenW = rowW * (hasTraces ? 0.46 : 0.58);
+    const byWidth = (allergenW - gap * (maxIcons - 1)) / maxIcons;
+    // Altura disponible para las filas de alérgenos de ESTA fila
+    const availableHeight = rowH * (hasTraces ? 0.85 : 0.95);
+    const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
+    let icon = Math.min(byWidth, byHeight);
+    // Sin techo fijo bajo — en una TV grande, byWidth/byHeight ya
+    // calculados a partir del tamaño real de la fila pueden ser
+    // perfectamente 150-200px.
+    icon = Math.max(24, Math.min(icon, 220));
+
+    row.style.setProperty('--icon-size', icon + 'px');
+    row.style.setProperty('--icon-gap', gap + 'px');
+  });
 }
 
 function fitLegend() {
