@@ -965,24 +965,21 @@ function adjustSizes(rowsCount, rowHeight) {
   const availH = Math.max(100, window.innerHeight - headerH - 40);
   const availW = Math.max(200, window.innerWidth - sidebarW - 40);
 
-  // El tamaño se basa sobre todo en el ANCHO disponible, que es igual para
-  // todas las filas. Antes se repartía la altura total entre el número de
-  // platos y esa media se aplicaba a TODOS por igual — así que un solo
-  // plato con más contenido (varios alérgenos + nota de sin gluten)
-  // empequeñecía el texto de TODOS los demás, aunque sobrara espacio de
-  // sobra (visible en la última captura: "FRUTA" y "ENSALADA" con hueco
-  // vacío). Se limita el "castigo por nº de platos" a un máximo de 6 filas
-  // de referencia: con menos platos no se agranda de forma desproporcionada,
-  // y con más no se sigue encogiendo sin límite por este cálculo — si de
-  // verdad no cupiera, el bucle de fitDishRows() lo corrige después.
+  // IMPORTANTE: sin techo fijo en píxeles. Un techo como "máximo 110px"
+  // funciona bien en un monitor de escritorio 1080p, pero en una TV 4K
+  // real (donde window.innerWidth puede ser 3000px+) ese mismo techo deja
+  // el texto diminuto en proporción a la pantalla física — que es
+  // exactamente lo que se veía en las últimas fotos reales de la TV. El
+  // tamaño se basa solo en fracciones del espacio disponible, así escala
+  // de forma natural sea cual sea la resolución real del dispositivo.
   const refRows = Math.min(Math.max(1, rowsCount), 8);
   const heightBudget = availH / refRows;
 
-  const nameFs = Math.max(32, Math.min(availW * 0.066, heightBudget * 0.66, 110));
-  const enFs = Math.max(17, Math.min(nameFs * 0.4, 38));
-  const iconSize = Math.max(48, Math.min(availW * 0.08, heightBudget * 0.62, 104));
-  const legendIcon = Math.max(30, Math.min(iconSize * 0.85, 60));
-  const legendText = Math.max(14, Math.min(legendIcon * 0.40, 20));
+  const nameFs = Math.max(16, Math.min(heightBudget * 0.55, availW * 0.045));
+  const enFs = Math.max(12, nameFs * 0.38);
+  const iconSize = Math.max(24, Math.min(heightBudget * 0.55, availW * 0.06));
+  const legendIcon = Math.max(18, Math.min(iconSize, availW * 0.035));
+  const legendText = Math.max(12, legendIcon * 0.4);
 
   root.setProperty('--dish-name-size', nameFs + 'px');
   root.setProperty('--dish-en-size', enFs + 'px');
@@ -1219,8 +1216,11 @@ function fitAllergenIcons() {
   const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
   let icon = Math.min(byWidth, byHeight);
   // Los iconos de alérgeno son información de seguridad: deben leerse bien
-  // desde lejos, así que el mínimo se sube considerablemente (antes 24px).
-  icon = Math.max(48, Math.min(icon, 130));
+  // desde lejos. Sin techo fijo bajo — en una TV 4K real, byWidth/byHeight
+  // ya calculados a partir del tamaño real de la fila pueden ser
+  // perfectamente 150-200px, y caparlo a 130px los dejaba pequeños en
+  // proporción a la pantalla física.
+  icon = Math.max(24, Math.min(icon, 220));
   document.documentElement.style.setProperty('--icon-size', icon + 'px');
   document.documentElement.style.setProperty('--icon-gap', gap + 'px');
 }
@@ -1238,9 +1238,11 @@ function fitLegend() {
   // Punto de partida: se calcula suponiendo una sola columna (lo habitual
   // con el ancho real del sidebar), y el bucle de abajo corrige el
   // resultado si al final el grid encaja más de una columna o menos.
-  let ic = Math.min(containerH / items.length * 0.8, 62);
-  ic = Math.max(26, ic);
-  let txt = Math.min(ic * 0.5, 22);
+  // Sin techo fijo bajo: en una TV grande, containerH puede ser de sobra
+  // para iconos de 100px+ sin que quepa razón para caparlo a 62px.
+  let ic = Math.min(containerH / items.length * 0.8, containerW * 0.16);
+  ic = Math.max(18, ic);
+  let txt = ic * 0.5;
   txt = Math.max(12, txt);
 
   const applySize = (iconPx, textPx) => {
@@ -1400,8 +1402,6 @@ function initDatabaseConnection() {
         refreshMenuDisplay();
       });
     }, 30000);
-
-} catch(e) { console.error(e); showOfflineState('Error inesperado al iniciar: ' + (e && e.message || e)); }
 }
 
 function showNoData() {
