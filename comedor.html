@@ -164,7 +164,7 @@
       justify-items: start;
       flex: 1;
       min-height: 0;
-      overflow-y: auto;
+      overflow-y: hidden;
     }
     .legend-item {
       display: flex;
@@ -173,7 +173,6 @@
       gap: 0.55vw;
       min-width: 0;
       width: 100%;
-      padding: 0.42vw 0.15vw;
       border-bottom: 1px solid #eef1f6;
     }
     .legend-item:last-child { border-bottom: none; }
@@ -965,19 +964,22 @@ function adjustSizes(rowsCount, rowHeight) {
   const availH = Math.max(100, window.innerHeight - headerH - 40);
   const availW = Math.max(200, window.innerWidth - sidebarW - 40);
 
-  // IMPORTANTE: sin techo fijo en píxeles. Un techo como "máximo 110px"
-  // funciona bien en un monitor de escritorio 1080p, pero en una TV 4K
-  // real (donde window.innerWidth puede ser 3000px+) ese mismo techo deja
-  // el texto diminuto en proporción a la pantalla física — que es
-  // exactamente lo que se veía en las últimas fotos reales de la TV. El
-  // tamaño se basa solo en fracciones del espacio disponible, así escala
-  // de forma natural sea cual sea la resolución real del dispositivo.
-  const refRows = Math.min(Math.max(1, rowsCount), 8);
+  // El tamaño se basa PRINCIPALMENTE en el alto disponible por fila (lo que
+  // se estaba desperdiciando con pocos platos: mucho hueco en blanco bajo
+  // el nombre). Antes se tomaba el MÍNIMO entre lo que permite el alto y
+  // lo que permite el ancho, así que aunque sobrara alto de sobra, el
+  // ancho seguía capando el tamaño por adelantado. Ahora el ancho ya no
+  // limita aquí — el nombre de plato puede ocupar hasta 2 líneas
+  // (line-clamp en el CSS) y, si un nombre concreto es tan largo que ni
+  // así cabe, el bucle de seguridad de fitDishRows() ya lo detecta
+  // (scrollHeight > clientHeight) y lo reduce él solo, sin que haga falta
+  // adivinarlo aquí de antemano y penalizar a todos los platos por igual.
+  const refRows = Math.min(Math.max(1, rowsCount), 6);
   const heightBudget = availH / refRows;
 
-  const nameFs = Math.max(16, Math.min(heightBudget * 0.55, availW * 0.045));
-  const enFs = Math.max(12, nameFs * 0.38);
-  const iconSize = Math.max(24, Math.min(heightBudget * 0.55, availW * 0.06));
+  const nameFs = Math.max(20, heightBudget * 0.5);
+  const enFs = Math.max(13, nameFs * 0.38);
+  const iconSize = Math.max(28, heightBudget * 0.42);
   const legendIcon = Math.max(18, Math.min(iconSize, availW * 0.035));
   const legendText = Math.max(12, legendIcon * 0.4);
 
@@ -1248,7 +1250,12 @@ function fitLegend() {
   const applySize = (iconPx, textPx) => {
     document.documentElement.style.setProperty('--legend-icon', iconPx + 'px');
     document.documentElement.style.setProperty('--legend-text', textPx + 'px');
+    // El padding vertical de cada fila escala con el icono (antes era un
+    // valor fijo en vw que nunca se reducía, y con 14 filas ese espacio
+    // fijo por sí solo podía impedir que todo cupiera sin scroll).
+    const vPad = Math.max(2, iconPx * 0.14);
     items.forEach(item => {
+      item.style.padding = vPad + 'px 2px';
       const esEl = item.querySelector('.legend-es');
       const enEl = item.querySelector('.legend-en');
       if (esEl) esEl.style.fontSize = textPx + 'px';
@@ -1258,13 +1265,15 @@ function fitLegend() {
   applySize(ic, txt);
 
   // Ajuste real: si los 14 alérgenos en conjunto no caben en el alto
-  // disponible (list.scrollHeight > list.clientHeight), reduce icono y
-  // texto en pasos pequeños hasta que quepan todos sin recortar ninguno
-  // y sin necesidad de scroll.
+  // disponible (list.scrollHeight > list.clientHeight), reduce icono,
+  // texto y el padding de cada fila en pasos pequeños hasta que quepan
+  // todos sin recortar ninguno y sin necesidad de scroll (no hay barra:
+  // .legend-list tiene overflow-y:hidden, así que esto es lo único que
+  // garantiza que se vea todo).
   let guard = 0;
-  while (list.scrollHeight > list.clientHeight + 1 && guard++ < 20) {
-    ic = Math.max(11, ic * 0.94);
-    txt = Math.max(8, txt * 0.94);
+  while (list.scrollHeight > list.clientHeight + 1 && guard++ < 40) {
+    ic = Math.max(9, ic * 0.95);
+    txt = Math.max(7, txt * 0.95);
     applySize(ic, txt);
   }
 
