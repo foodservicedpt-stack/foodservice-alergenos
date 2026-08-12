@@ -1,1 +1,1 @@
-Nothing needs to be added to .gitignore since the changes only include HTML files (comidas_especiales.html and gestion.html), which are source files and not build artifacts, dependencies, or temporary files.
+Nothing should be ignored since the changes only include HTML files which are source code/config files.
