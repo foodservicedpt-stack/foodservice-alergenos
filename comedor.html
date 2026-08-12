@@ -60,7 +60,34 @@
     .body { display: flex; flex: 1; min-height: 0; padding: 1.2vw; gap: 1.2vw; }
 
     /* ─── MAIN COL ─── */
-    .main-col { flex: 1; display: flex; flex-direction: column; gap: 0.7vw; min-height: 0; overflow: hidden; }
+    .main-col {
+      flex: 1; display: flex; flex-direction: column; gap: 0.7vw;
+      min-height: 0; overflow: hidden;
+    }
+    /* Con varios platos, main-col pasa a un grid de N columnas (fijado
+       por JS vía --grid-cols según el nº de platos) para aprovechar el
+       ancho — antes, con una sola columna de ancho completo, cada fila
+       dejaba muchísimo espacio en blanco entre el nombre y los iconos,
+       y encima cada plato se llevaba una porción de ALTO más pequeña de
+       la necesaria al repartirse en muchas filas apiladas. Con 2-3
+       columnas, cada plato tiene una celda más ancha en proporción y
+       muchas menos filas verticales, así que el texto puede ser bastante
+       más grande. */
+    .main-col.grid-mode {
+      display: grid;
+      grid-template-columns: repeat(var(--grid-cols, 1), 1fr);
+      grid-auto-rows: 1fr;
+      gap: 0.7vw;
+    }
+    /* En modo grid, cada celda es más estrecha, así que el nombre y los
+       alérgenos se apilan en vertical en vez de ir lado a lado (si no,
+       con una celda de la mitad de ancho, los iconos quedarían apretados
+       contra el nombre). */
+    .main-col.grid-mode .dish-row { flex-direction: column; align-items: stretch; }
+    .main-col.grid-mode .dish-allergens {
+      width: 100%; max-width: 100%; align-items: flex-start;
+      flex-direction: row; flex-wrap: wrap; margin-left: 0; margin-top: 0.5vw;
+    }
 
     /* ─── DISH ROW ─── */
     .dish-row {
@@ -1074,7 +1101,13 @@ function fitDishRows() {
   const rows = [...mainCol.querySelectorAll('.dish-row')];
   if (!rows.length) return;
 
-  adjustSizes(rows.length, rows[0].getBoundingClientRect().height);
+  // En modo grid, varios platos comparten la misma fila visual — lo que
+  // limita el alto disponible por plato es el nº de FILAS de grid, no el
+  // nº de platos en bruto (con 2 columnas, 8 platos son solo 4 filas).
+  const gridCols = parseInt(getComputedStyle(mainCol).getPropertyValue('--grid-cols')) || 1;
+  const gridRows = Math.ceil(rows.length / gridCols);
+
+  adjustSizes(gridRows, rows[0].getBoundingClientRect().height);
   if (manualDishSize) {
     const root = document.documentElement.style;
     if (manualDishSize.name) root.setProperty('--dish-name-size', manualDishSize.name);
@@ -1149,6 +1182,15 @@ function renderMenu(data) {
     col.innerHTML = '<div class="no-data"><span class="icon">🍽️</span><p>Menú no disponible</p><small>Menu not available yet</small></div>';
     return;
   }
+
+  // Con pocos platos, una sola columna de ancho completo se lee mejor
+  // (nombres grandes, sin partir la atención). Con varios, pasar a 2-3
+  // columnas aprovecha el ancho que si no queda en blanco, y sobre todo
+  // reduce el número de FILAS verticales — que es lo que de verdad
+  // limita lo grande que puede ser el texto cuando hay muchos platos.
+  const gridCols = platos.length <= 3 ? 1 : platos.length <= 8 ? 2 : 3;
+  col.classList.toggle('grid-mode', gridCols > 1);
+  col.style.setProperty('--grid-cols', gridCols);
 
   platos.forEach(p => {
     const contiene = p.contiene||[], trazas = p.trazas||[];
