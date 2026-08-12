@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Service DPT — Carta Especial</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="./firebase-config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --dish-name-size: 5.5vw;
+      --dish-en-size: 2vw;
+      --icon-size: 5vw;
+      --icon-gap: 0.6vw;
+      --dish-pad: 1.4vw;
+      --legend-icon: 2.8vw;
+      --legend-text: 1.3vw;
+      --header-h: 14vh;
+      --turno-title-size: 2vw;
+      --turno-msg-es-size: 3vw;
+      --turno-msg-en-size: 1.8vw;
+      --turno-countdown-size: 1.8vw;
+      --carousel-es-size: 2.6vw;
+      --carousel-en-size: 1.7vw;
+      --carousel-farewell-es-size: 4vw;
+      --carousel-farewell-en-size: 2vw;
+      --no-allergen-scale: 1;
+      --dish-gluten-scale: 1;
+      
+      /* Colores elegantes oscuros */
+      --bg-dark: #0a0a0a;
+      --bg-card: #141414;
+      --bg-header: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 50%, #0d0d0d 100%);
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --accent-gold: #c9a962;
+      --accent-gold-dim: #8b7355;
+      --border-color: #2a2a2a;
+      --shadow-color: rgba(0,0,0,0.5);
+    }
+
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg-dark);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    /* ─── LAYOUT MASTER ─── */
+    .screen { display: flex; flex-direction: column; width: 100vw; height: 100vh; }
+
+    /* ─── HEADER ─── */
+    .header {
+      background: var(--bg-header);
+      height: var(--header-h);
+      display: flex; align-items: center; padding: 0 2.5vw; gap: 2vw;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.6);
+      border-bottom: 2px solid var(--accent-gold-dim);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+    }
+    .header-logo { 
+      height: 70%; 
+      max-height: 75px; 
+      object-fit: contain; 
+      filter: brightness(1.2) drop-shadow(0 0 15px rgba(201,169,98,0.3)); 
+    }
+    .header-divider { 
+      width: 3px; 
+      height: 60%; 
+      background: linear-gradient(to bottom, var(--accent-gold), var(--accent-gold-dim)); 
+      border-radius: 2px; 
+    }
+    .header-title .es { 
+      font-size: clamp(26px,4vw,58px); 
+      font-weight: 900; 
+      letter-spacing: 6px; 
+      color: var(--accent-gold); 
+      text-transform: uppercase; 
+      text-shadow: 0 2px 10px rgba(201,169,98,0.3);
+    }
+    .header-title .en { 
+      font-size: clamp(12px,1.5vw,24px); 
+      color: var(--text-secondary); 
+      letter-spacing: 5px; 
+      text-transform: uppercase; 
+      font-style: italic; 
+      margin-top: 4px;
+    }
+    .header-spacer { flex: 1; }
+    .header-datetime { 
+      text-align: right; 
+      color: var(--text-primary); 
+      line-height: 1.2; 
+      min-width: 280px;
+    }
+    .header-date { 
+      font-size: clamp(16px,2vw,30px); 
+      font-weight: 700; 
+      color: var(--text-secondary); 
+      text-transform: none; 
+      letter-spacing: 1px;
+    }
+    .header-time { 
+      font-size: clamp(42px,6.5vw,85px); 
+      font-weight: 900; 
+      color: var(--accent-gold); 
+      letter-spacing: 4px;
+      text-shadow: 0 0 20px rgba(201,169,98,0.4);
+    }
+
+    /* ─── BODY ─── */
+    .body { 
+      display: flex; 
+      flex: 1; 
+      min-height: 0; 
+      padding: 1.2vw; 
+      gap: 1.2vw; 
+      background: radial-gradient(ellipse at top, #1a1a1a 0%, var(--bg-dark) 70%);
+    }
+
+    /* ─── MAIN COL ─── */
+    .main-col {
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.7vw;
+      min-height: 0; 
+      overflow: hidden;
+    }
+    .main-col.grid-mode {
+      display: grid;
+      grid-template-columns: repeat(var(--grid-cols, 1), 1fr);
+      grid-auto-rows: 1fr;
+      gap: 0.7vw;
+    }
+    .main-col.grid-mode .dish-row { 
+      flex-direction: column; 
+      align-items: stretch; 
+    }
+    .main-col.grid-mode .dish-allergens {
+      width: 100%; 
+      max-width: 100%; 
+      align-items: flex-start;
+      flex-direction: column; 
+      margin-left: 0; 
+      margin-top: 0.5vw;
+    }
+
+    /* ─── DISH ROW ─── */
+    .dish-row {
+      background: var(--bg-card); 
+      border-radius: 16px;
+      padding: var(--dish-pad) calc(var(--dish-pad) * 1.2);
+      display: flex; 
+      align-items: flex-start;
+      box-shadow: 0 4px 20px var(--shadow-color);
+      flex: 1; 
+      flex-shrink: 0;
+      border-left: 5px solid var(--accent-gold-dim);
+      gap: 0.7vw;
+      min-height: 6vw;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+    .dish-row:hover {
+      border-color: var(--accent-gold);
+      box-shadow: 0 6px 30px rgba(201,169,98,0.15);
+    }
+    @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
+
+    .dish-info { 
+      flex: 1; 
+      padding-right: 0.4vw; 
+      min-width: 0; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.45vw; 
+    }
+    .dish-name-es {
+      font-size: var(--dish-name-size); 
+      font-weight: 900; 
+      color: var(--text-primary);
+      text-transform: uppercase; 
+      letter-spacing: 0.08em; 
+      line-height: 1.1;
+      white-space: normal; 
+      overflow: hidden; 
+      overflow-wrap: break-word; 
+      word-break: break-word;
+      display: -webkit-box; 
+      -webkit-box-orient: vertical; 
+      -webkit-line-clamp: 2; 
+      line-clamp: 2;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .dish-name-en {
+      font-size: calc(var(--dish-en-size) * 1.15); 
+      color: var(--text-secondary); 
+      font-style: italic; 
+      line-height: 1.1;
+      white-space: normal; 
+      overflow: hidden; 
+      overflow-wrap: break-word; 
+      word-break: break-word;
+      display: -webkit-box; 
+      -webkit-box-orient: vertical; 
+      -webkit-line-clamp: 2; 
+      line-clamp: 2;
+    }
+    .dish-gluten-note {
+      display: flex; 
+      flex-direction: row; 
+      align-items: center; 
+      gap: 0.6vw;
+      padding: 0.4vw 0.7vw; 
+      border-radius: 10px;
+      border: 1.5px solid var(--accent-gold-dim); 
+      background: rgba(201,169,98,0.1);
+      max-width: 100%; 
+      align-self: flex-start; 
+      box-sizing: border-box;
+    }
+    .dish-gluten-icon { flex-shrink: 0; display: flex; }
+    .dish-gluten-icon svg {
+      width: calc(var(--dish-en-size) * 1.5 * var(--dish-gluten-scale, 1)); 
+      height: calc(var(--dish-en-size) * 1.5 * var(--dish-gluten-scale, 1));
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
+    }
+    .dish-gluten-txt { 
+      display: flex; 
+      flex-direction: column; 
+      line-height: 1.18; 
+      min-width: 0; 
+    }
+    .dish-gluten-es {
+      font-size: calc(var(--dish-en-size) * 1.35 * var(--dish-gluten-scale, 1)); 
+      font-weight: 800; 
+      color: var(--accent-gold);
+      overflow-wrap: anywhere;
+    }
+    .dish-gluten-en {
+      font-size: calc(var(--dish-en-size) * 1.05 * var(--dish-gluten-scale, 1)); 
+      font-style: italic; 
+      color: var(--text-secondary);
+      overflow-wrap: anywhere; 
+      opacity: 0.92;
+    }
+
+    /* ─── ALLERGEN ICONS ─── */
+    .dish-allergens { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: flex-start; 
+      justify-content: center; 
+      gap: 0.3vw; 
+      flex-shrink: 0; 
+      width: min(32%, 300px); 
+      max-width: 300px; 
+      margin-left: 0.4vw; 
+    }
+    .allergen-row { 
+      display: flex; 
+      align-items: center; 
+      gap: var(--icon-gap); 
+      flex-wrap: wrap; 
+      justify-content: flex-start; 
+      max-width: 100%; 
+    }
+    .alg-icon-wrap {
+      width: var(--icon-size); 
+      height: var(--icon-size); 
+      overflow: hidden;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+    }
+    .alg-icon-wrap img { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: contain; 
+      border-radius: 50%; 
+      filter: brightness(1.1);
+    }
+    .alg-icon-wrap.trace-icon { opacity: 0.75; }
+    .trace-label {
+      font-size: calc(var(--icon-size) * 0.28); 
+      font-weight: 800; 
+      color: #d4a843;
+      background: rgba(201,169,98,0.15); 
+      border: 2px solid var(--accent-gold-dim); 
+      border-radius: 50px;
+      padding: 0.2vw 0.7vw; 
+      letter-spacing: 0.5px; 
+      white-space: nowrap;
+      line-height: 1.1; 
+      text-align: left; 
+      max-width: 100%;
+    }
+    .no-allergen {
+      background: rgba(16,185,129,0.1); 
+      border: 2px solid #059669; 
+      border-radius: 12px;
+      padding: 0.55vw 1.1vw; 
+      color: #6ee7b7; 
+      font-weight: 800;
+      font-size: calc(var(--dish-en-size) * 1.05 * var(--no-allergen-scale, 1));
+      display: flex; 
+      flex-direction: row; 
+      align-items: center; 
+      gap: 0.7vw;
+      max-width: 100%; 
+      width: auto; 
+      flex-wrap: nowrap;
+    }
+    .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
+    .no-allergen .shield-ok svg {
+      width: calc(var(--dish-name-size) * 1.15); 
+      height: calc(var(--dish-name-size) * 1.15);
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+    }
+    .no-allergen-txt { 
+      display: flex; 
+      flex-direction: column; 
+      line-height: 1.1; 
+      min-width: 0; 
+    }
+    .no-allergen-txt .es { white-space: normal; overflow-wrap: anywhere; }
+    .no-allergen .en { 
+      font-style: italic; 
+      font-size: 0.82em; 
+      opacity: 0.7; 
+      font-weight: 600; 
+      white-space: normal; 
+      overflow-wrap: anywhere; 
+    }
+
+    /* ─── SIDEBAR LEGEND ─── */
+    .sidebar {
+      flex: 0 0 min(250px, 23vw);
+      width: min(24vw, 340px);
+      max-width: 360px;
+      background: var(--bg-card); 
+      border-radius: 16px;
+      padding: 1vw 0.8vw; 
+      display: flex; 
+      flex-direction: column;
+      box-shadow: 0 4px 20px var(--shadow-color);
+      border: 1px solid var(--border-color);
+      min-height: 0;
+      overflow: hidden;
+    }
+    .legend-title { 
+      font-size: 1.1vw; 
+      font-weight: 800; 
+      color: var(--accent-gold); 
+      text-transform: uppercase; 
+      letter-spacing: 2px; 
+      border-bottom: 2px solid var(--border-color); 
+      padding-bottom: 0.5vw; 
+      margin-bottom: 0.6vw;
+      text-shadow: 0 2px 8px rgba(201,169,98,0.2);
+    }
+    .legend-title .en { 
+      display: block; 
+      font-style: italic; 
+      font-weight: 400; 
+      text-transform: none; 
+      letter-spacing: 0; 
+      font-size: 0.85em; 
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .legend-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      align-content: start;
+      justify-items: start;
+      flex: 1;
+      min-height: 0;
+      overflow-y: hidden;
+    }
+    .legend-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55vw;
+      min-width: 0;
+      width: 100%;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 0.3vw 0;
+    }
+    .legend-item:last-child { border-bottom: none; }
+    .legend-circle {
+      width: var(--legend-icon);
+      height: var(--legend-icon);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+    }
+    .legend-circle img { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: contain; 
+      border-radius: 50%; 
+      filter: brightness(1.1);
+    }
+    .legend-text-wrap {
+      line-height: 1.15;
+      min-width: 0;
+      width: calc(100% - var(--legend-icon) - 0.55vw);
+    }
+    .legend-es {
+      font-size: var(--legend-text);
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      display: block;
+      white-space: normal;
+      letter-spacing: 0.5px;
+    }
+    .legend-en {
+      font-size: calc(var(--legend-text) * 0.85);
+      color: var(--text-secondary);
+      font-style: italic;
+      display: block;
+      white-space: normal;
+    }
+    @media (max-width: 1100px) {
+      .body { flex-wrap: wrap; }
+      .sidebar { width: 100%; max-width: 100%; }
+    }
+
+    /* ─── FOOTER ─── */
+    .footer { 
+      background: linear-gradient(90deg, #0d0d0d, #1a1a1a, #0d0d0d); 
+      padding: 0.5vw 2.5vw; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      flex-shrink: 0;
+      border-top: 1px solid var(--border-color);
+    }
+    .footer-brand { 
+      color: var(--text-secondary); 
+      font-size: clamp(10px,1vw,14px); 
+      letter-spacing: 1.5px; 
+    }
+    .footer-updated { 
+      color: var(--text-secondary); 
+      font-size: clamp(9px,0.9vw,13px); 
+    }
+    .live-dot { 
+      display: inline-block; 
+      width: 8px; 
+      height: 8px; 
+      border-radius: 50%; 
+      background: #10b981; 
+      margin-right: 6px; 
+      animation: blink 2s infinite;
+      box-shadow: 0 0 10px #10b981;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .no-data { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      color: var(--text-secondary); 
+      gap: 16px; 
+    }
+    .no-data .icon { font-size: 5vw; }
+    .no-data p { font-size: 2vw; font-weight: 600; }
+    .no-data small { font-size: 1.2vw; opacity: 0.7; max-width: 60vw; text-align: center; line-height: 1.5; }
+    .fade-update { animation: none; }
+    @keyframes fadeUpdate { 0%{opacity:1;transform:scale(1)} 100%{opacity:1;transform:scale(1)} }
+
+    /* ═══════════════════════════════════════════════════
+       TURNO OVERLAY — Pantalla completa elegante
+    ═══════════════════════════════════════════════════ */
+    #turno-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    #turno-overlay.visible { opacity: 1; pointer-events: auto; }
+
+    .turno-scrim {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+    }
+
+    .turno-card-tv {
+      position: relative; z-index: 1;
+      width: 90vw; max-width: 1500px;
+      border-radius: 2.5vw;
+      padding: clamp(20px, 3vw, 48px) clamp(24px, 5vw, 80px);
+      text-align: center;
+      overflow: hidden;
+      box-shadow: 0 3vw 6vw rgba(0,0,0,0.8), 0 0 0 3px rgba(201,169,98,0.3);
+      transform: scale(0.85) translateY(3vw);
+      transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease;
+      animation: cardGlow 2.5s ease-in-out infinite;
+      opacity: 0;
+      background: linear-gradient(135deg, rgba(20,20,20,0.95), rgba(30,30,30,0.9));
+      border: 2px solid var(--accent-gold-dim);
+    }
+    @keyframes cardGlow {
+      0%, 100% { box-shadow: 0 4vw 8vw rgba(0,0,0,0.8), 0 0 0 4px rgba(201,169,98,0.2); }
+      50%      { box-shadow: 0 4vw 8vw rgba(0,0,0,0.8), 0 0 0 10px rgba(201,169,98,0.35); }
+    }
+    #turno-overlay.visible .turno-card-tv { transform: scale(1) translateY(0); opacity: 1; }
+
+    .turno-bell {
+      font-size: clamp(34px, 7vw, 112px); line-height: 1;
+      display: block; margin-bottom: 1vw;
+      animation: bellRing 0.6s ease-in-out 0.3s 3;
+      transform-origin: top center;
+      filter: drop-shadow(0 0 20px rgba(201,169,98,0.5));
+    }
+    @keyframes bellRing {
+      0%,100% { transform: rotate(0deg); }
+      20%      { transform: rotate(-20deg); }
+      40%      { transform: rotate(20deg); }
+      60%      { transform: rotate(-12deg); }
+      80%      { transform: rotate(12deg); }
+    }
+
+    .turno-title {
+      font-size: clamp(16px, var(--turno-title-size), 36px);
+      font-weight: 900; letter-spacing: 4px;
+      text-transform: uppercase; 
+      color: var(--accent-gold);
+      opacity: 0.85;
+      margin-bottom: 1vw;
+    }
+
+    .turno-msg-es {
+      font-size: clamp(20px, var(--turno-msg-es-size), 52px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      line-height: 1.05;
+      margin-bottom: 1vw;
+      color: var(--text-primary);
+      text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      word-break: break-word;
+    }
+
+    .turno-msg-en {
+      font-size: clamp(14px, var(--turno-msg-en-size), 30px);
+      font-style: italic;
+      opacity: 0.85;
+      margin-bottom: 1.5vw;
+      line-height: 1.2;
+      color: var(--text-secondary);
+    }
+
+    .turno-countdown-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0.6vw;
+    }
+    .turno-countdown-label {
+      font-size: clamp(13px, var(--turno-countdown-size), 30px); 
+      font-weight: 900;
+      opacity: 0.85; 
+      letter-spacing: 2px; 
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .turno-progress-track {
+      width: min(65%, 900px); 
+      height: clamp(10px, 1.3vw, 20px); 
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1); 
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+    .turno-progress-bar {
+      height: 100%; 
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--accent-gold-dim), var(--accent-gold));
+      transition: width 1s linear;
+    }
+
+    .turno-carousel {
+      position: relative;
+      margin: 2vw 0;
+      padding: 1.5vw;
+      border-radius: 1.5vw;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      min-height: 20vh;
+      border: 1px solid var(--border-color);
+    }
+    .carousel-track {
+      display: flex;
+      transition: transform 0.8s cubic-bezier(0.4,0,0.2,1);
+      will-change: transform;
+    }
+    .carousel-slide {
+      flex: 0 0 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2vw;
+      padding: 2vw;
+    }
+    .carousel-slide.farewell {
+      background: linear-gradient(135deg, rgba(201,169,98,0.1), rgba(201,169,98,0.03));
+      border-radius: 1vw;
+      border: 1px solid rgba(201,169,98,0.2);
+      justify-content: center;
+      min-height: 18vh;
+    }
+    .carousel-farewell-es {
+      font-size: clamp(22px, var(--carousel-farewell-es-size), 48px);
+      font-weight: 900;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 15px rgba(201,169,98,0.3);
+    }
+    .carousel-farewell-en {
+      font-size: clamp(14px, var(--carousel-farewell-en-size), 26px);
+      font-style: italic;
+      color: var(--text-secondary);
+      opacity: 0.8;
+    }
+    .carousel-reminder-img {
+      max-width: 100%;
+      max-height: 14vh;
+      object-fit: contain;
+      filter: brightness(1.1) drop-shadow(0 2px 10px rgba(0,0,0,0.5));
+      border-radius: 8px;
+    }
+
+    .carousel-nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.8vw;
+      margin-top: 1vw;
+    }
+    .carousel-dot {
+      width: clamp(8px, 1vw, 14px);
+      height: clamp(8px, 1vw, 14px);
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .carousel-dot.active {
+      background: var(--accent-gold);
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 12px rgba(201,169,98,0.6);
+    }
+    .carousel-dot:hover:not(.active) {
+      background: rgba(255,255,255,0.4);
+    }
+
+    /* Animación de entrada para platos */
+    .dish-row {
+      animation: dishEnter 0.5s ease-out forwards;
+      opacity: 0;
+    }
+    @keyframes dishEnter {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="screen">
+  
+  <div class="header">
+    <img src="./img/Encabezado.png" alt="Food Service DPT" class="header-logo" onerror="this.style.display='none'">
+    <div class="header-divider"></div>
+    <div class="header-title">
+      <div class="es">CARTA</div>
+      <div class="en">Special Menu</div>
+    </div>
+    <div class="header-spacer"></div>
+    <div class="header-datetime">
+      <div class="header-date" id="header-date">Cargando...</div>
+      <div class="header-time" id="header-time">--:--</div>
+    </div>
+  </div>
+  
+  <div class="body">
+    <div class="main-col" id="main-col">
+      <div class="no-data">
+        <span class="icon">⏳</span>
+        <p>Cargando menú especial...</p>
+        <small>Espera un momento</small>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="legend-title">ALÉRGENOS<span class="en">Allergen Legend</span></div>
+      <div class="legend-list" id="legend-list"></div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <div class="footer-brand">FOOD SERVICE DPT</div>
+    <div class="footer-updated"><span class="live-dot"></span>Actualizado: <span id="last-updated">--:--:--</span></div>
+  </div>
+
+  <!-- TURNO OVERLAY -->
+  <div id="turno-overlay">
+    <div class="turno-scrim"></div>
+    <div class="turno-card-tv">
+      <span class="turno-bell">🔔</span>
+      <div class="turno-title">Próximo turno</div>
+      <div class="turno-msg-es" id="turno-msg-es">Comida</div>
+      <div class="turno-msg-en" id="turno-msg-en">Lunch</div>
+      
+      <div class="turno-countdown-wrap">
+        <div class="turno-countdown-label">Comienza en</div>
+        <div class="turno-progress-track">
+          <div class="turno-progress-bar" id="turno-progress-bar" style="width:100%"></div>
+        </div>
+      </div>
+      
+      <div class="turno-carousel" id="turno-carousel">
+        <div class="carousel-track" id="carousel-track">
+          <!-- Se llena dinámicamente -->
+        </div>
+        <div class="carousel-nav" id="carousel-nav"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG & STATE
+// ═══════════════════════════════════════════════════
+const ALERGENS = [
+  { id:'gluten',     es:'Gluten',     en:'Gluten',           img:'alergenos_gluten.svg' },
+  { id:'lacteos',    es:'Lácteos',    en:'Dairy',            img:'alergenos_lacteos.svg' },
+  { id:'huevos',     es:'Huevos',     en:'Eggs',             img:'alergenos_huevos.svg' },
+  { id:'pescado',    es:'Pescado',    en:'Fish',             img:'alergenos_pescado.svg' },
+  { id:'crustaceos', es:'Crustáceos', en:'Crustaceans',      img:'alergenos_crustaceos.svg' },
+  { id:'moluscos',   es:'Moluscos',   en:'Molluscs',         img:'alergenos_moluscos.svg' },
+  { id:'cacahuetes', es:'Cacahuetes', en:'Peanuts',          img:'alergenos_cacahuetes.svg' },
+  { id:'soja',       es:'Soja',       en:'Soy',              img:'alergenos_soja.svg' },
+  { id:'cascara',    es:'Frutos Cáscara', en:'Nuts',         img:'alergenos_cascara.svg' },
+  { id:'apio',       es:'Apio',       en:'Celery',           img:'alergenos_apio.svg' },
+  { id:'mostaza',    es:'Mostaza',    en:'Mustard',          img:'alergenos_mostaza.svg' },
+  { id:'sesamo',     es:'Sésamo',     en:'Sesame',           img:'alergenos_sesamo.svg' },
+  { id:'sulfitos',   es:'Sulfitos',   en:'Sulphites',        img:'alergenos_sulfitos.svg' },
+  { id:'altramuces', es:'Altramuces', en:'Lupin',            img:'alergenos_altramuces.svg' }
+];
+
+let db, dishesRef, turnosRef, configRef;
+let currentDishes = [];
+let currentTurnos = {};
+let currentConfig = {};
+let turnoTimer = null;
+let carouselInterval = null;
+let currentSlideIndex = 0;
+let totalSlides = 0;
+
+// ═══════════════════════════════════════════════════
+// INIT FIREBASE
+// ═══════════════════════════════════════════════════
+function initFirebase() {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  db = firebase.database();
+  dishesRef = db.ref('menuEspecial/dishes');
+  turnosRef = db.ref('menuEspecial/turnos');
+  configRef = db.ref('menuEspecial/config');
+  
+  dishesRef.on('value', snap => {
+    const data = snap.val() || {};
+    currentDishes = Object.entries(data)
+      .map(([id, d]) => ({ id, ...d }))
+      .filter(d => !d.hidden)
+      .sort((a,b) => (a.order||0) - (b.order||0));
+    renderDishes();
+    updateLastUpdated();
+  });
+  
+  turnosRef.on('value', snap => {
+    currentTurnos = snap.val() || {};
+    checkTurno();
+  });
+  
+  configRef.on('value', snap => {
+    currentConfig = snap.val() || {};
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// DATE & TIME
+// ═══════════════════════════════════════════════════
+function updateDateTime() {
+  const now = new Date();
+  const dateEl = document.getElementById('header-date');
+  const timeEl = document.getElementById('header-time');
+  
+  const options = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  let dateStr = now.toLocaleDateString('es-ES', options);
+  dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+  
+  dateEl.textContent = dateStr;
+  
+  const hours = String(now.getHours()).padStart(2,'0');
+  const minutes = String(now.getMinutes()).padStart(2,'0');
+  timeEl.textContent = `${hours}:${minutes}`;
+}
+
+function updateLastUpdated() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-ES');
+  document.getElementById('last-updated').textContent = timeStr;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER LEGEND
+// ═══════════════════════════════════════════════════
+function renderLegend() {
+  const list = document.getElementById('legend-list');
+  list.innerHTML = ALERGENS.map(a => `
+    <div class="legend-item">
+      <div class="legend-circle">
+        <img src="./img/${a.img}" alt="${a.es}" onerror="this.style.display='none'">
+      </div>
+      <div class="legend-text-wrap">
+        <span class="legend-es">${a.es}</span>
+        <span class="legend-en">${a.en}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER DISHES
+// ═══════════════════════════════════════════════════
+function renderDishes() {
+  const container = document.getElementById('main-col');
+  
+  if (currentDishes.length === 0) {
+    container.innerHTML = `
+      <div class="no-data">
+        <span class="icon">🍽️</span>
+        <p>No hay platos especiales disponibles</p>
+        <small>Pronto habrá novedades</small>
+      </div>
+    `;
+    return;
+  }
+  
+  // Modo grid si hay más de 2 platos
+  if (currentDishes.length > 2) {
+    container.classList.add('grid-mode');
+    container.style.setProperty('--grid-cols', Math.min(currentDishes.length, 3));
+  } else {
+    container.classList.remove('grid-mode');
+  }
+  
+  container.innerHTML = currentDishes.map((dish, idx) => {
+    const hasAllergens = dish.contains && dish.contains.length > 0;
+    const containsData = dish.contains || [];
+    const tracesData = dish.traces || [];
+    
+    let allergenHTML = '';
+    if (hasAllergens) {
+      const containsIcons = containsData.map(id => {
+        const alg = ALERGENS.find(a => a.id === id);
+        if (!alg) return '';
+        return `<div class="alg-icon-wrap"><img src="./img/${alg.img}" alt="${alg.es}" title="${alg.es}" onerror="this.style.display='none'"></div>`;
+      }).join('');
+      
+      const tracesIcons = tracesData.map(id => {
+        const alg = ALERGENS.find(a => a.id === id);
+        if (!alg) return '';
+        return `<div class="alg-icon-wrap trace-icon"><img src="./img/${alg.img}" alt="${alg.es}" title="Trazas: ${alg.es}" onerror="this.style.display='none'"></div>`;
+      }).join('');
+      
+      const traceLabel = tracesData.length > 0 ? '<div class="trace-label">TRAZAS</div>' : '';
+      
+      allergenHTML = `
+        <div class="dish-allergens">
+          <div class="allergen-row">${containsIcons}</div>
+          ${tracesIcons || traceLabel ? `<div class="allergen-row">${tracesIcons}${traceLabel}</div>` : ''}
+        </div>
+      `;
+    } else {
+      allergenHTML = `
+        <div class="dish-allergens">
+          <div class="no-allergen">
+            <div class="shield-ok">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="no-allergen-txt">
+              <span class="es">Sin alérgenos</span>
+              <span class="en">No allergens</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    const glutenHTML = dish.sinGluten ? `
+      <div class="dish-gluten-note">
+        <div class="dish-gluten-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M4.93 4.93L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="dish-gluten-txt">
+          <span class="dish-gluten-es">Sin gluten</span>
+          <span class="dish-gluten-en">Gluten free</span>
+        </div>
+      </div>
+    ` : '';
+    
+    const delay = idx * 100;
+    
+    return `
+      <div class="dish-row" style="animation-delay: ${delay}ms">
+        <div class="dish-info">
+          <div class="dish-name-es">${escapeHtml(dish.name_es || 'Sin nombre')}</div>
+          <div class="dish-name-en">${escapeHtml(dish.name_en || '')}</div>
+          ${glutenHTML}
+        </div>
+        ${allergenHTML}
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ═══════════════════════════════════════════════════
+// TURNO LOGIC
+// ═══════════════════════════════════════════════════
+function checkTurno() {
+  if (turnoTimer) {
+    clearTimeout(turnoTimer);
+    turnoTimer = null;
+  }
+  
+  const now = new Date();
+  const currentDay = now.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  
+  let nextTurno = null;
+  let minDiff = Infinity;
+  
+  for (const [day, turnos] of Object.entries(currentTurnos)) {
+    if (!turnos.enabled) continue;
+    
+    const turnoList = turnos.turnos || [];
+    for (const turno of turnoList) {
+      if (!turno.enabled) continue;
+      
+      const [h, m] = turno.hora.split(':').map(Number);
+      const turnoTime = h * 60 + m;
+      
+      let diff = turnoTime - currentTime;
+      if (diff < 0) diff += 24 * 60;
+      
+      if (diff < minDiff && diff <= 30) {
+        minDiff = diff;
+        nextTurno = turno;
+      }
+    }
+  }
+  
+  if (nextTurno && minDiff >= 0) {
+    showTurnoOverlay(nextTurno, minDiff);
+  }
+}
+
+function showTurnoOverlay(turno, minutesUntil) {
+  const overlay = document.getElementById('turno-overlay');
+  const msgEs = document.getElementById('turno-msg-es');
+  const msgEn = document.getElementById('turno-msg-en');
+  const progressBar = document.getElementById('turno-progress-bar');
+  
+  msgEs.textContent = turno.nombre_es || 'Turno';
+  msgEn.textContent = turno.nombre_en || 'Shift';
+  
+  overlay.classList.add('visible');
+  
+  const duration = minutesUntil * 60 * 1000;
+  const startTime = Date.now();
+  
+  function updateProgress() {
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, duration - elapsed);
+    const percent = (remaining / duration) * 100;
+    
+    progressBar.style.width = `${percent}%`;
+    
+    if (remaining > 0) {
+      turnoTimer = setTimeout(updateProgress, 1000);
+    } else {
+      overlay.classList.remove('visible');
+    }
+  }
+  
+  updateProgress();
+  
+  // Auto-hide after 8 seconds or when countdown ends
+  setTimeout(() => {
+    if (overlay.classList.contains('visible')) {
+      overlay.classList.remove('visible');
+    }
+  }, 8000);
+}
+
+// ═══════════════════════════════════════════════════
+// CAROUSEL
+// ═══════════════════════════════════════════════════
+function initCarousel() {
+  const track = document.getElementById('carousel-track');
+  const nav = document.getElementById('carousel-nav');
+  
+  const slides = [];
+  
+  // Farewell slide
+  const farewell = currentConfig.farewell || {
+    es: '¡Buen provecho!',
+    en: 'Enjoy your meal!'
+  };
+  slides.push({
+    type: 'farewell',
+    html: `
+      <div class="carousel-farewell-es">${escapeHtml(farewell.es)}</div>
+      <div class="carousel-farewell-en">${escapeHtml(farewell.en)}</div>
+    `
+  });
+  
+  // Reminder images
+  const reminders = currentConfig.recordatorios || ['recordatorio_1.png', 'recordatorio_2.png'];
+  reminders.forEach(img => {
+    slides.push({
+      type: 'reminder',
+      html: `<img src="./img/${img}" alt="Recordatorio" class="carousel-reminder-img" onerror="this.style.display='none'">`
+    });
+  });
+  
+  totalSlides = slides.length;
+  currentSlideIndex = 0;
+  
+  track.innerHTML = slides.map((slide, i) => `
+    <div class="carousel-slide ${slide.type}">${slide.html}</div>
+  `).join('');
+  
+  nav.innerHTML = slides.map((_, i) => `
+    <div class="carousel-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></div>
+  `).join('');
+  
+  // Click handlers
+  nav.querySelectorAll('.carousel-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      currentSlideIndex = parseInt(dot.dataset.index);
+      updateCarousel();
+      resetCarouselTimer();
+    });
+  });
+  
+  startCarouselTimer();
+}
+
+function updateCarousel() {
+  const track = document.getElementById('carousel-track');
+  const dots = document.querySelectorAll('.carousel-dot');
+  
+  track.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+  
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('active', i === currentSlideIndex);
+  });
+}
+
+function startCarouselTimer() {
+  if (carouselInterval) clearInterval(carouselInterval);
+  carouselInterval = setInterval(() => {
+    currentSlideIndex = (currentSlideIndex + 1) % totalSlides;
+    updateCarousel();
+  }, 5000);
+}
+
+function resetCarouselTimer() {
+  if (carouselInterval) clearInterval(carouselInterval);
+  startCarouselTimer();
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
+  renderLegend();
+  updateDateTime();
+  setInterval(updateDateTime, 1000);
+  
+  // Listen for config changes
+  configRef.on('value', snap => {
+    currentConfig = snap.val() || {};
+    initCarousel();
+  });
+});
+</script>
+</body>
+</html>

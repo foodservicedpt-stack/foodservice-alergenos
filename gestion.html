@@ -268,6 +268,8 @@
     #tab-content-turnos.active { display: block; }
     #tab-content-menu { display: none; }
     #tab-content-menu.active { display: block; }
+    #tab-content-especial { display: none; }
+    #tab-content-especial.active { display: block; }
 
     .turnos-intro {
       background: linear-gradient(135deg, #2e1065, #4c1d95);
@@ -464,6 +466,7 @@
     <div class="sep"></div>
     <div class="topbar-actions">
       <a href="./comedor.html" target="_blank" class="btn-tv">📺 Ver pantalla TV</a>
+      <a href="./comidas_especiales.html" target="_blank" class="btn-tv">✨ Ver pantalla comidas especiales</a>
       <a href="./desayuno.html" target="_blank" class="btn-print">☕ Gestión desayuno</a>
     </div>
   </div>
@@ -471,6 +474,7 @@
   <!-- TAB BAR -->
 <div class="tab-bar">
   <button class="tab-btn active" id="tab-comedor"  onclick="switchMainTab('comedor')">🍽️&nbsp;&nbsp;Menú del día</button>
+  <button class="tab-btn" id="tab-especial" onclick="switchMainTab('especial')">✨&nbsp;&nbsp;Menú especial</button>
   <button class="tab-btn tab-turnos" id="tab-turnos" onclick="switchMainTab('turnos')">⚙️&nbsp;&nbsp;Gestión de Turnos</button>
   <button class="tab-btn" id="tab-ajustes" onclick="switchMainTab('ajustes')">🔧&nbsp;&nbsp;Ajustes de Tamaños</button>
 </div>
@@ -609,6 +613,21 @@
         </button>
         <span id="cierre-status" style="color:#64748b; font-weight:700; font-size:0.9rem;"></span>
       </div>
+    </div>
+
+    <!-- MENÚ ESPECIAL TAB CONTENT -->
+    <div id="tab-content-especial">
+      <div class="turnos-intro" style="background: linear-gradient(135deg, #2e1065, #4c1d95);">
+        <div class="turnos-intro-icon">✨</div>
+        <div>
+          <h3>Gestión de Menú Especial / Carta</h3>
+          <p>Configura los platos para eventos especiales, cenas o menús personalizados. Estos platos se mostrarán en la pantalla de "Carta" con un diseño elegante en tonos oscuros y dorados.</p>
+        </div>
+      </div>
+      <div id="dish-list-especial"></div>
+      <button class="btn-add-dish" onclick="addDishEspecial()">
+        <span class="plus">➕</span> Añadir plato especial
+      </button>
     </div>
 
     <!-- AJUSTES TAB CONTENT -->
@@ -777,13 +796,14 @@ function hexToRgb(hex) {
 // ══════════════════════════════════════════════
 function switchMainTab(tab) {
   currentMainTab = tab;
-  ['comedor','turnos','ajustes'].forEach(t => {
+  ['comedor','turnos','especial','ajustes'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
   });
   document.getElementById('tab-content-menu').classList.toggle('active', tab === 'comedor');
   document.getElementById('tab-content-turnos').classList.toggle('active', tab === 'turnos');
+  document.getElementById('tab-content-especial').classList.toggle('active', tab === 'especial');
   document.getElementById('tab-content-ajustes').classList.toggle('active', tab === 'ajustes');
-  document.getElementById('menu-control-bar').style.display   = tab !== 'turnos' ? 'flex' : 'none';
+  document.getElementById('menu-control-bar').style.display   = (tab !== 'turnos' && tab !== 'especial') ? 'flex' : 'none';
   document.getElementById('turnos-control-bar').style.display = tab === 'turnos' ? 'flex' : 'none';
   document.getElementById('ajustes-config').style.display     = tab === 'ajustes' ? 'block' : 'none';
 
