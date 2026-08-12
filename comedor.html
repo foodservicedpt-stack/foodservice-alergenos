@@ -1022,7 +1022,7 @@ function adjustSizes(rowsCount, rowHeight) {
   const refRows = Math.min(Math.max(1, rowsCount), 6);
   const heightBudget = availH / refRows;
 
-  const nameFs = Math.max(24, heightBudget * 0.85);
+  const nameFs = Math.max(28, heightBudget * 1.05);
   const enFs = Math.max(14, nameFs * 0.36);
   const iconSize = Math.max(32, heightBudget * 0.56);
   const legendIcon = Math.max(18, Math.min(iconSize, availW * 0.035));
@@ -1257,7 +1257,7 @@ function fitAllergenIcons() {
   // ocupara todo el hueco disponible sin relación con el texto, quedando
   // más grande que el propio nombre del plato.
   const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 40;
-  const iconCap = nameFs * 1.3;
+  const iconCap = nameFs * 1.7;
 
   // Cada fila calcula y aplica su PROPIO tamaño de icono (como variable
   // CSS local en la propia fila, que sobrescribe la global solo para sus
