@@ -1133,11 +1133,79 @@ function resetCarouselTimer() {
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
+
+// Función para detectar tamaño de pantalla y ajustar elementos
+function detectScreenAndAdjust() {
+  const screen = document.querySelector('.screen');
+  if (!screen) return;
+  
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  const screenDiagonal = Math.sqrt(screenWidth * screenWidth + screenHeight * screenHeight);
+  const inches = screenDiagonal / 96; // 96 DPI estándar
+  
+  console.log(`Pantalla: ${screenWidth}x${screenHeight}, ~${inches.toFixed(1)}"`); 
+  
+  // Ajustar tamaños base según pulgadas
+  let baseScale = 1;
+  if (inches < 32) {
+    baseScale = 0.85; // Pantallas pequeñas (<32")
+  } else if (inches >= 32 && inches < 50) {
+    baseScale = 1; // Pantallas medianas (32"-50")
+  } else if (inches >= 50 && inches < 65) {
+    baseScale = 1.15; // Pantallas grandes (50"-65")
+  } else {
+    baseScale = 1.3; // Pantallas muy grandes (>65")
+  }
+  
+  // Ajustar según número de platos para optimizar espacio
+  const dishCount = currentDishes.length;
+  let dishScale = 1;
+  if (dishCount === 1) {
+    dishScale = 1.4; // Un solo plato: máximo tamaño
+  } else if (dishCount === 2) {
+    dishScale = 1.2; // Dos platos: tamaño grande
+  } else if (dishCount <= 4) {
+    dishScale = 1; // 3-4 platos: tamaño normal
+  } else {
+    dishScale = 0.85; // Muchos platos: reducir un poco
+  }
+  
+  // Aplicar escalado combinado
+  const root = document.documentElement;
+  const finalScale = baseScale * dishScale;
+  
+  root.style.setProperty('--dish-name-size', `${5.5 * finalScale}vw`);
+  root.style.setProperty('--dish-en-size', `${2 * finalScale}vw`);
+  root.style.setProperty('--icon-size', `${5 * finalScale}vw`);
+  root.style.setProperty('--dish-pad', `${1.4 * finalScale}vw`);
+  root.style.setProperty('--legend-icon', `${2.8 * finalScale}vw`);
+  root.style.setProperty('--legend-text', `${1.3 * finalScale}vw`);
+  
+  // Ajustar header si hay pocos platos
+  if (dishCount <= 2) {
+    root.style.setProperty('--header-h', '16vh');
+    root.style.setProperty('--dish-name-size', `${6 * finalScale}vw`);
+  }
+  
+  console.log(`Ajuste aplicado: base=${baseScale.toFixed(2)}, dishes=${dishScale.toFixed(2)}, final=${finalScale.toFixed(2)}`);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initFirebase();
   renderLegend();
   updateDateTime();
   setInterval(updateDateTime, 1000);
+  
+  // Detectar y ajustar al cargar
+  detectScreenAndAdjust();
+  
+  // Reajustar al cambiar tamaño de ventana
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(detectScreenAndAdjust, 200);
+  });
   
   // Listen for config changes
   configRef.on('value', snap => {

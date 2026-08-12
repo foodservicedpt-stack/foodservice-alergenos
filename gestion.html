@@ -628,6 +628,11 @@
       <button class="btn-add-dish" onclick="addDishEspecial()">
         <span class="plus">➕</span> Añadir plato especial
       </button>
+      <div style="margin-top: 20px; text-align: right;">
+        <button class="btn-publish-turnos" id="btn-publish-especial" onclick="saveMenuEspecial()" style="padding: 14px 32px; font-size: 1.05rem;">
+          ✨ &nbsp;GUARDAR MENÚ ESPECIAL
+        </button>
+      </div>
     </div>
 
     <!-- AJUSTES TAB CONTENT -->
@@ -738,6 +743,10 @@ let cierreState = {
 let dishCounter = 0;
 let fbReady = false;
 let unsaved = false;
+
+// Estado para menú especial
+let especialState = { platos: [] };
+let especialDbReady = false;
 
 // ══════════════════════════════════════════════
 //  UTILS
@@ -908,6 +917,18 @@ db.ref('recordatorios').on('value', snap => {
     cierreState = normalizeCierre(snap.val());
     syncCierreUI();
   }, err => console.warn(err));
+  
+  // Cargar menú especial desde Firebase
+  db.ref('menuEspecial/dishes').on('value', snap => {
+    const data = snap.val() || {};
+    especialState.platos = Object.entries(data)
+      .map(([id, d]) => ({ id, ...d }))
+      .filter(d => !d.hidden)
+      .sort((a,b) => (a.order||0) - (b.order||0));
+    renderMenuEspecial();
+    especialDbReady = true;
+  }, err => console.warn('menuEspecial:', err));
+  
   // Sólo se lee una vez al abrir el panel (no con .on) para no pelear con
   // los sliders mientras el usuario los está moviendo en este momento.
   db.ref('tvSettings').once('value').then(snap => {
@@ -1689,6 +1710,214 @@ function adjustBrightness(hex, pct) {
 function renderTurnos() {
   document.getElementById('turno-list').innerHTML = '';
   turnosState.forEach(t => renderTurnoCard(t));
+}
+
+// ══════════════════════════════════════════════
+//  MENÚ ESPECIAL / CARTA
+// ══════════════════════════════════════════════
+function renderMenuEspecial() {
+  const container = document.getElementById('dish-list-especial');
+  container.innerHTML = '';
+  
+  const platos = especialState.platos || [];
+  
+  if (!platos.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🍽️</div>
+        <p>Aún no hay platos especiales. Pulsa "Añadir plato especial".</p>
+      </div>
+    `;
+    return;
+  }
+  
+  platos.forEach((p, idx) => renderDishEspecial(p, idx, platos.length));
+}
+
+function renderDishEspecial(plato, idx, total) {
+  const container = document.getElementById('dish-list-especial');
+  const div = document.createElement('div');
+  div.className = `dish-card${plato.oculto ? ' dish-hidden' : ''}`;
+  div.id = `dish-card-${plato.id}`;
+  div.innerHTML = `
+    <div class="dish-header" style="background: linear-gradient(90deg, #2e1065, #4c1d95);">
+      <div class="dish-num">${idx + 1}</div>
+      <div class="dish-names-row">
+        <input class="input-es" type="text" placeholder="🇪🇸  Nombre en español"
+               value="${escHtml(plato.nombreEs||'')}"
+               oninput="updateFieldEspecial('${plato.id}','nombreEs',this.value); autoTranslateEspecial('${plato.id}')">
+        <button class="translate-btn" onclick="manualTranslateEspecial('${plato.id}')" title="Traducir al inglés">🌐 Traducir</button>
+        <input class="input-en" type="text" placeholder="🇬🇧  English name (auto)"
+               value="${escHtml(plato.nombreEn||'')}"
+               oninput="updateFieldEspecial('${plato.id}','nombreEn',this.value)">
+      </div>
+      <div class="dish-meta">
+        <label class="gluten-toggle">
+          <input type="checkbox" ${plato.sinGluten ? 'checked' : ''} onchange="toggleSinGlutenEspecial('${plato.id}', this.checked)">
+          <span class="gluten-toggle-box"></span>
+          <span>🌾 Sin gluten</span>
+        </label>
+      </div>
+      <div class="dish-move" style="display:flex; gap:4px;">
+        <button class="btn-move${idx === 0 ? ' disabled' : ''}" onclick="moveDishEspecial('${plato.id}', 'up')" title="Mover arriba" ${idx === 0 ? 'disabled' : ''}>⬆️</button>
+        <button class="btn-move${idx === total - 1 ? ' disabled' : ''}" onclick="moveDishEspecial('${plato.id}', 'down')" title="Mover abajo" ${idx === total - 1 ? 'disabled' : ''}>⬇️</button>
+      </div>
+      <button class="btn-hide-dish${plato.oculto ? ' is-hidden' : ''}" id="hidebtn-${plato.id}"
+              onclick="toggleDishHiddenEspecial('${plato.id}')"
+              title="Mostrar u ocultar este plato en la pantalla de Carta">
+        ${plato.oculto ? '🙈 Oculto en TV' : '👁 Visible en TV'}
+      </button>
+      <button class="btn-remove-dish" onclick="removeDishEspecial('${plato.id}')">🗑 Eliminar</button>
+    </div>
+    <div class="allergen-body">
+      <div class="alg-section">
+        <div class="alg-label"><span class="type-contains">● CONTIENE</span> / Contains:</div>
+        <div class="alg-grid">${ALLERGENS.map(a => buildAlgBtnEspecial(a, plato.id, 'contiene', normalizeAllergenList(plato.contiene))).join('')}</div>
+      </div>
+      <div class="alg-section">
+        <div class="alg-label"><span class="type-traces">⚠ TRAZAS</span> / May contain traces:</div>
+        <div class="alg-grid">${ALLERGENS.map(a => buildAlgBtnEspecial(a, plato.id, 'trazas', normalizeAllergenList(plato.trazas), true)).join('')}</div>
+      </div>
+    </div>`;
+  container.appendChild(div);
+}
+
+function buildAlgBtnEspecial(a, dishId, type, selected, isTrace=false) {
+  const active = selected.includes(a.id) ? 'active' : '';
+  const traceClass = isTrace ? 'traces-mode' : '';
+  return `<button class="alg-btn ${active} ${traceClass}" style="--clr:${a.color}"
+            onclick="toggleAllergenEspecial('${dishId}','${type}','${a.id}',this)" title="${a.es} / ${a.en}">
+    <div class="alg-icon-ring"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>
+    <div class="alg-name">${a.es}</div></button>`;
+}
+
+function addDishEspecial() {
+  const id = `e${Date.now()}`;
+  const plato = { id, nombreEs:'', nombreEn:'', contiene:[], trazas:[], oculto:false, sinGluten:false };
+  especialState.platos.push(plato);
+  renderMenuEspecial();
+  saveMenuEspecial();
+  setTimeout(() => document.getElementById(`dish-card-${id}`)?.querySelector('.input-es')?.focus(), 50);
+}
+
+function removeDishEspecial(id) {
+  especialState.platos = especialState.platos.filter(p => p.id !== id);
+  const card = document.getElementById(`dish-card-${id}`);
+  if (card) { card.style.opacity='0'; card.style.transform='translateX(20px)'; card.style.transition='all .25s'; setTimeout(() => { card.remove(); renderMenuEspecial(); }, 250); }
+  saveMenuEspecial();
+}
+
+function moveDishEspecial(dishId, direction) {
+  const platos = especialState.platos;
+  const idx = platos.findIndex(p => p.id === dishId);
+  if (idx === -1) return;
+  if (direction === 'up' && idx > 0) {
+    [platos[idx], platos[idx - 1]] = [platos[idx - 1], platos[idx]];
+  } else if (direction === 'down' && idx < platos.length - 1) {
+    [platos[idx], platos[idx + 1]] = [platos[idx + 1], platos[idx]];
+  } else return;
+  renderMenuEspecial();
+  saveMenuEspecial();
+}
+
+function updateFieldEspecial(dishId, field, value) {
+  const d = especialState.platos.find(p=>p.id===dishId); 
+  if(d){ d[field]=value; }
+}
+
+function toggleDishHiddenEspecial(dishId) {
+  const d = especialState.platos.find(p=>p.id===dishId); if(!d) return;
+  d.oculto = !d.oculto;
+  const card = document.getElementById(`dish-card-${dishId}`);
+  if (card) card.classList.toggle('dish-hidden', d.oculto);
+  const btn = document.getElementById(`hidebtn-${dishId}`);
+  if (btn) { btn.classList.toggle('is-hidden', d.oculto); btn.innerHTML = d.oculto ? '🙈 Oculto en TV' : '👁 Visible en TV'; }
+  showToast(d.oculto ? '🙈 Plato oculto en la pantalla de Carta' : '👁 Plato visible en la pantalla de Carta', 'info');
+  saveMenuEspecial();
+}
+
+function toggleAllergenEspecial(dishId, type, algId) {
+  const dish = especialState.platos.find(p=>p.id===dishId); if(!dish) return;
+  const otherType = type === 'contiene' ? 'trazas' : 'contiene';
+  if (!Array.isArray(dish[type])) dish[type] = [];
+  if (!Array.isArray(dish[otherType])) dish[otherType] = [];
+  const arr = dish[type];
+  const otherArr = dish[otherType];
+  const idx = arr.indexOf(algId);
+  const otherIdx = otherArr.indexOf(algId);
+
+  if (idx === -1) {
+    arr.push(algId);
+    if (otherIdx !== -1) otherArr.splice(otherIdx, 1);
+  } else {
+    arr.splice(idx, 1);
+  }
+
+  renderMenuEspecial();
+  saveMenuEspecial();
+}
+
+function toggleSinGlutenEspecial(dishId, checked) {
+  const dish = especialState.platos.find(p=>p.id===dishId); if(!dish) return;
+  dish.sinGluten = checked;
+  saveMenuEspecial();
+}
+
+let especialTranslateTimers = {};
+function autoTranslateEspecial(dishId) {
+  clearTimeout(especialTranslateTimers[dishId]);
+  especialTranslateTimers[dishId] = setTimeout(() => {
+    const d = especialState.platos.find(x => x.id === dishId);
+    if (d && d.nombreEs.trim()) manualTranslateEspecial(dishId);
+  }, 1400);
+}
+
+async function manualTranslateEspecial(dishId) {
+  const d = especialState.platos.find(x => x.id === dishId);
+  if (!d || !d.nombreEs.trim()) return;
+  const geminiKey = window.firebaseConfig.geminiApiKey;
+  if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: `Translate this Spanish dish name to English naturally. Return ONLY the translation, nothing else: ${d.nombreEs.trim()}` }] }] })
+      });
+      const data = await resp.json();
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+        d.nombreEn = data.candidates[0].content.parts[0].text.trim();
+        const card = document.getElementById(`dish-card-${dishId}`);
+        if(card) card.querySelector('.input-en').value = d.nombreEn;
+        saveMenuEspecial();
+        return;
+      }
+    } catch(e){ console.warn('Gemini translation failed:', e); }
+  }
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(d.nombreEs.trim())}&langpair=es|en`;
+    const json = await (await fetch(url)).json();
+    if(json.responseStatus===200) {
+      d.nombreEn = json.responseData.translatedText;
+      const card = document.getElementById(`dish-card-${dishId}`);
+      if(card) card.querySelector('.input-en').value = d.nombreEn;
+      saveMenuEspecial();
+    }
+  } catch(e){ console.warn(e); }
+}
+
+async function saveMenuEspecial() {
+  const btn = document.getElementById('btn-publish-especial');
+  if(btn) { btn.disabled=true; btn.textContent='⏳ Guardando...'; }
+  if(!fbReady){ if(btn) { btn.disabled=false; btn.innerHTML='✨ &nbsp;GUARDAR MENÚ ESPECIAL'; } return; }
+  try {
+    const dishesObj = {};
+    especialState.platos.forEach((p, idx) => {
+      dishesObj[p.id] = { ...p, order: idx };
+    });
+    await firebase.database().ref('menuEspecial/dishes').set(dishesObj);
+    showToast('✅ Menú especial guardado en TV', 'success');
+  } catch(e){ showToast('❌ Error: '+e.message, 'error'); }
+  finally { if(btn) { btn.disabled=false; btn.innerHTML='✨ &nbsp;GUARDAR MENÚ ESPECIAL'; } }
 }
 
 function renderTurnoCard(turno) {
