@@ -1687,19 +1687,12 @@ function initDatabaseConnection() {
     db.ref('agente_accesibilidad/adjustments').on('value', snap => {
       const adjustments = snap.val();
       if (adjustments && adjustments.source === 'agent_panel') {
-        console.log('[Agente] Ajustes recibidos:', adjustments);
-        applyAgentAdjustments(adjustments);
+        console.log('[Agente] 🔔 Ajustes recibidos:', adjustments);
         
-        // Confirmar aplicación
-        db.ref('agente_accesibilidad/adjustments_applied').set({
-          timestamp: Date.now(),
-          adjustments: adjustments
-        }).catch(e => console.warn('Error confirmando ajustes:', e));
-        
-        // Limpiar ajustes para evitar re-aplicación
+        // Pequeño delay para asegurar que el DOM está listo
         setTimeout(() => {
-          db.ref('agente_accesibilidad/adjustments').remove().catch(e => {});
-        }, 1000);
+          applyAgentAdjustments(adjustments);
+        }, 50);
       }
     });
 }
@@ -1815,37 +1808,80 @@ function getCurrentMetrics() {
 //  AGENTE DE ACCESIBILIDAD - Aplicar ajustes del agente
 // ══════════════════════════════════════════════
 function applyAgentAdjustments(adjustments) {
+  if (!adjustments) return;
+  
   const root = document.documentElement.style;
+  let changed = false;
+  
+  console.log('[Agente] Recibiendo ajustes:', adjustments);
   
   if (adjustments.textSize !== undefined) {
     root.setProperty('--dish-name-size', adjustments.textSize + 'vw');
-    console.log('[Agente] Tamaño texto ajustado a', adjustments.textSize + 'vw');
+    root.setProperty('--dish-en-size', (adjustments.textSize * 0.37) + 'vw'); // Proporcional
+    console.log('[Agente] ✅ Tamaño texto ajustado a', adjustments.textSize + 'vw');
+    changed = true;
   }
   
   if (adjustments.iconSize !== undefined) {
     root.setProperty('--icon-size', adjustments.iconSize + 'vw');
-    console.log('[Agente] Tamaño iconos ajustado a', adjustments.iconSize + 'vw');
+    root.setProperty('--icon-gap', (adjustments.iconSize * 0.11) + 'vw'); // Proporcional
+    console.log('[Agente] ✅ Tamaño iconos ajustado a', adjustments.iconSize + 'vw');
+    changed = true;
   }
   
   if (adjustments.dishPad !== undefined) {
     root.setProperty('--dish-pad', adjustments.dishPad + 'vw');
-    console.log('[Agente] Padding plato ajustado a', adjustments.dishPad + 'vw');
+    console.log('[Agente] ✅ Padding plato ajustado a', adjustments.dishPad + 'vw');
+    changed = true;
   }
   
   if (adjustments.legendIcon !== undefined) {
     root.setProperty('--legend-icon', adjustments.legendIcon + 'vw');
-    console.log('[Agente] Iconos leyenda ajustados a', adjustments.legendIcon + 'vw');
+    root.setProperty('--legend-text', (adjustments.legendIcon * 0.47) + 'vw'); // Proporcional
+    console.log('[Agente] ✅ Iconos leyenda ajustados a', adjustments.legendIcon + 'vw');
+    changed = true;
   }
   
-  // Recalcular layout después de aplicar ajustes
-  requestAnimationFrame(fitDishRows);
+  if (adjustments.headerH !== undefined) {
+    root.setProperty('--header-h', adjustments.headerH + 'vh');
+    console.log('[Agente] ✅ Altura header ajustada a', adjustments.headerH + 'vh');
+    changed = true;
+  }
   
-  // Forzar actualización inmediata de métricas
-  setTimeout(() => {
-    const metrics = getCurrentMetrics();
-    db.ref('agente_accesibilidad/metrics').update(metrics)
-      .catch(e => console.warn('Error actualizando métricas post-ajuste:', e));
-  }, 500);
+  // Forzar repintado inmediato
+  if (changed) {
+    console.log('[Agente] 🔄 Aplicando cambios visuales...');
+    
+    // Forzar reflow
+    void document.body.offsetHeight;
+    
+    // Recalcular layout
+    requestAnimationFrame(() => {
+      fitDishRows();
+      
+      // Forzar actualización de todas las filas
+      document.querySelectorAll('.dish-row').forEach(row => {
+        row.style.display = 'none';
+        row.offsetHeight; // Trigger reflow
+        row.style.display = '';
+      });
+    });
+    
+    // Confirmar aplicación
+    db.ref('agente_accesibilidad/adjustments_applied').set({
+      timestamp: Date.now(),
+      adjustments: adjustments,
+      applied: true
+    }).catch(e => console.warn('Error confirmando ajustes:', e));
+    
+    // Forzar actualización inmediata de métricas
+    setTimeout(() => {
+      const metrics = getCurrentMetrics();
+      db.ref('agente_accesibilidad/metrics').update(metrics)
+        .then(() => console.log('[Agente] ✅ Métricas actualizadas'))
+        .catch(e => console.warn('Error actualizando métricas post-ajuste:', e));
+    }, 300);
+  }
 }
 </script>
 </body>
