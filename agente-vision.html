@@ -708,30 +708,46 @@
     // ══════════════════════════════════════════════
     //  APLICAR AJUSTES AUTOMÁTICOS
     // ══════════════════════════════════════════════
+    //  AUTO-AJUSTE INTELIGENTE - Agente de Visión
+    // ══════════════════════════════════════════════
     function applyAutoAdjustments(metrics) {
       const adjustments = {};
       let changed = false;
       
-      // Ajustar tamaño de texto si es muy pequeño
+      // Reglas de accesibilidad WCAG 2.1
+      // Texto mínimo 28px para legibilidad en pantallas grandes
       if (metrics.textSize < 28) {
-        const newSize = Math.min(10, state.controls.textSize + 0.5);
-        if (newSize !== state.controls.textSize) {
-          adjustments.textSize = newSize;
+        const incrementPx = 4; // Incremento en pixels
+        const incrementVw = incrementPx / (window.innerWidth / 100); // Convertir a vw
+        const newSize = Math.min(12, state.controls.textSize + incrementVw);
+        if (Math.abs(newSize - state.controls.textSize) > 0.1) {
+          adjustments.dishNameSize = newSize * (window.innerWidth / 100); // Enviar en px
           state.controls.textSize = newSize;
           changed = true;
-          log(`Auto-ajuste: texto a ${newSize}vw`, 'action');
+          log(`🤖 Auto-ajuste: texto a ${(newSize * (window.innerWidth / 100)).toFixed(0)}px`, 'action');
         }
       }
       
-      // Ajustar iconos si hay overflow
+      // Si hay overflow, reducir tamaños proporcionalmente
       if (metrics.hasOverflow) {
-        const newIconSize = Math.max(3, state.controls.iconSize - 0.3);
-        if (newIconSize !== state.controls.iconSize) {
-          adjustments.iconSize = newIconSize;
-          state.controls.iconSize = newIconSize;
+        const reduction = 0.92; // Reducir 8%
+        const newDishName = Math.max(24, metrics.textSize * reduction);
+        const newDishEn = Math.max(16, (metrics.textSize * 0.36) * reduction);
+        const newPrice = Math.max(18, (metrics.textSize * 0.5) * reduction);
+        
+        if (newDishName < metrics.textSize) {
+          adjustments.dishNameSize = newDishName;
+          adjustments.dishEnSize = newDishEn;
+          adjustments.dishPriceSize = newPrice;
+          state.controls.textSize = newDishName / (window.innerWidth / 100);
           changed = true;
-          log(`Auto-ajuste: iconos a ${newIconSize}vw (overflow detectado)`, 'action');
+          log(`🤖 Auto-ajuste: overflow detectado, reduciendo todo un 8%`, 'action');
         }
+      }
+      
+      // Mejorar contraste si es insuficiente (< 4.5:1 WCAG AA)
+      if (metrics.contrastRatio < 4.5 && metrics.contrastRatio > 0) {
+        log(`⚠️ Contraste insuficiente: ${metrics.contrastRatio.toFixed(2)}:1 (mínimo 4.5:1)`, 'warning');
       }
       
       // Aplicar ajustes si hay cambios
@@ -867,25 +883,30 @@
     els.ctrlTextSize.addEventListener('input', e => {
       state.controls.textSize = parseFloat(e.target.value);
       els.valTextSize.textContent = state.controls.textSize.toFixed(1) + 'vw';
-      sendAdjustments({ textSize: state.controls.textSize });
+      // Enviar tamaño de nombre de plato en pixels
+      const dishNamePx = state.controls.textSize * (window.innerWidth / 100);
+      sendAdjustments({ dishNameSize: dishNamePx });
     });
     
     els.ctrlIconSize.addEventListener('input', e => {
       state.controls.iconSize = parseFloat(e.target.value);
       els.valIconSize.textContent = state.controls.iconSize.toFixed(1) + 'vw';
-      sendAdjustments({ iconSize: state.controls.iconSize });
+      // El tamaño de iconos se calcula automáticamente basado en dishNameSize
+      log('Iconos se ajustan automáticamente según tamaño de texto', 'info');
     });
     
     els.ctrlDishPad.addEventListener('input', e => {
       state.controls.dishPad = parseFloat(e.target.value);
       els.valDishPad.textContent = state.controls.dishPad.toFixed(1) + 'vw';
-      sendAdjustments({ dishPad: state.controls.dishPad });
+      // El padding se ajusta automáticamente
+      log('Padding se ajusta automáticamente', 'info');
     });
     
     els.ctrlLegendIcon.addEventListener('input', e => {
       state.controls.legendIcon = parseFloat(e.target.value);
       els.valLegendIcon.textContent = state.controls.legendIcon.toFixed(1) + 'vw';
-      sendAdjustments({ legendIcon: state.controls.legendIcon });
+      // Los iconos de leyenda se ajustan automáticamente
+      log('Iconos de leyenda se ajustan automáticamente', 'info');
     });
     
     // Toggle Auto Mode

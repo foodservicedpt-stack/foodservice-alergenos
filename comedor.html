@@ -981,10 +981,64 @@ function todayStr() {
 //  AUTO-SIZING
 // ══════════════════════════════════════════════
 let sizeResizeObserver = null;
-// Si desde gestión se fija un tamaño manual de letra para los platos, se
-// usa como punto de partida en vez de la fórmula automática — pero el
-// bucle de fitDishRows() lo sigue protegiendo contra cortes reales.
-let manualDishSize = null;
+// Variables manuales para el Agente de Visión - permiten control individual
+let manualDishSize = null; // Legacy: tamaño general manual
+let manualDishNameSize = null; // Agente: tamaño específico nombre plato
+let manualDishEnSize = null; // Agente: tamaño específico inglés
+let manualDishPriceSize = null; // Agente: tamaño específico precio
+let manualSectionTitleSize = null; // Agente: tamaño título sección
+let manualRowGap = null; // Agente: gap entre filas
+
+/**
+ * Aplica ajustes recibidos del Agente de Visión con validación de seguridad.
+ * Evita valores maliciosos o absurdos que rompan la visibilidad.
+ */
+function applyAgentAdjustments(adjustments) {
+    if (!adjustments) return;
+
+    console.log('[Agente] Recibiendo ajustes:', adjustments);
+
+    // RANGOS SEGUROS - Validación crítica de seguridad
+    const safeRanges = {
+        dishName: { min: 24, max: 150 },
+        dishEn: { min: 14, max: 100 },
+        dishPrice: { min: 18, max: 120 },
+        sectionTitle: { min: 24, max: 180 },
+        rowGap: { min: 4, max: 80 }
+    };
+
+    const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+    let changed = false;
+
+    if (adjustments.dishNameSize !== undefined) {
+        const val = clamp(parseFloat(adjustments.dishNameSize), safeRanges.dishName.min, safeRanges.dishName.max);
+        if (manualDishNameSize !== val) { manualDishNameSize = val; changed = true; }
+    }
+    if (adjustments.dishEnSize !== undefined) {
+        const val = clamp(parseFloat(adjustments.dishEnSize), safeRanges.dishEn.min, safeRanges.dishEn.max);
+        if (manualDishEnSize !== val) { manualDishEnSize = val; changed = true; }
+    }
+    if (adjustments.dishPriceSize !== undefined) {
+        const val = clamp(parseFloat(adjustments.dishPriceSize), safeRanges.dishPrice.min, safeRanges.dishPrice.max);
+        if (manualDishPriceSize !== val) { manualDishPriceSize = val; changed = true; }
+    }
+    if (adjustments.sectionTitleSize !== undefined) {
+        const val = clamp(parseFloat(adjustments.sectionTitleSize), safeRanges.sectionTitle.min, safeRanges.sectionTitle.max);
+        if (manualSectionTitleSize !== val) { manualSectionTitleSize = val; changed = true; }
+    }
+    if (adjustments.rowGap !== undefined) {
+        const val = clamp(parseFloat(adjustments.rowGap), safeRanges.rowGap.min, safeRanges.rowGap.max);
+        if (manualRowGap !== val) { manualRowGap = val; changed = true; }
+    }
+
+    if (changed) {
+        console.log('[Agente] Ajustes validados aplicados. Recalculando layout...');
+        requestAnimationFrame(() => {
+            fitDishRows();
+            reportMetrics();
+        });
+    }
+}
 // ══════════════════════════════════════════════
 //  DEBUG PANEL — activar con ?debug=1 en la URL. Muestra en la propia
 //  pantalla los valores reales que ve el navegador (resolución, tamaños
@@ -1017,24 +1071,29 @@ function adjustSizes(rowsCount, rowHeight, gridCols) {
 
   const refRows = Math.min(Math.max(1, rowsCount), 6);
   const heightBudget = availH / refRows;
-  // El ancho que importa es el de la CELDA (con varias columnas, cada
-  // plato solo tiene una fracción del ancho total), no el de toda la
-  // pantalla. Sin esto, en modo grid un nombre largo en una celda
-  // estrecha se calculaba como si tuviera todo el ancho disponible,
-  // dando un tamaño imposible de encajar sin envolver a 3+ líneas — el
-  // bucle de seguridad tenía que reducirlo una y otra vez sin llegar
-  // nunca a un resultado realmente bueno.
   const cellW = availW / Math.max(1, gridCols || 1);
 
-  const nameFs = Math.max(28, Math.min(heightBudget * 1.05, cellW * 0.13));
-  const enFs = Math.max(14, nameFs * 0.36);
+  // ─── RESPETAR AJUSTES MANUALES DEL AGENTE DE VISIÓN ───
+  // Si el agente ha fijado tamaños manuales, LOS USAMOS en lugar de calcular
+  const nameFs = manualDishNameSize !== null ? manualDishNameSize : Math.max(28, Math.min(heightBudget * 1.05, cellW * 0.13));
+  const enFs = manualDishEnSize !== null ? manualDishEnSize : Math.max(14, nameFs * 0.36);
+  const dishPriceFs = manualDishPriceSize !== null ? manualDishPriceSize : Math.max(18, nameFs * 0.5);
   const iconSize = Math.max(32, Math.min(heightBudget * 0.56, cellW * 0.16));
   const legendIcon = Math.max(18, Math.min(iconSize, availW * 0.035));
   const legendText = Math.max(12, legendIcon * 0.4);
 
   root.setProperty('--dish-name-size', nameFs + 'px');
   root.setProperty('--dish-en-size', enFs + 'px');
+  root.setProperty('--dish-price-size', dishPriceFs + 'px');
   root.setProperty('--icon-size', iconSize + 'px');
+  
+  // Aplicar títulos y gaps si vienen del agente
+  if (manualSectionTitleSize !== null) {
+    root.setProperty('--section-title-size', manualSectionTitleSize + 'px');
+  }
+  if (manualRowGap !== null) {
+    root.setProperty('--row-gap', manualRowGap + 'px');
+  }
   root.setProperty('--icon-gap', Math.max(4, iconSize * 0.12) + 'px');
   root.setProperty('--dish-pad', Math.max(8, heightBudget * 0.16) + 'px');
   root.setProperty('--legend-icon', legendIcon + 'px');
