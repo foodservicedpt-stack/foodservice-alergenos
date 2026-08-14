@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agente de Accesibilidad — Food Service DPT</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="./firebase-config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #1d4ed8;
+      --primary-light: #3b82f6;
+      --surface: #ffffff;
+      --bg: #0f172a;
+      --border: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #06b6d4;
+      --shadow: 0 4px 16px rgba(0,0,0,0.3);
+      --radius: 14px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      background: linear-gradient(135deg, #0b1f3a 0%, #1a3a6e 60%, #0b1f3a 100%);
+      padding: 20px 40px;
+      display: flex; align-items: center; gap: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-logo { height: 50px; object-fit: contain; filter: brightness(1.15); }
+    .header-title { font-size: 1.5rem; font-weight: 900; letter-spacing: 2px; color: #ffffff; text-transform: uppercase; }
+    .header-subtitle { font-size: 0.85rem; color: #93c5fd; letter-spacing: 1px; margin-top: 4px; }
+    .header-spacer { flex: 1; }
+    .connection-status {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.3); border-radius: 50px;
+      font-size: 0.85rem; font-weight: 700; color: #6ee7b7;
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #10b981; animation: pulse 2s infinite;
+    }
+    .status-dot.offline { background: #ef4444; animation: none; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* ─── MAIN LAYOUT ─── */
+    .main-container {
+      display: grid; grid-template-columns: 1fr 450px;
+      gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto;
+    }
+
+    /* ─── LIVE PREVIEW PANEL ─── */
+    .preview-panel {
+      background: var(--surface); color: #0f172a;
+      border-radius: var(--radius); overflow: hidden;
+      box-shadow: var(--shadow);
+      display: flex; flex-direction: column;
+    }
+    .preview-header {
+      background: #1e293b; color: white;
+      padding: 15px 20px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .preview-refresh {
+      background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.4);
+      color: #93c5fd; padding: 6px 14px; border-radius: 8px;
+      font-size: 0.75rem; font-weight: 700; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preview-refresh:hover { background: rgba(59,130,246,0.3); }
+    .preview-frame {
+      flex: 1; min-height: 500px; border: none;
+      background: #f0f4f8;
+    }
+
+    /* ─── CONTROL PANEL ─── */
+    .control-panel {
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    .card {
+      background: rgba(30,41,59,0.6); backdrop-filter: blur(10px);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px; box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 0.9rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--muted); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-title .icon { font-size: 1.2rem; }
+
+    /* ─── METRICS GRID ─── */
+    .metrics-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+    }
+    .metric-item {
+      background: rgba(15,23,42,0.5); border-radius: 10px;
+      padding: 14px; border: 1px solid rgba(148,163,184,0.1);
+    }
+    .metric-label {
+      font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+    .metric-value {
+      font-size: 1.4rem; font-weight: 900; color: var(--text);
+      line-height: 1;
+    }
+    .metric-unit { font-size: 0.75rem; color: var(--muted); margin-left: 4px; }
+    .metric-status {
+      font-size: 0.7rem; font-weight: 700; margin-top: 6px;
+      padding: 3px 8px; border-radius: 4px; display: inline-block;
+    }
+    .metric-status.good { background: rgba(16,185,129,0.2); color: #10b981; }
+    .metric-status.warning { background: rgba(245,158,11,0.2); color: #f59e0b; }
+    .metric-status.bad { background: rgba(239,68,68,0.2); color: #ef4444; }
+
+    /* ─── SIZE CONTROLS ─── */
+    .size-control-group { margin-bottom: 16px; }
+    .size-control-group:last-child { margin-bottom: 0; }
+    .size-label {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px; font-size: 0.8rem; font-weight: 600; color: var(--text);
+    }
+    .size-value {
+      background: rgba(59,130,246,0.2); color: #93c5fd;
+      padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;
+    }
+    .size-slider {
+      width: 100%; height: 6px; border-radius: 3px;
+      background: rgba(148,163,184,0.2); outline: none;
+      -webkit-appearance: none; appearance: none;
+    }
+    .size-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--primary-light); cursor: pointer;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.4);
+      transition: transform 0.15s;
+    }
+    .size-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+    .size-slider::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--primary-light); cursor: pointer;
+      border: none; box-shadow: 0 2px 8px rgba(59,130,246,0.4);
+    }
+
+    /* ─── ACTION BUTTONS ─── */
+    .action-buttons { display: flex; flex-direction: column; gap: 10px; }
+    .btn {
+      padding: 14px 20px; border: none; border-radius: 10px;
+      font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white; box-shadow: 0 4px 12px rgba(29,78,216,0.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(29,78,216,0.45); }
+    .btn-success {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: white; box-shadow: 0 4px 12px rgba(5,150,105,0.35);
+    }
+    .btn-success:hover { transform: translateY(-2px); }
+    .btn-warning {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      color: white; box-shadow: 0 4px 12px rgba(217,119,6,0.35);
+    }
+    .btn-warning:hover { transform: translateY(-2px); }
+    .btn-secondary {
+      background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.3);
+      color: var(--muted);
+    }
+    .btn-secondary:hover { background: rgba(148,163,184,0.2); color: var(--text); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    /* ─── RECOMMENDATIONS ─── */
+    .recommendation-list { display: flex; flex-direction: column; gap: 10px; }
+    .recommendation-item {
+      background: rgba(15,23,42,0.4); border-left: 4px solid var(--info);
+      padding: 12px 14px; border-radius: 8px;
+      font-size: 0.8rem; line-height: 1.4;
+    }
+    .recommendation-item.warning { border-left-color: var(--warning); }
+    .recommendation-item.danger { border-left-color: var(--danger); }
+    .recommendation-item.success { border-left-color: var(--success); }
+    .rec-title { font-weight: 700; margin-bottom: 4px; display: block; }
+
+    /* ─── AUTO MODE TOGGLE ─── */
+    .toggle-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0; border-bottom: 1px solid rgba(148,163,184,0.1);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: 0.85rem; font-weight: 600; }
+    .toggle-switch {
+      position: relative; width: 50px; height: 26px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: rgba(148,163,184,0.2);
+      border-radius: 26px; cursor: pointer; transition: 0.3s;
+    }
+    .toggle-slider:before {
+      position: absolute; content: ""; height: 20px; width: 20px;
+      left: 3px; bottom: 3px; background: white; border-radius: 50%;
+      transition: 0.3s;
+    }
+    input:checked + .toggle-slider { background: var(--primary); }
+    input:checked + .toggle-slider:before { transform: translateX(24px); }
+
+    /* ─── SCREEN INFO ─── */
+    .screen-info {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      margin-bottom: 16px;
+    }
+    .info-pill {
+      background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 8px; padding: 10px; text-align: center;
+    }
+    .info-pill .label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; }
+    .info-pill .value { font-size: 1rem; font-weight: 800; color: #93c5fd; margin-top: 4px; }
+
+    /* ─── LAST UPDATE ─── */
+    .last-update {
+      font-size: 0.7rem; color: var(--muted); text-align: center;
+      margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid rgba(148,163,184,0.1);
+    }
+
+    /* ─── LOADING STATE ─── */
+    .loading-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.95);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; flex-direction: column; gap: 20px;
+    }
+    .loading-spinner {
+      width: 50px; height: 50px; border: 4px solid rgba(59,130,246,0.2);
+      border-top-color: var(--primary-light); border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 1rem; color: var(--muted); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Conectando con la pantalla del comedor...</div>
+</div>
+
+<div class="header">
+  <img src="./img/Encabezado.png" alt="Food Service DPT" class="header-logo" onerror="this.style.display='none'">
+  <div>
+    <div class="header-title">Agente de Accesibilidad</div>
+    <div class="header-subtitle">Visión artificial y ajuste automático en tiempo real</div>
+  </div>
+  <div class="header-spacer"></div>
+  <div class="connection-status" id="connection-status">
+    <span class="status-dot" id="status-dot"></span>
+    <span id="status-text">Conectando...</span>
+  </div>
+</div>
+
+<div class="main-container">
+  <!-- PANEL IZQUIERDO: VISTA PREVIA EN VIVO -->
+  <div class="preview-panel">
+    <div class="preview-header">
+      <span>Vista Previa en Tiempo Real</span>
+      <button class="preview-refresh" onclick="refreshPreview()">🔄 Actualizar</button>
+    </div>
+    <iframe class="preview-frame" id="preview-frame" src="./comedor.html?preview=true"></iframe>
+  </div>
+
+  <!-- PANEL DERECHO: CONTROLES Y MÉTRICAS -->
+  <div class="control-panel">
+    
+    <!-- INFORMACIÓN DE PANTALLA -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📺</span> Información de Pantalla</div>
+      <div class="screen-info" id="screen-info">
+        <div class="info-pill">
+          <div class="label">Resolución</div>
+          <div class="value" id="screen-resolution">--</div>
+        </div>
+        <div class="info-pill">
+          <div class="label">Escala</div>
+          <div class="value" id="screen-scale">--</div>
+        </div>
+        <div class="info-pill">
+          <div class="label">Platos</div>
+          <div class="value" id="dish-count">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MÉTRICAS DE ACCESIBILIDAD -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span> Métricas de Visibilidad</div>
+      <div class="metrics-grid" id="metrics-grid">
+        <div class="metric-item">
+          <div class="metric-label">Tamaño Texto Principal</div>
+          <div class="metric-value" id="metric-name-size">--<span class="metric-unit">px</span></div>
+          <div class="metric-status" id="metric-name-status">--</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Tamaño Iconos</div>
+          <div class="metric-value" id="metric-icon-size">--<span class="metric-unit">px</span></div>
+          <div class="metric-status" id="metric-icon-status">--</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Contraste Detectado</div>
+          <div class="metric-value" id="metric-contrast">--</div>
+          <div class="metric-status" id="metric-contrast-status">--</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Overflow Detectado</div>
+          <div class="metric-value" id="metric-overflow">--</div>
+          <div class="metric-status" id="metric-overflow-status">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLES MANUALES -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🎛️</span> Ajustes Manuales</div>
+      
+      <div class="size-control-group">
+        <div class="size-label">
+          <span>Nombre del Plato (Español)</span>
+          <span class="size-value" id="val-dish-name">6vw</span>
+        </div>
+        <input type="range" class="size-slider" id="slider-dish-name" min="3" max="12" step="0.1" value="6">
+      </div>
+
+      <div class="size-control-group">
+        <div class="size-label">
+          <span>Nombre del Plato (Inglés)</span>
+          <span class="size-value" id="val-dish-en">2.2vw</span>
+        </div>
+        <input type="range" class="size-slider" id="slider-dish-en" min="1" max="5" step="0.1" value="2.2">
+      </div>
+
+      <div class="size-control-group">
+        <div class="size-label">
+          <span>Tamaño de Iconos</span>
+          <span class="size-value" id="val-icon-size">5.5vw</span>
+        </div>
+        <input type="range" class="size-slider" id="slider-icon-size" min="2" max="10" step="0.1" value="5.5">
+      </div>
+
+      <div class="size-control-group">
+        <div class="size-label">
+          <span>Mensaje Turno (Español)</span>
+          <span class="size-value" id="val-turno-es">3.2vw</span>
+        </div>
+        <input type="range" class="size-slider" id="slider-turno-es" min="1.5" max="6" step="0.1" value="3.2">
+      </div>
+
+      <div class="action-buttons" style="margin-top: 16px;">
+        <button class="btn btn-primary" onclick="applySettings()">💾 Aplicar Cambios</button>
+        <button class="btn btn-success" onclick="optimizeForAccessibility()">✨ Optimizar Automáticamente</button>
+        <button class="btn btn-secondary" onclick="resetToDefaults()">🔄 Restaurar Valores por Defecto</button>
+      </div>
+    </div>
+
+    <!-- MODO AUTÓNOMO -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🤖</span> Modo Autónomo</div>
+      
+      <div class="toggle-row">
+        <span class="toggle-label">Ajuste automático continuo</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="auto-mode-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      
+      <div class="toggle-row">
+        <span class="toggle-label">Priorizar tamaño máximo</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="priority-size-toggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-label">Alertas de problemas</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="alerts-toggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div style="margin-top: 16px; font-size: 0.75rem; color: var(--muted); line-height: 1.5;">
+        Cuando el modo autónomo está activado, el agente ajustará automáticamente los tamaños cada 5 segundos basándose en las métricas de visibilidad detectadas.
+      </div>
+    </div>
+
+    <!-- RECOMENDACIONES -->
+    <div class="card">
+      <div class="card-title"><span class="icon">💡</span> Recomendaciones</div>
+      <div class="recommendation-list" id="recommendation-list">
+        <div class="recommendation-item success">
+          <span class="rec-title">✓ Sistema operativo</span>
+          Esperando datos de la pantalla...
+        </div>
+      </div>
+    </div>
+
+    <div class="last-update" id="last-update">Última actualización: --</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIGURACIÓN FIREBASE
+// ══════════════════════════════════════════════
+let db = null;
+let metricsListener = null;
+let autoModeInterval = null;
+
+const DEFAULT_SETTINGS = {
+  dishNameSize: '6vw',
+  dishEnSize: '2.2vw',
+  iconSize: '5.5vw',
+  turnoMsgEsSize: '3.2vw',
+  turnoMsgEnSize: '2vw',
+  carouselEsSize: '2.8vw',
+  carouselEnSize: '1.8vw'
+};
+
+const ACCESSIBILITY_THRESHOLDS = {
+  minNameSize: 28,      // px mínimos para nombre de plato
+  minIconSize: 32,      // px mínimos para iconos
+  minContrast: 4.5,     // ratio WCAG AA
+  targetContrast: 7,    // ratio WCAG AAA
+  maxOverflow: 0        // overflow permitido
+};
+
+// Estado actual
+let currentMetrics = {
+  screenWidth: 0,
+  screenHeight: 0,
+  dishNameSizePx: 0,
+  iconSizePx: 0,
+  contrastRatio: 0,
+  hasOverflow: false,
+  dishCount: 0,
+  lastUpdate: null
+};
+
+let currentSettings = { ...DEFAULT_SETTINGS };
+let autoModeEnabled = false;
+
+// ══════════════════════════════════════════════
+//  INICIALIZACIÓN
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // Inicializar Firebase
+    if (typeof firebase !== 'undefined') {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      
+      // Cargar configuración guardada
+      await loadSettings();
+      
+      // Escuchar métricas en tiempo real
+      listenToMetrics();
+      
+      // Actualizar UI con valores cargados
+      updateUIFromSettings();
+      
+      // Ocultar loading
+      document.getElementById('loading').style.display = 'none';
+      updateConnectionStatus(true);
+    } else {
+      throw new Error('Firebase no disponible');
+    }
+  } catch (error) {
+    console.error('Error inicializando agente:', error);
+    document.getElementById('loading').innerHTML = `
+      <div style="color: #ef4444; font-size: 1.2rem; font-weight: 700;">⚠️ Error de conexión</div>
+      <div style="color: #94a3b8; margin-top: 10px;">${error.message}</div>
+      <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 20px;">🔄 Reintentar</button>
+    `;
+  }
+});
+
+// ══════════════════════════════════════════════
+//  ESCUCHAR MÉTRICAS EN TIEMPO REAL
+// ══════════════════════════════════════════════
+function listenToMetrics() {
+  if (!db) return;
+  
+  const metricsRef = db.ref('accessibilityMetrics');
+  metricsListener = metricsRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      currentMetrics = {
+        screenWidth: data.screenWidth || 0,
+        screenHeight: data.screenHeight || 0,
+        dishNameSizePx: data.dishNameSizePx || 0,
+        iconSizePx: data.iconSizePx || 0,
+        contrastRatio: data.contrastRatio || 0,
+        hasOverflow: data.hasOverflow || false,
+        dishCount: data.dishCount || 0,
+        lastUpdate: data.lastUpdate || null
+      };
+      
+      updateMetricsUI();
+      generateRecommendations();
+      updateLastUpdate();
+      
+      // Si el modo autónomo está activado, evaluar ajustes
+      if (autoModeEnabled) {
+        evaluateAutoAdjustment();
+      }
+    }
+  });
+  
+  // También escuchar cambios en settings
+  db.ref('tvSettings').on('value', (snapshot) => {
+    const settings = snapshot.val();
+    if (settings) {
+      currentSettings = { ...DEFAULT_SETTINGS, ...settings };
+      updateUIFromSettings();
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+//  ACTUALIZAR UI DE MÉTRICAS
+// ══════════════════════════════════════════════
+function updateMetricsUI() {
+  // Información de pantalla
+  if (currentMetrics.screenWidth && currentMetrics.screenHeight) {
+    document.getElementById('screen-resolution').textContent = 
+      `${currentMetrics.screenWidth} × ${currentMetrics.screenHeight}`;
+    
+    const scale = calculateScale(currentMetrics.screenWidth, currentMetrics.screenHeight);
+    document.getElementById('screen-scale').textContent = scale.toFixed(2) + '×';
+  }
+  
+  document.getElementById('dish-count').textContent = currentMetrics.dishCount || '--';
+  
+  // Métricas de accesibilidad
+  const nameSizeEl = document.getElementById('metric-name-size');
+  nameSizeEl.innerHTML = `${Math.round(currentMetrics.dishNameSizePx)}<span class="metric-unit">px</span>`;
+  
+  const nameStatusEl = document.getElementById('metric-name-status');
+  if (currentMetrics.dishNameSizePx >= ACCESSIBILITY_THRESHOLDS.minNameSize) {
+    nameStatusEl.textContent = '✓ Óptimo';
+    nameStatusEl.className = 'metric-status good';
+  } else if (currentMetrics.dishNameSizePx >= ACCESSIBILITY_THRESHOLDS.minNameSize * 0.8) {
+    nameStatusEl.textContent = '⚠ Aceptable';
+    nameStatusEl.className = 'metric-status warning';
+  } else {
+    nameStatusEl.textContent = '✗ Muy pequeño';
+    nameStatusEl.className = 'metric-status bad';
+  }
+  
+  const iconSizeEl = document.getElementById('metric-icon-size');
+  iconSizeEl.innerHTML = `${Math.round(currentMetrics.iconSizePx)}<span class="metric-unit">px</span>`;
+  
+  const iconStatusEl = document.getElementById('metric-icon-status');
+  if (currentMetrics.iconSizePx >= ACCESSIBILITY_THRESHOLDS.minIconSize) {
+    iconStatusEl.textContent = '✓ Óptimo';
+    iconStatusEl.className = 'metric-status good';
+  } else if (currentMetrics.iconSizePx >= ACCESSIBILITY_THRESHOLDS.minIconSize * 0.8) {
+    iconStatusEl.textContent = '⚠ Aceptable';
+    iconStatusEl.className = 'metric-status warning';
+  } else {
+    iconStatusEl.textContent = '✗ Muy pequeño';
+    iconStatusEl.className = 'metric-status bad';
+  }
+  
+  const contrastEl = document.getElementById('metric-contrast');
+  contrastEl.textContent = currentMetrics.contrastRatio > 0 ? currentMetrics.contrastRatio.toFixed(2) + ':1' : '--';
+  
+  const contrastStatusEl = document.getElementById('metric-contrast-status');
+  if (currentMetrics.contrastRatio >= ACCESSIBILITY_THRESHOLDS.targetContrast) {
+    contrastStatusEl.textContent = '✓ AAA';
+    contrastStatusEl.className = 'metric-status good';
+  } else if (currentMetrics.contrastRatio >= ACCESSIBILITY_THRESHOLDS.minContrast) {
+    contrastStatusEl.textContent = '✓ AA';
+    contrastStatusEl.className = 'metric-status good';
+  } else if (currentMetrics.contrastRatio > 0) {
+    contrastStatusEl.textContent = '✗ Bajo';
+    contrastStatusEl.className = 'metric-status bad';
+  } else {
+    contrastStatusEl.textContent = '--';
+    contrastStatusEl.className = 'metric-status';
+  }
+  
+  const overflowEl = document.getElementById('metric-overflow');
+  overflowEl.textContent = currentMetrics.hasOverflow ? 'Detectado' : 'Ninguno';
+  
+  const overflowStatusEl = document.getElementById('metric-overflow-status');
+  if (!currentMetrics.hasOverflow) {
+    overflowStatusEl.textContent = '✓ Correcto';
+    overflowStatusEl.className = 'metric-status good';
+  } else {
+    overflowStatusEl.textContent = '✗ Problema';
+    overflowStatusEl.className = 'metric-status bad';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  GENERAR RECOMENDACIONES
+// ══════════════════════════════════════════════
+function generateRecommendations() {
+  const listEl = document.getElementById('recommendation-list');
+  const recommendations = [];
+  
+  if (currentMetrics.dishNameSizePx < ACCESSIBILITY_THRESHOLDS.minNameSize) {
+    recommendations.push({
+      type: 'warning',
+      title: 'Texto demasiado pequeño',
+      message: `El tamaño actual (${Math.round(currentMetrics.dishNameSizePx)}px) está por debajo del recomendado (${ACCESSIBILITY_THRESHOLDS.minNameSize}px). Considera aumentar a ${Math.ceil(currentMetrics.dishNameSizePx * 1.2)}px.`
+    });
+  }
+  
+  if (currentMetrics.iconSizePx < ACCESSIBILITY_THRESHOLDS.minIconSize) {
+    recommendations.push({
+      type: 'warning',
+      title: 'Iconos pequeños',
+      message: `Los iconos miden ${Math.round(currentMetrics.iconSizePx)}px. Para una pantalla de 70", se recomiendan al menos ${ACCESSIBILITY_THRESHOLDS.minIconSize}px.`
+    });
+  }
+  
+  if (currentMetrics.hasOverflow) {
+    recommendations.push({
+      type: 'danger',
+      title: 'Contenido cortado',
+      message: 'Se ha detectado overflow de contenido. Reduce el tamaño de texto o aumenta la capacidad de la cuadrícula.'
+    });
+  }
+  
+  if (currentMetrics.contrastRatio > 0 && currentMetrics.contrastRatio < ACCESSIBILITY_THRESHOLDS.minContrast) {
+    recommendations.push({
+      type: 'danger',
+      title: 'Contraste insuficiente',
+      message: `El contraste detectado (${currentMetrics.contrastRatio.toFixed(2)}:1) no cumple WCAG AA (4.5:1 mínimo).`
+    });
+  }
+  
+  if (recommendations.length === 0 && currentMetrics.lastUpdate) {
+    recommendations.push({
+      type: 'success',
+      title: '✓ Todo correcto',
+      message: 'La pantalla cumple con todos los criterios de accesibilidad.'
+    });
+  }
+  
+  if (recommendations.length === 0 && !currentMetrics.lastUpdate) {
+    recommendations.push({
+      type: 'success',
+      title: '✓ Sistema operativo',
+      message: 'Esperando datos de la pantalla...'
+    });
+  }
+  
+  listEl.innerHTML = recommendations.map(rec => `
+    <div class="recommendation-item ${rec.type}">
+      <span class="rec-title">${rec.title}</span>
+      ${rec.message}
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+//  CALCULAR ESCALA ÓPTIMA
+// ══════════════════════════════════════════════
+function calculateScale(width, height) {
+  // Referencia: 1280x720 en 70" = escala base 1.0
+  const refWidth = 1280;
+  const refHeight = 720;
+  return Math.sqrt((width * height) / (refWidth * refHeight));
+}
+
+// ══════════════════════════════════════════════
+//  EVALUAR AJUSTE AUTOMÁTICO
+// ══════════════════════════════════════════════
+function evaluateAutoAdjustment() {
+  if (!autoModeEnabled) return;
+  
+  const adjustments = {};
+  let needsAdjustment = false;
+  
+  // Priorizar tamaño si está activado
+  const prioritizeSize = document.getElementById('priority-size-toggle').checked;
+  
+  if (currentMetrics.dishNameSizePx < ACCESSIBILITY_THRESHOLDS.minNameSize) {
+    const newSize = Math.min(10, parseFloat(currentSettings.dishNameSize) * 1.15);
+    adjustments.dishNameSize = newSize.toFixed(1) + 'vw';
+    needsAdjustment = true;
+  }
+  
+  if (currentMetrics.iconSizePx < ACCESSIBILITY_THRESHOLDS.minIconSize) {
+    const newIconSize = Math.min(9, parseFloat(currentSettings.iconSize) * 1.15);
+    adjustments.iconSize = newIconSize.toFixed(1) + 'vw';
+    needsAdjustment = true;
+  }
+  
+  if (currentMetrics.hasOverflow && prioritizeSize) {
+    // Reducir gradualmente hasta que no haya overflow
+    if (parseFloat(currentSettings.dishNameSize) > 4) {
+      adjustments.dishNameSize = (parseFloat(currentSettings.dishNameSize) * 0.95).toFixed(1) + 'vw';
+      needsAdjustment = true;
+    }
+  }
+  
+  if (needsAdjustment && Object.keys(adjustments).length > 0) {
+    applySettingsToFirebase(adjustments);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  CARGAR CONFIGURACIÓN
+// ══════════════════════════════════════════════
+async function loadSettings() {
+  if (!db) return;
+  
+  try {
+    const snapshot = await db.ref('tvSettings').once('value');
+    const settings = snapshot.val();
+    if (settings) {
+      currentSettings = { ...DEFAULT_SETTINGS, ...settings };
+    }
+  } catch (error) {
+    console.warn('Error cargando settings:', error);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  ACTUALIZAR UI DESDE SETTINGS
+// ══════════════════════════════════════════════
+function updateUIFromSettings() {
+  setSliderValue('slider-dish-name', currentSettings.dishNameSize, 'val-dish-name');
+  setSliderValue('slider-dish-en', currentSettings.dishEnSize, 'val-dish-en');
+  setSliderValue('slider-icon-size', currentSettings.iconSize, 'val-icon-size');
+  setSliderValue('slider-turno-es', currentSettings.turnoMsgEsSize, 'val-turno-es');
+}
+
+function setSliderValue(sliderId, valueStr, displayId) {
+  const numValue = parseFloat(valueStr) || 0;
+  document.getElementById(sliderId).value = numValue;
+  document.getElementById(displayId).textContent = valueStr;
+}
+
+// ══════════════════════════════════════════════
+//  APLICAR CAMBIOS
+// ══════════════════════════════════════════════
+function applySettings() {
+  const settings = {
+    dishNameSize: document.getElementById('slider-dish-name').value + 'vw',
+    dishEnSize: document.getElementById('slider-dish-en').value + 'vw',
+    iconSize: document.getElementById('slider-icon-size').value + 'vw',
+    turnoMsgEsSize: document.getElementById('slider-turno-es').value + 'vw'
+  };
+  
+  applySettingsToFirebase(settings);
+}
+
+function applySettingsToFirebase(settings) {
+  if (!db) {
+    alert('No hay conexión con Firebase');
+    return;
+  }
+  
+  db.ref('tvSettings').update(settings)
+    .then(() => {
+      showToast('✓ Configuración aplicada correctamente', 'success');
+      currentSettings = { ...currentSettings, ...settings };
+      updateUIFromSettings();
+    })
+    .catch(error => {
+      console.error('Error aplicando settings:', error);
+      showToast('✗ Error al aplicar configuración', 'error');
+    });
+}
+
+// ══════════════════════════════════════════════
+//  OPTIMIZAR PARA ACCESIBILIDAD
+// ══════════════════════════════════════════════
+function optimizeForAccessibility() {
+  if (!currentMetrics.lastUpdate) {
+    showToast('⚠ Esperando datos de la pantalla...', 'warning');
+    return;
+  }
+  
+  const optimizations = {};
+  
+  // Calcular tamaños óptimos basados en resolución
+  const baseScale = calculateScale(currentMetrics.screenWidth, currentMetrics.screenHeight);
+  
+  // Para 1280x720 en 70", usar valores base aumentados
+  if (currentMetrics.screenWidth <= 1280) {
+    // Pantalla HD estándar - maximizar tamaños
+    optimizations.dishNameSize = '7.5vw';
+    optimizations.iconSize = '6.5vw';
+    optimizations.dishEnSize = '2.8vw';
+    optimizations.turnoMsgEsSize = '4vw';
+  } else {
+    // Pantallas más grandes - escalar proporcionalmente
+    optimizations.dishNameSize = (6 * baseScale).toFixed(1) + 'vw';
+    optimizations.iconSize = (5.5 * baseScale).toFixed(1) + 'vw';
+    optimizations.dishEnSize = (2.2 * baseScale).toFixed(1) + 'vw';
+    optimizations.turnoMsgEsSize = (3.2 * baseScale).toFixed(1) + 'vw';
+  }
+  
+  // Asegurar mínimos de accesibilidad
+  if (currentMetrics.dishNameSizePx < ACCESSIBILITY_THRESHOLDS.minNameSize) {
+    optimizations.dishNameSize = '8vw';
+  }
+  
+  if (currentMetrics.iconSizePx < ACCESSIBILITY_THRESHOLDS.minIconSize) {
+    optimizations.iconSize = '7vw';
+  }
+  
+  applySettingsToFirebase(optimizations);
+  showToast('✨ Optimización aplicada', 'success');
+}
+
+// ══════════════════════════════════════════════
+//  RESTAURAR VALORES POR DEFECTO
+// ══════════════════════════════════════════════
+function resetToDefaults() {
+  if (confirm('¿Restaurar valores por defecto?')) {
+    applySettingsToFirebase(DEFAULT_SETTINGS);
+    showToast('🔄 Valores restaurados', 'success');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  ACTUALIZAR ESTADO DE CONEXIÓN
+// ══════════════════════════════════════════════
+function updateConnectionStatus(connected) {
+  const dot = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  
+  if (connected) {
+    dot.classList.remove('offline');
+    text.textContent = 'Conectado en tiempo real';
+  } else {
+    dot.classList.add('offline');
+    text.textContent = 'Desconectado';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  ACTUALIZAR ÚLTIMA ACTUALIZACIÓN
+// ══════════════════════════════════════════════
+function updateLastUpdate() {
+  const el = document.getElementById('last-update');
+  if (currentMetrics.lastUpdate) {
+    const date = new Date(currentMetrics.lastUpdate);
+    el.textContent = 'Última actualización: ' + date.toLocaleTimeString();
+  }
+}
+
+// ══════════════════════════════════════════════
+//  REFRESCAR VISTA PREVIA
+// ══════════════════════════════════════════════
+function refreshPreview() {
+  const iframe = document.getElementById('preview-frame');
+  iframe.src = iframe.src;
+  showToast('🔄 Vista previa actualizada', 'success');
+}
+
+// ══════════════════════════════════════════════
+//  TOAST NOTIFICATIONS
+// ══════════════════════════════════════════════
+function showToast(message, type = 'info') {
+  const colors = {
+    success: '#10b981',
+    error: '#ef4444',
+    warning: '#f59e0b',
+    info: '#06b6d4'
+  };
+  
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed; bottom: 30px; right: 30px;
+    background: ${colors[type]}; color: white;
+    padding: 14px 24px; border-radius: 10px;
+    font-weight: 700; font-size: 0.9rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    z-index: 10000; animation: slideIn 0.3s ease;
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// Añadir animaciones CSS dinámicamente
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+`;
+document.head.appendChild(style);
+
+// ══════════════════════════════════════════════
+//  EVENT LISTENERS PARA SLIDERS
+// ══════════════════════════════════════════════
+['slider-dish-name', 'slider-dish-en', 'slider-icon-size', 'slider-turno-es'].forEach(id => {
+  document.getElementById(id).addEventListener('input', (e) => {
+    const displayId = id.replace('slider-', 'val-');
+    document.getElementById(displayId).textContent = e.target.value + 'vw';
+  });
+});
+
+// ══════════════════════════════════════════════
+//  MODO AUTÓNOMO TOGGLE
+// ══════════════════════════════════════════════
+document.getElementById('auto-mode-toggle').addEventListener('change', (e) => {
+  autoModeEnabled = e.target.checked;
+  
+  if (autoModeEnabled) {
+    showToast('🤖 Modo autónomo ACTIVADO', 'success');
+    // Evaluar cada 5 segundos
+    autoModeInterval = setInterval(evaluateAutoAdjustment, 5000);
+  } else {
+    showToast('🔧 Modo autónomo DESACTIVADO', 'info');
+    if (autoModeInterval) {
+      clearInterval(autoModeInterval);
+      autoModeInterval = null;
+    }
+  }
+});
+</script>
+</body>
+</html>

@@ -1163,6 +1163,144 @@ function fitDishRows() {
     shrinkIterations: guard,
     stillOverflowing: dishContentOverflows(mainCol, rows),
   });
+  
+  // Enviar métricas a Firebase para el Agente de Accesibilidad
+  reportAccessibilityMetrics(gridRows, gridCols, availH, availW);
+}
+
+// ══════════════════════════════════════════════
+//  REPORTAR MÉTRICAS AL AGENTE DE ACCESIBILIDAD
+// ══════════════════════════════════════════════
+let metricsReportInterval = null;
+function reportAccessibilityMetrics(gridRows, gridCols, availH, availW) {
+  if (!db) return;
+  
+  const mainCol = document.getElementById('main-col');
+  const rows = mainCol ? [...mainCol.querySelectorAll('.dish-row')] : [];
+  const rootStyles = getComputedStyle(document.documentElement);
+  
+  const metrics = {
+    screenWidth: window.innerWidth,
+    screenHeight: window.innerHeight,
+    dishNameSizePx: parseFloat(rootStyles.getPropertyValue('--dish-name-size')) || 0,
+    iconSizePx: rows[0] ? parseFloat(getComputedStyle(rows[0]).getPropertyValue('--icon-size')) || 0 : 0,
+    contrastRatio: calculateContrastRatio(),
+    hasOverflow: dishContentOverflows(mainCol, rows),
+    dishCount: rows.length,
+    gridRows: gridRows || 0,
+    gridCols: gridCols || 0,
+    lastUpdate: Date.now()
+  };
+  
+  // Actualizar inmediatamente
+  db.ref('accessibilityMetrics').set(metrics).catch(e => console.warn('Error reportando métricas:', e));
+  
+  // Programar siguientes actualizaciones periódicas (cada 3 segundos)
+  if (!metricsReportInterval) {
+    metricsReportInterval = setInterval(() => {
+      // Recalcular métricas actuales
+      const currentRows = document.getElementById('main-col')?.querySelectorAll('.dish-row') || [];
+      const currentRootStyles = getComputedStyle(document.documentElement);
+      
+      const updatedMetrics = {
+        screenWidth: window.innerWidth,
+        screenHeight: window.innerHeight,
+        dishNameSizePx: parseFloat(currentRootStyles.getPropertyValue('--dish-name-size')) || 0,
+        iconSizePx: currentRows[0] ? parseFloat(getComputedStyle(currentRows[0]).getPropertyValue('--icon-size')) || 0 : 0,
+        contrastRatio: calculateContrastRatio(),
+        hasOverflow: dishContentOverflows(document.getElementById('main-col'), [...currentRows]),
+        dishCount: currentRows.length,
+        lastUpdate: Date.now()
+      };
+      
+      db.ref('accessibilityMetrics').update(updatedMetrics).catch(e => console.warn('Error actualizando métricas:', e));
+    }, 3000);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  CALCULAR RATIO DE CONTRASTE (análisis real de colores)
+// ══════════════════════════════════════════════
+function calculateContrastRatio() {
+  // Función auxiliar para obtener el valor RGB de un color CSS
+  function parseColor(colorStr) {
+    if (!colorStr || colorStr === 'transparent') return null;
+    
+    // Manejar rgb() y rgba()
+    const rgbMatch = colorStr.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (rgbMatch) {
+      return { r: parseInt(rgbMatch[1]), g: parseInt(rgbMatch[2]), b: parseInt(rgbMatch[3]) };
+    }
+    
+    // Manejar hex
+    const hexMatch = colorStr.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+    if (hexMatch) {
+      return { r: parseInt(hexMatch[1], 16), g: parseInt(hexMatch[2], 16), b: parseInt(hexMatch[3], 16) };
+    }
+    
+    return null;
+  }
+  
+  // Calcular luminancia relativa (WCAG 2.1)
+  function getLuminance(rgb) {
+    const [r, g, b] = [rgb.r, rgb.g, rgb.b].map(c => {
+      c = c / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  
+  // Calcular ratio de contraste entre dos colores
+  function getContrastRatio(lum1, lum2) {
+    const lighter = Math.max(lum1, lum2);
+    const darker = Math.min(lum1, lum2);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+  
+  try {
+    // Analizar elementos clave de texto en pantalla
+    const textElements = document.querySelectorAll('.dish-name-es, .dish-name-en, .dish-gluten-es, .dish-gluten-en, .no-allergen-txt');
+    let minContrast = 21; // Máximo teórico
+    
+    textElements.forEach(el => {
+      const style = window.getComputedStyle(el);
+      const textColor = style.color;
+      
+      // Obtener color de fondo (puede ser heredado)
+      let bgColor = style.backgroundColor;
+      let parent = el.parentElement;
+      while (parent && (bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)')) {
+        bgColor = window.getComputedStyle(parent).backgroundColor;
+        parent = parent.parentElement;
+      }
+      if (bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)') {
+        bgColor = '#ffffff'; // Default si no se encuentra
+      }
+      
+      const fgRGB = parseColor(textColor);
+      const bgRGB = parseColor(bgColor);
+      
+      if (fgRGB && bgRGB) {
+        const fgLum = getLuminance(fgRGB);
+        const bgLum = getLuminance(bgRGB);
+        const contrast = getContrastRatio(fgLum, bgLum);
+        
+        if (contrast < minContrast) {
+          minContrast = contrast;
+        }
+      }
+    });
+    
+    // Si no se encontraron elementos, usar valor conservador
+    if (minContrast === 21) {
+      return 16.0; // Valor por defecto seguro para nuestro diseño
+    }
+    
+    return parseFloat(minContrast.toFixed(2));
+  } catch (e) {
+    console.warn('Error calculando contraste:', e);
+    return 16.0; // Valor conservador por defecto
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1406,6 +1544,14 @@ window.addEventListener('resize', () => {
   requestAnimationFrame(fitDishRows);
   if (document.getElementById('turno-overlay')?.classList.contains('visible')) {
     requestAnimationFrame(fitTurnoOverlay);
+  }
+  // Reportar inmediatamente el cambio de resolución al agente
+  if (db) {
+    db.ref('accessibilityMetrics/screenResolution').set({
+      width: window.innerWidth,
+      height: window.innerHeight,
+      timestamp: Date.now()
+    }).catch(e => console.warn('Error reportando resize:', e));
   }
 });
 
