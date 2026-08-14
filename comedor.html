@@ -1186,6 +1186,26 @@ function buildLegend(usedIds) {
 // ══════════════════════════════════════════════
 //  RENDER MENU
 // ══════════════════════════════════════════════
+// Decide el nº de columnas midiendo el espacio REAL disponible, no un
+// número fijo de platos. Con 1 columna, cada plato tiene todo el ancho
+// para sus alérgenos (importante para platos con muchos iconos); solo se
+// sacrifica ese ancho por más alto si con 1 columna quedaría demasiado
+// apretado de verdad.
+function decideGridCols(dishCount) {
+  if (dishCount <= 1) return 1;
+  const headerH = document.querySelector('.header')?.getBoundingClientRect().height || window.innerHeight * 0.11;
+  const availH = Math.max(100, window.innerHeight - headerH - 40);
+  const MIN_ROW_H = 130; // por debajo de esto, una fila se queda demasiado apretada
+
+  const listBudget = availH / dishCount;
+  if (listBudget >= MIN_ROW_H) return 1;
+
+  const twoColBudget = availH / Math.ceil(dishCount / 2);
+  if (twoColBudget >= MIN_ROW_H || dishCount <= 8) return 2;
+
+  return 3;
+}
+
 function renderMenu(data) {
   // Se muestran solo los platos NO ocultos (el resto se gestionan pero no salen en TV)
   const platos = (data.platos || []).filter(p => !p.oculto);
@@ -1200,12 +1220,16 @@ function renderMenu(data) {
     return;
   }
 
-  // Con pocos platos, una sola columna de ancho completo se lee mejor
-  // (nombres grandes, sin partir la atención). Con varios, pasar a 2-3
-  // columnas aprovecha el ancho que si no queda en blanco, y sobre todo
-  // reduce el número de FILAS verticales — que es lo que de verdad
-  // limita lo grande que puede ser el texto cuando hay muchos platos.
-  const gridCols = platos.length <= 3 ? 1 : platos.length <= 8 ? 2 : 3;
+  // Antes se decidía por un umbral fijo de nº de platos (>3 -> mosaico),
+  // pero eso no tiene en cuenta el contenido real: 4 platos con muy
+  // pocos alérgenos caben perfectamente en 1 columna, mientras que un
+  // solo plato con muchos alérgenos (como una ensaladilla con 11 iconos
+  // entre "contiene" y "trazas") necesita todo el ancho posible, no
+  // menos. Ahora se decide midiendo el espacio real: si con 1 columna
+  // cada plato tendría un alto razonable, se queda en lista; solo si de
+  // verdad quedaría muy apretado se pasa a mosaico, que da más alto por
+  // fila a cambio de menos ancho.
+  const gridCols = decideGridCols(platos.length);
   col.classList.toggle('grid-mode', gridCols > 1);
   col.style.setProperty('--grid-cols', gridCols);
 

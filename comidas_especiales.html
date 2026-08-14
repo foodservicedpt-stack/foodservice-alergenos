@@ -898,6 +898,26 @@ function renderLegend() {
 // ═══════════════════════════════════════════════════
 // RENDER DISHES
 // ═══════════════════════════════════════════════════
+// Decide el nº de columnas midiendo el espacio REAL disponible, no un
+// número fijo de platos — un plato con muchos alérgenos necesita todo el
+// ancho posible, así que solo se pasa a mosaico si con 1 columna
+// quedaría demasiado apretado de verdad.
+function decideGridCols(dishCount) {
+  if (dishCount <= 1) return 1;
+  const headerEl = document.querySelector('.header');
+  const headerH = headerEl?.getBoundingClientRect().height || window.innerHeight * 0.14;
+  const availH = Math.max(100, window.innerHeight - headerH - 40);
+  const MIN_ROW_H = 130;
+
+  const listBudget = availH / dishCount;
+  if (listBudget >= MIN_ROW_H) return 1;
+
+  const twoColBudget = availH / Math.ceil(dishCount / 2);
+  if (twoColBudget >= MIN_ROW_H || dishCount <= 8) return 2;
+
+  return 3;
+}
+
 function renderDishes() {
   const container = document.getElementById('main-col');
   
@@ -913,13 +933,13 @@ function renderDishes() {
     return;
   }
   
-  // Modo grid si hay más de 2 platos
-  if (currentDishes.length > 2) {
-    container.classList.add('grid-mode');
-    container.style.setProperty('--grid-cols', Math.min(currentDishes.length, 3));
-  } else {
-    container.classList.remove('grid-mode');
-  }
+  // Antes se pasaba a mosaico con más de 2 platos fuera cual fuera su
+  // contenido. Ahora se mide el espacio real: solo se sacrifica ancho por
+  // más alto si con 1 columna quedaría demasiado apretado de verdad (un
+  // plato con muchos alérgenos necesita todo el ancho posible).
+  const gridColsSpecial = decideGridCols(currentDishes.length);
+  container.classList.toggle('grid-mode', gridColsSpecial > 1);
+  container.style.setProperty('--grid-cols', gridColsSpecial);
   
   container.innerHTML = currentDishes.map((dish, idx) => {
     const hasAllergens = dish.contains && dish.contains.length > 0;
