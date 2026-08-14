@@ -1001,30 +1001,33 @@ function updateDebugPanel(vals) {
   }
   panel.textContent =
     `window: ${window.innerWidth}x${window.innerHeight}\n` +
-    `platos: ${vals.rowsCount} | headerH: ${vals.headerH.toFixed(0)} | sidebarW: ${vals.sidebarW.toFixed(0)}\n` +
+    `filas grid: ${vals.gridRows} | columnas: ${vals.gridCols}\n` +
     `availH: ${vals.availH.toFixed(0)} | availW: ${vals.availW.toFixed(0)} | budget/fila: ${vals.heightBudget.toFixed(0)}\n` +
-    `nombre: ${vals.nameFs.toFixed(0)}px | en: ${vals.enFs.toFixed(0)}px | icono: ${vals.iconSize.toFixed(0)}px`;
+    `nombre FINAL: ${vals.finalNameFs.toFixed(0)}px | en: ${vals.finalEnFs.toFixed(0)}px | icono[0]: ${vals.finalIconFirst.toFixed(0)}px\n` +
+    `iteraciones reducción: ${vals.shrinkIterations} | ¿sigue sin caber?: ${vals.stillOverflowing}`;
 }
 
-function adjustSizes(rowsCount, rowHeight) {
+function adjustSizes(rowsCount, rowHeight, gridCols) {
   const root = document.documentElement.style;
   const headerH = document.querySelector('.header')?.getBoundingClientRect().height || window.innerHeight * 0.11;
   const sidebarW = document.querySelector('.sidebar')?.getBoundingClientRect().width || window.innerWidth * 0.19;
   const availH = Math.max(100, window.innerHeight - headerH - 40);
   const availW = Math.max(200, window.innerWidth - sidebarW - 40);
 
-  // El tamaño se basa en el alto disponible por fila. Se ha subido la
-  // fracción varias veces tras comprobar en fotos reales de la TV que
-  // seguía viéndose pequeño — así que ahora se sube de forma notable
-  // (0.5 -> 0.72) y se añade un panel de diagnóstico (?debug=1 en la URL)
-  // que muestra en pantalla los valores reales calculados, para no tener
-  // que seguir adivinando a partir de fotos.
   const refRows = Math.min(Math.max(1, rowsCount), 6);
   const heightBudget = availH / refRows;
+  // El ancho que importa es el de la CELDA (con varias columnas, cada
+  // plato solo tiene una fracción del ancho total), no el de toda la
+  // pantalla. Sin esto, en modo grid un nombre largo en una celda
+  // estrecha se calculaba como si tuviera todo el ancho disponible,
+  // dando un tamaño imposible de encajar sin envolver a 3+ líneas — el
+  // bucle de seguridad tenía que reducirlo una y otra vez sin llegar
+  // nunca a un resultado realmente bueno.
+  const cellW = availW / Math.max(1, gridCols || 1);
 
-  const nameFs = Math.max(28, heightBudget * 1.05);
+  const nameFs = Math.max(28, Math.min(heightBudget * 1.05, cellW * 0.13));
   const enFs = Math.max(14, nameFs * 0.36);
-  const iconSize = Math.max(32, heightBudget * 0.56);
+  const iconSize = Math.max(32, Math.min(heightBudget * 0.56, cellW * 0.16));
   const legendIcon = Math.max(18, Math.min(iconSize, availW * 0.035));
   const legendText = Math.max(12, legendIcon * 0.4);
 
@@ -1035,8 +1038,7 @@ function adjustSizes(rowsCount, rowHeight) {
   root.setProperty('--dish-pad', Math.max(8, heightBudget * 0.16) + 'px');
   root.setProperty('--legend-icon', legendIcon + 'px');
   root.setProperty('--legend-text', legendText + 'px');
-
-  updateDebugPanel({ rowsCount, headerH, sidebarW, availH, availW, heightBudget, nameFs, enFs, iconSize });
+  return { availH, availW, heightBudget };
 }
 function startSizeAutoAdjust() {
   stopSizeAutoAdjust();
@@ -1107,7 +1109,7 @@ function fitDishRows() {
   const gridCols = parseInt(getComputedStyle(mainCol).getPropertyValue('--grid-cols')) || 1;
   const gridRows = Math.ceil(rows.length / gridCols);
 
-  adjustSizes(gridRows, rows[0].getBoundingClientRect().height);
+  const { availH, availW, heightBudget } = adjustSizes(gridRows, rows[0].getBoundingClientRect().height, gridCols);
   if (manualDishSize) {
     const root = document.documentElement.style;
     if (manualDishSize.name) root.setProperty('--dish-name-size', manualDishSize.name);
@@ -1146,6 +1148,21 @@ function fitDishRows() {
   }
 
   fitLegend();
+
+  // El panel se actualiza AQUÍ, al final de todo, con los valores
+  // REALMENTE aplicados tras el bucle — antes se actualizaba dentro de
+  // adjustSizes(), mostrando el punto de PARTIDA, no el valor final que
+  // de verdad llega a pantalla (que el bucle puede haber reducido varias
+  // veces). Con esto también se ve cuántas veces tuvo que reducir y si
+  // aun así se quedó sin caber del todo.
+  updateDebugPanel({
+    gridRows, gridCols, availH, availW, heightBudget,
+    finalNameFs: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 0,
+    finalEnFs: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 0,
+    finalIconFirst: rows[0] ? parseFloat(getComputedStyle(rows[0]).getPropertyValue('--icon-size')) || 0 : 0,
+    shrinkIterations: guard,
+    stillOverflowing: dishContentOverflows(mainCol, rows),
+  });
 }
 
 // ══════════════════════════════════════════════
