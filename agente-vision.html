@@ -745,15 +745,25 @@
     //  ENVIAR AJUSTES A COMER.HTML
     // ══════════════════════════════════════════════
     function sendAdjustments(adjustments) {
-      if (!db) return;
+      if (!db) {
+        log('❌ Firebase no disponible', 'error');
+        return;
+      }
+      
+      console.log('[Agente] Enviando ajustes:', adjustments);
       
       db.ref(`${AGENT_CHANNEL}/adjustments`).set({
         ...adjustments,
         timestamp: Date.now(),
         source: 'agent_panel'
       }).then(() => {
+        console.log('[Agente] ✅ Ajustes enviados correctamente');
         log('Ajustes enviados a comedor.html', 'success');
+        
+        // NO limpiar los ajustes - dejar que comedor los aplique
+        // El listener de comedor se encarga de aplicarlos
       }).catch(e => {
+        console.error('[Agente] Error enviando ajustes:', e);
         log('Error enviando ajustes: ' + e.message, 'error');
       });
     }
