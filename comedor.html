@@ -6,6 +6,7 @@
   <title>Food Service DPT — Pantalla Comedor</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="./firebase-config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1666,6 +1667,41 @@ function initDatabaseConnection() {
         refreshMenuDisplay();
       });
     }, 30000);
+    
+    // ══════════════════════════════════════════════
+    //  AGENTE DE ACCESIBILIDAD - Escuchar comandos
+    // ══════════════════════════════════════════════
+    db.ref('agente_accesibilidad/commands').on('value', snap => {
+      const cmd = snap.val();
+      if (cmd && cmd.action === 'capture_screenshot') {
+        console.log('[Agente] Solicitud de captura recibida');
+        captureAndSendScreenshot();
+        // Limpiar comando para evitar re-ejecución
+        db.ref('agente_accesibilidad/commands').remove().catch(e => {});
+      }
+    });
+    
+    // ══════════════════════════════════════════════
+    //  AGENTE DE ACCESIBILIDAD - Escuchar ajustes
+    // ══════════════════════════════════════════════
+    db.ref('agente_accesibilidad/adjustments').on('value', snap => {
+      const adjustments = snap.val();
+      if (adjustments && adjustments.source === 'agent_panel') {
+        console.log('[Agente] Ajustes recibidos:', adjustments);
+        applyAgentAdjustments(adjustments);
+        
+        // Confirmar aplicación
+        db.ref('agente_accesibilidad/adjustments_applied').set({
+          timestamp: Date.now(),
+          adjustments: adjustments
+        }).catch(e => console.warn('Error confirmando ajustes:', e));
+        
+        // Limpiar ajustes para evitar re-aplicación
+        setTimeout(() => {
+          db.ref('agente_accesibilidad/adjustments').remove().catch(e => {});
+        }, 1000);
+      }
+    });
 }
 
 function showNoData() {
@@ -1714,6 +1750,102 @@ function applyTVSettings(settings) {
 function applyTVSettingsFromStorage() {
   try { applyTVSettings(JSON.parse(localStorage.getItem('tvSettings') || '{}')); }
   catch (e) { /* localStorage corrupto o inaccesible: se ignora */ }
+}
+
+// ══════════════════════════════════════════════
+//  AGENTE DE ACCESIBILIDAD - Capturar y enviar screenshot
+// ══════════════════════════════════════════════
+async function captureAndSendScreenshot() {
+  try {
+    // Usar html2canvas para capturar la pantalla
+    if (typeof html2canvas === 'undefined') {
+      console.warn('[Agente] html2canvas no cargado, enviando solo métricas');
+      // Enviar solo métricas sin imagen
+      const currentMetrics = {
+        timestamp: Date.now(),
+        ...getCurrentMetrics()
+      };
+      db.ref('agente_accesibilidad/metrics').set(currentMetrics)
+        .catch(e => console.warn('Error enviando métricas:', e));
+      return;
+    }
+    
+    const canvas = await html2canvas(document.body, {
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#f0f4f8'
+    });
+    
+    const screenshotData = canvas.toDataURL('image/jpeg', 0.8);
+    
+    // Obtener métricas actuales
+    const metrics = getCurrentMetrics();
+    
+    // Enviar screenshot + métricas al agente
+    await db.ref('agente_accesibilidad/metrics').set({
+      timestamp: Date.now(),
+      screenshot: screenshotData,
+      ...metrics
+    });
+    
+    console.log('[Agente] Screenshot enviado:', Math.round(screenshotData.length / 1024) + 'KB');
+  } catch (e) {
+    console.error('[Agente] Error capturando screenshot:', e);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  AGENTE DE ACCESIBILIDAD - Obtener métricas actuales
+// ══════════════════════════════════════════════
+function getCurrentMetrics() {
+  const rows = document.querySelectorAll('#main-col .dish-row');
+  const rootStyles = getComputedStyle(document.documentElement);
+  
+  return {
+    contrastRatio: calculateContrastRatio(),
+    textSize: parseFloat(rootStyles.getPropertyValue('--dish-name-size')) || 0,
+    iconSize: parseFloat(rootStyles.getPropertyValue('--icon-size')) || 0,
+    hasOverflow: dishContentOverflows(document.getElementById('main-col'), [...rows]),
+    screenWidth: window.innerWidth,
+    screenHeight: window.innerHeight
+  };
+}
+
+// ══════════════════════════════════════════════
+//  AGENTE DE ACCESIBILIDAD - Aplicar ajustes del agente
+// ══════════════════════════════════════════════
+function applyAgentAdjustments(adjustments) {
+  const root = document.documentElement.style;
+  
+  if (adjustments.textSize !== undefined) {
+    root.setProperty('--dish-name-size', adjustments.textSize + 'vw');
+    console.log('[Agente] Tamaño texto ajustado a', adjustments.textSize + 'vw');
+  }
+  
+  if (adjustments.iconSize !== undefined) {
+    root.setProperty('--icon-size', adjustments.iconSize + 'vw');
+    console.log('[Agente] Tamaño iconos ajustado a', adjustments.iconSize + 'vw');
+  }
+  
+  if (adjustments.dishPad !== undefined) {
+    root.setProperty('--dish-pad', adjustments.dishPad + 'vw');
+    console.log('[Agente] Padding plato ajustado a', adjustments.dishPad + 'vw');
+  }
+  
+  if (adjustments.legendIcon !== undefined) {
+    root.setProperty('--legend-icon', adjustments.legendIcon + 'vw');
+    console.log('[Agente] Iconos leyenda ajustados a', adjustments.legendIcon + 'vw');
+  }
+  
+  // Recalcular layout después de aplicar ajustes
+  requestAnimationFrame(fitDishRows);
+  
+  // Forzar actualización inmediata de métricas
+  setTimeout(() => {
+    const metrics = getCurrentMetrics();
+    db.ref('agente_accesibilidad/metrics').update(metrics)
+      .catch(e => console.warn('Error actualizando métricas post-ajuste:', e));
+  }, 500);
 }
 </script>
 </body>
