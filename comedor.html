@@ -18,17 +18,17 @@
       --text-scale: 1;                     /* 1 = 100% normal; ajustado desde gestión */
       
       /* ── TEXT SIZES (main: dish names, countdown; secondary: EN, legend) ── */
-      --text-xs:    clamp(14px, 1.6vmin, 20px);   /* timestamps, tiny UI      */
-      --text-sm:    clamp(20px, 2.4vmin, 30px);   /* EN names, legend, labels   */
-      --text-base:  clamp(32px, 4.0vmin, 48px);   /* Dish ES name (primary)    */
-      --text-lg:    clamp(40px, 5.0vmin, 64px);   /* Turno titles, countdown    */
-      --text-xl:    clamp(56px, 7.0vmin, 96px);   /* Hero numbers, clock       */
+      --text-xs:    clamp(14px, calc(1.6vmin * var(--text-scale)), 20px);   /* timestamps, tiny UI      */
+      --text-sm:    clamp(20px, calc(2.4vmin * var(--text-scale)), 30px);   /* EN names, legend, labels   */
+      --text-base:  clamp(32px, calc(4.0vmin * var(--text-scale)), 48px);   /* Dish ES name (primary)    */
+      --text-lg:    clamp(40px, calc(5.0vmin * var(--text-scale)), 64px);   /* Turno titles, countdown    */
+      --text-xl:    clamp(56px, calc(7.0vmin * var(--text-scale)), 96px);   /* Hero numbers, clock       */
 
       /* ── ICON SIZES ── */
-      --icon-xs:    clamp(24px, 2.8vmin, 36px);   /* tiny UI icons            */
-      --icon-sm:    clamp(32px, 4.0vmin, 52px);   /* legend, meta             */
-      --icon-base:  clamp(44px, 5.5vmin, 72px);  /* Dish allergens (standard) */
-      --icon-lg:    clamp(64px, 8.0vmin, 110px);  /* Hero: bell, escudo        */
+      --icon-xs:    clamp(24px, calc(2.8vmin * var(--text-scale)), 36px);   /* tiny UI icons            */
+      --icon-sm:    clamp(32px, calc(4.0vmin * var(--text-scale)), 52px);   /* legend, meta             */
+      --icon-base:  clamp(44px, calc(5.5vmin * var(--text-scale)), 72px);  /* Dish allergens (standard) */
+      --icon-lg:    clamp(64px, calc(8.0vmin * var(--text-scale)), 110px);  /* Hero: bell, escudo        */
 
       /* ── SPACING (all derived from --text-base) ── */
       --space-1:    calc(var(--text-base) * 0.125);  /* 4–6px                 */
@@ -39,6 +39,11 @@
 
       /* ── HEADER ── */
       --header-h: 10vh;
+
+      /* ── DISH (pueden ser sobrescritos por la calibración de gestión) ── */
+      --dish-name-size:   var(--text-base);
+      --dish-en-size:     var(--text-sm);
+      --dish-pad:         var(--space-2);
 
       /* ── TURNO OVERLAY ── */
       --turno-title-size:        var(--text-lg);
@@ -195,557 +200,13 @@
     }
     .legend-title { font-size: 1.2vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5vw; margin-bottom: 0.6vw; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
-    .legend-list { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-content: space-between; flex: 1; }
+    .legend-list { display: flex; flex-direction: column; justify-content: space-between; align-content: stretch; flex: 1; }
     .legend-item { display: flex; align-items: center; gap: 0.45vw; flex: 0 0 auto; }
-    .legend-circle { width: 3.4vw; height: 3.4vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .legend-circle { width: 2.7vw; height: 2.7vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
     .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-    .legend-text-wrap { line-height: 1.15; min-width: 0; }
-    .legend-es { font-size: clamp(12px, 1.5vw, 20px); font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; white-space: nowrap; }
-    .legend-en { font-size: clamp(10px, 1.2vw, 16px); color: #64748b; font-style: italic; display: block; white-space: nowrap; }
-
-    /* ─── FOOTER ─── */
-    .footer { background: #0b1f3a; padding: 0.5vw 2.5vw; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .footer-brand { color: #94a3b8; font-size: clamp(10px,1vw,14px); letter-spacing: 1px; }
-    .footer-updated { color: #94a3b8; font-size: clamp(9px,0.9vw,13px); }
-    .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 6px; animation: blink 2s infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-    /* ── PAGINACIÓN DE PLATOS ── */
-.dish-pagination { display: flex; justify-content: center; gap: 6px; padding: 8px 0; flex-shrink: 0; }
-.page-dot { width: clamp(8px, 1vmin, 14px); height: clamp(8px, 1vmin, 14px); border-radius: 50%; background: rgba(100,116,139,0.3); border: 2px solid transparent; transition: all 0.2s; cursor: pointer; }
-.page-dot.active { background: #3b82f6; border-color: #1e40af; transform: scale(1.25); }
-
-.no-data { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; gap: 16px; }
-    .no-data .icon { font-size: 5vw; }
-    .no-data p { font-size: 2vw; font-weight: 600; }
-    .no-data small { font-size: 1.2vw; opacity: 0.7; }
-    .fade-update { animation: none; }
-    @keyframes fadeUpdate { 0%{opacity:1;transform:scale(1)} 100%{opacity:1;transform:scale(1)} }
-
-    /* ═══════════════════════════════════════════════════
-       TURNO OVERLAY — Pantalla completa espectacular
-    ═══════════════════════════════════════════════════ */
-    #turno-overlay {
-      position: fixed; inset: 0; z-index: 9999;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.5s ease;
-    }
-    #turno-overlay.visible { opacity: 1; pointer-events: auto; }
-
-    /* Dark scrim behind the card */
-    .turno-scrim {
-      position: absolute; inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(8px);
-    }
-
-    /* Main card */
-    .turno-card-tv {
-      position: relative; z-index: 1;
-      width: 92vw; max-width: 1600px;
-      border-radius: 2.5vw;
-      padding: clamp(20px, 3vw, 48px) clamp(24px, 5vw, 80px);
-      text-align: center;
-      overflow: hidden;
-      box-shadow: 0 3vw 6vw rgba(0,0,0,0.6), 0 0 0 3px rgba(255,255,255,0.12);
-      transform: scale(0.85) translateY(3vw);
-      transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease;
-      animation: cardGlow 2.5s ease-in-out infinite;
-      opacity: 0;
-    }
-    /* Pulsing outer glow via box-shadow (NOT clipped by overflow:hidden) */
-    @keyframes cardGlow {
-      0%, 100% { box-shadow: 0 4vw 8vw rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.12); }
-      50%      { box-shadow: 0 4vw 8vw rgba(0,0,0,0.6), 0 0 0 9px rgba(255,255,255,0.22); }
-    }
-    #turno-overlay.visible .turno-card-tv { transform: scale(1) translateY(0); opacity: 1; }
-
-    /* Bell pulse animation */
-    .turno-bell {
-      font-size: clamp(34px, 7vw, 112px); line-height: 1;
-      display: block; margin-bottom: 1vw;
-      animation: bellRing 0.6s ease-in-out 0.3s 3;
-      transform-origin: top center;
-    }
-    @keyframes bellRing {
-      0%,100% { transform: rotate(0deg); }
-      20%      { transform: rotate(-20deg); }
-      40%      { transform: rotate(20deg); }
-      60%      { transform: rotate(-12deg); }
-      80%      { transform: rotate(12deg); }
-    }
-
-    .turno-title {
-      font-size: clamp(16px, var(--turno-title-size), 36px);
-      font-weight: 900; letter-spacing: 4px;
-      text-transform: uppercase; opacity: 0.75;
-      margin-bottom: 1vw;
-    }
-
-    .turno-msg-es {
-      font-size: clamp(20px, var(--turno-msg-es-size), 52px);
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      line-height: 1.05;
-      margin-bottom: 1vw;
-      text-shadow: 0 4px 20px rgba(0,0,0,0.25);
-      word-break: break-word;
-    }
-
-    .turno-msg-en {
-      font-size: clamp(14px, var(--turno-msg-en-size), 30px);
-      font-style: italic;
-      opacity: 0.78;
-      margin-bottom: 1.5vw;
-      line-height: 1.2;
-    }
-
-    /* Countdown bar */
-    .turno-countdown-wrap {
-      display: flex; flex-direction: column; align-items: center; gap: 0.6vw;
-    }
-    .turno-countdown-label {
-      font-size: clamp(13px, var(--turno-countdown-size), 30px); font-weight: 900;
-      opacity: 0.85; letter-spacing: 2px; text-transform: uppercase;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-    }
-    .turno-progress-track {
-      width: min(65%, 900px); height: clamp(10px, 1.3vw, 20px); border-radius: 10px;
-      background: rgba(255,255,255,0.2); overflow: hidden;
-    }
-    .turno-progress-bar {
-      height: 100%; border-radius: 10px;
-      background: rgba(255,255,255,0.9);
-      transition: width 1s linear;
-    }
-
-    /* TURNO CAROUSEL (integrado: despedida + recordatorios) */
-    .turno-carousel {
-      position: relative;
-      margin: 2vw 0;
-      padding: 1.5vw;
-      border-radius: 1.5vw;
-      background: rgba(0,0,0,0.15);
-      backdrop-filter: blur(10px);
-      overflow: hidden;
-      min-height: 22vh;
-    }
-    .carousel-track {
-      display: flex;
-      transition: transform 0.8s cubic-bezier(0.4,0,0.2,1);
-      will-change: transform;
-    }
-    .carousel-slide {
-      flex: 0 0 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1.2vw;
-      padding: 2vw;
-    }
-    .carousel-slide.farewell {
-      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-      border-radius: 1vw;
-      /* Sin imagen: centra el mensaje en todo el alto del carrusel en vez de
-         dejarlo arriba con el hueco vacío que reservaban los slides con foto. */
-      justify-content: center;
-    }
-    .carousel-slide.farewell .slide-text-es {
-      font-size: var(--carousel-farewell-es-size);
-    }
-    .carousel-slide.farewell .slide-text-en {
-      font-size: var(--carousel-farewell-en-size);
-    }
-    .carousel-slide img {
-      max-width: 100%;
-      max-height: 30vh;
-      width: auto;
-      height: auto;
-      border-radius: 1vw;
-      box-shadow: 0 4px 25px rgba(0,0,0,0.3);
-      object-fit: contain;
-    }
-.slide-text-es {
-      font-size: var(--carousel-es-size);
-      font-weight: 900;
-      text-transform: uppercase;
-      text-align: center;
-      text-shadow: 0 3px 15px rgba(0,0,0,0.6);
-      line-height: 1.1;
-      word-break: break-word;
-      max-width: 95%;
-      color: inherit;
-    }
-.slide-text-en {
-      font-size: var(--carousel-en-size);
-      font-style: italic;
-      opacity: 0.85;
-      text-align: center;
-      line-height: 1.2;
-      max-width: 95%;
-      color: inherit;
-    }
-    .slide-label {
-      font-size: clamp(12px, 1.8vw, 24px);
-      font-weight: 700;
-      opacity: 0.7;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 0.5vw;
-    }
-    .carousel-dots {
-      display: flex;
-      justify-content: center;
-      gap: 0.6vw;
-      margin-top: 1vw;
-    }
-    .carousel-dot {
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.25);
-      cursor: pointer;
-      transition: all 0.3s;
-      border: 2px solid transparent;
-    }
-    .carousel-dot.active {
-      background: #fff;
-      transform: scale(1.4);
-      border-color: rgba(255,255,255,0.5);
-    }
-    .carousel-dot:hover { background: rgba(255,255,255,0.5); }
-
-    /* Dismiss button (subtle, for manual close) */
-    .turno-dismiss-btn {
-      position: absolute; top: 2vw; right: 2.5vw;
-      background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
-      color: rgba(255,255,255,0.7); border-radius: 50px;
-      padding: 0.6vw 1.5vw; font-size: clamp(11px, 1.1vw, 18px); font-weight: 700;
-      cursor: pointer; letter-spacing: 1px; transition: all 0.2s;
-    }
-    .turno-dismiss-btn:hover { background: rgba(255,255,255,0.25); color: white; }
-
-    /* Shimmer strip across top */
-    .turno-shimmer {
-      position: absolute; top: 0; left: 0; right: 0; height: 6px;
-      border-radius: 0;                 /* the card clips it, so it spans the full width */
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
-      background-size: 200% 100%;
-      animation: shimmer 2s infinite;
-    }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-    /* Particles background (CSS only, simple) */
-    .turno-particles {
-      position: absolute; inset: 0; border-radius: 3vw; overflow: hidden; pointer-events: none;
-    }
-    .turno-particles::before, .turno-particles::after {
-      content: '';
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.06);
-      animation: floatCircle 8s ease-in-out infinite;
-    }
-    .turno-particles::before { width: 40vw; height: 40vw; left: -10vw; top: -10vw; animation-delay: 0s; }
-    .turno-particles::after  { width: 30vw; height: 30vw; right: -5vw; bottom: -5vw; animation-delay: -4s; }
-    @keyframes floatCircle { 0%,100%{transform:translate(0,0)} 50%{transform:translate(2vw,2vw)} }
-
-    /* ─── CIERRE DE COMEDOR ─── */
-    #cierre-overlay { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; padding:4vw; opacity:0; visibility:hidden; transition:opacity .45s ease, visibility .45s; background:radial-gradient(circle at 50% 0%, #263f67 0%, #101d34 46%, #070d19 100%); color:#fff; }
-    #cierre-overlay.visible { opacity:1; visibility:visible; }
-    .cierre-card { width:min(90vw,1500px); text-align:center; padding:6vw 7vw; border:1px solid rgba(255,255,255,.22); border-radius:3vw; background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.035)); box-shadow:0 3vw 8vw rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.18); position:relative; overflow:hidden; }
-    .cierre-card::before { content:''; position:absolute; inset:auto -10% -70% -10%; height:55%; background:radial-gradient(ellipse,rgba(56,189,248,.24),transparent 65%); pointer-events:none; }
-    .cierre-logo { position:relative; height:clamp(60px,8vw,130px); object-fit:contain; filter:brightness(1.2) drop-shadow(0 10px 16px rgba(0,0,0,.35)); margin-bottom:2vw; }
-    .cierre-kicker { position:relative; color:#7dd3fc; font-size:clamp(15px,1.7vw,28px); font-weight:800; letter-spacing:.25em; text-transform:uppercase; }
-    .cierre-title { position:relative; font-size:clamp(48px,8vw,132px); font-weight:950; letter-spacing:.035em; text-transform:uppercase; line-height:1; margin:1.3vw 0; text-shadow:0 5px 24px rgba(0,0,0,.3); }
-    .cierre-message-es { position:relative; font-size:clamp(23px,3.3vw,56px); font-weight:750; line-height:1.12; margin:0 auto 1vw; max-width:1000px; }
-    .cierre-message-en { position:relative; color:#cbd5e1; font-size:clamp(17px,2.1vw,34px); font-style:italic; line-height:1.2; }
-    .cierre-clock-wrap { position:relative; display:inline-flex; flex-direction:column; gap:.5vw; margin-top:3.5vw; padding:1.4vw 4vw 1.8vw; border-top:1px solid rgba(125,211,252,.42); border-bottom:1px solid rgba(125,211,252,.42); }
-    .cierre-clock-label { color:#bae6fd; font-size:clamp(14px,1.5vw,24px); font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
-    .cierre-clock { color:#fff; font-size:clamp(52px,9vw,150px); font-weight:950; line-height:.95; letter-spacing:.06em; font-variant-numeric: tabular-nums; }
-  </style>
-</head>
-<body>
-
-<!-- ══════════════════════ MAIN SCREEN ══════════════════════ -->
-<div class="screen">
-
-  <div class="header">
-    <img src="./img/Encabezado.png" alt="Food Service DPT" class="header-logo" onerror="this.style.display='none'">
-    <div class="header-divider"></div>
-    <div class="header-title">
-      <div class="es">Menú del día</div>
-      <div class="en">Menu of the day</div>
-    </div>
-    <div class="header-spacer"></div>
-    <div class="header-datetime">
-      <div class="header-date" id="header-date">Cargando...</div>
-      <div class="header-time" id="header-time">--:--</div>
-    </div>
-  </div>
-
-  <div class="body">
-    <div class="main-col" id="main-col">
-      <div class="dish-pagination" id="dish-pagination" style="display:none;"></div>
-      <div class="no-data">
-        <span class="icon">⏳</span>
-        <p>Conectando con Firebase...</p>
-        <small>Espera un momento</small>
-      </div>
-    </div>
-
-    <div class="sidebar">
-      <div class="legend-title">ALÉRGENOS<span class="en">Allergen Legend</span></div>
-      <div class="legend-list" id="legend-list"></div>
-    </div>
-  </div>
-
-  <div class="footer">
-    <span class="footer-brand">FOOD SERVICE DPT &nbsp;·&nbsp; Allergen Management System</span>
-    <span class="footer-updated"><span class="live-dot"></span><span id="footer-updated">En vivo</span></span>
-  </div>
-</div>
-
-<!-- ══════════════════════ CIERRE DE COMEDOR ══════════════════════ -->
-<div id="cierre-overlay" aria-live="polite">
-  <div class="cierre-card">
-    <img src="./img/Encabezado.png" alt="Food Service DPT" class="cierre-logo" onerror="this.style.display='none'">
-    <div class="cierre-kicker">Food Service DPT</div>
-    <div class="cierre-title">Comedor cerrado</div>
-    <div class="cierre-message-es" id="cierre-message-es">El comedor está cerrado</div>
-    <div class="cierre-message-en" id="cierre-message-en">The dining room is closed</div>
-    <div class="cierre-clock-wrap">
-      <div class="cierre-clock" id="cierre-clock">--:--:--</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════ TURNO OVERLAY ══════════════════════ -->
-<div id="turno-overlay">
-  <div class="turno-scrim" onclick="dismissTurno()"></div>
-
-  <div class="turno-card-tv" id="turno-card-tv">
-    <div class="turno-shimmer"></div>
-    <div class="turno-particles"></div>
-    <button class="turno-dismiss-btn" onclick="dismissTurno()">✕ Cerrar</button>
-
-    <span class="turno-bell" id="turno-bell">🔔</span>
-    <div class="turno-title" id="turno-title">CAMBIO DE TURNO · SHIFT CHANGE</div>
-
-    <!-- CAROUSEL INTEGRADO: mensaje de despedida + recordatorios -->
-    <div class="turno-carousel" id="turno-carousel">
-      <div class="carousel-track" id="carousel-track"></div>
-      <div class="carousel-dots" id="carousel-dots"></div>
-    </div>
-
-    <!-- CUENTA ATRÁS SIEMPRE VISIBLE (fuera del carousel) -->
-    <div class="turno-countdown-wrap">
-      <div class="turno-countdown-label" id="turno-countdown-label">Cambio de turno</div>
-      <div class="turno-progress-track">
-        <div class="turno-progress-bar" id="turno-progress-bar" style="width:100%"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-</script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="./firebase-config.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      /* ── Unidades base ── */
-      --vp-min: 1vmin;                    /* 1% of smaller viewport dimension */
-      
-      /* ── ESCALA DE TEXTO (calibración desde gestión) ── */
-      --text-scale: 1;                     /* 1 = 100% normal; ajustado desde gestión */
-      
-      /* ── TEXT SIZES (main: dish names, countdown; secondary: EN, legend) ── */
-      --text-xs:    clamp(14px, 1.6vmin, 20px);   /* timestamps, tiny UI      */
-      --text-sm:    clamp(20px, 2.4vmin, 30px);   /* EN names, legend, labels   */
-      --text-base:  clamp(32px, 4.0vmin, 48px);   /* Dish ES name (primary)    */
-      --text-lg:    clamp(40px, 5.0vmin, 64px);   /* Turno titles, countdown    */
-      --text-xl:    clamp(56px, 7.0vmin, 96px);   /* Hero numbers, clock       */
-
-      /* ── ICON SIZES ── */
-      --icon-xs:    clamp(24px, 2.8vmin, 36px);   /* tiny UI icons            */
-      --icon-sm:    clamp(32px, 4.0vmin, 52px);   /* legend, meta             */
-      --icon-base:  clamp(44px, 5.5vmin, 72px);  /* Dish allergens (standard) */
-      --icon-lg:    clamp(64px, 8.0vmin, 110px);  /* Hero: bell, escudo        */
-
-      /* ── SPACING (all derived from --text-base) ── */
-      --space-1:    calc(var(--text-base) * 0.125);  /* 4–6px                 */
-      --space-2:    calc(var(--text-base) * 0.25);   /* 8–12px                */
-      --space-3:    calc(var(--text-base) * 0.5);    /* 16–24px               */
-      --space-4:    calc(var(--text-base) * 1);      /* 32–48px               */
-      --space-5:    calc(var(--text-base) * 1.5);    /* 48–72px               */
-
-      /* ── HEADER ── */
-      --header-h: 10vh;
-
-      /* ── TURNO OVERLAY ── */
-      --turno-title-size:        var(--text-lg);
-      --turno-msg-es-size:       var(--text-xl);
-      --turno-msg-en-size:       var(--text-base);
-      --turno-countdown-size:    var(--text-lg);
-      --carousel-es-size:        var(--text-base);
-      --carousel-en-size:        var(--text-sm);
-      --carousel-farewell-es-size: var(--text-xl);
-      --carousel-farewell-en-size: var(--text-lg);
-
-      /* ── LEGEND ── */
-      --legend-icon:   var(--icon-sm);
-      --legend-text:   var(--text-sm);
-
-      /* ── FOOTER ── */
-      --footer-h: 6vh;
-    }
-
-    html, body {
-      width: 100%; height: 100%; overflow: hidden;
-      background: #f0f4f8;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    }
-
-    /* ─── LAYOUT MASTER ─── */
-    .screen { display: flex; flex-direction: column; width: 100vw; height: 100vh; }
-
-    /* ─── HEADER ─── */
-    .header {
-      background: linear-gradient(135deg, #0b1f3a 0%, #1a3a6e 60%, #0b1f3a 100%);
-      height: var(--header-h);
-      display: flex; align-items: center; padding: 0 2.5vw; gap: 2vw;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex-shrink: 0;
-    }
-    .header-logo { height: 75%; max-height: 80px; object-fit: contain; filter: brightness(1.15) drop-shadow(0 0 10px rgba(96,165,250,0.3)); }
-    .header-divider { width: 3px; height: 55%; background: rgba(255,255,255,0.2); border-radius: 2px; }
-    .header-title .es { font-size: var(--text-lg); font-weight: 900; letter-spacing: 3px; color: #ffffff; text-transform: uppercase; }
-    .header-title .en { font-size: var(--text-sm); color: #93c5fd; letter-spacing: 4px; text-transform: uppercase; font-style: italic; }
-    .header-spacer { flex: 1; }
-    .header-datetime { text-align: right; color: white; line-height: 1.3; }
-    .header-date { font-size: var(--text-base); font-weight: 700; color: #e0f2fe; text-transform: none; }
-    .header-time { font-size: var(--text-xl); font-weight: 900; color: #7dd3fc; letter-spacing: 2px; }
-
-    /* ─── BODY ─── */
-    .body { display: flex; flex: 1; min-height: 0; padding: 1.2vw; gap: 1.2vw; }
-
-    /* ─── MAIN COL ─── */
-    .main-col { flex: 1; display: flex; flex-direction: column; gap: 0.7vw; min-height: 0; overflow: hidden; }
-
-    /* ─── DISH ROW ─── */
-    .dish-row {
-      background: #ffffff; border-radius: 14px;
-      padding: var(--dish-pad) calc(var(--dish-pad) * 1.2);
-      display: flex; align-items: flex-start;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      flex: 1; min-height: 6vw; flex-shrink: 0;
-      border-left: 5px solid transparent;
-      overflow: hidden;
-      gap: 0.7vw;
-    }
-    .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
-    .dish-row:nth-child(even) { border-left-color: #10b981; }
-    @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
-
-    .dish-info { flex: 1; padding-right: 0.4vw; min-width: 0; display: flex; flex-direction: column; gap: 0.45vw; }
-    .dish-name-es {
-      font-size: var(--dish-name-size); font-weight: 900; color: #0f172a;
-      text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.08;
-      white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
-    }
-    .dish-name-en {
-      font-size: calc(var(--dish-en-size)); color: #64748b; font-style: italic; line-height: 1.1;
-      white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
-    }
-    .dish-gluten-note {
-      display: flex; flex-direction: column; gap: 0.16vw;
-      padding: 0.45vw 0.6vw; border-radius: 0.7vw;
-      border: 1px solid #bbf7d0; background: #f0fdf4;
-      max-width: 100%; align-self: flex-start;
-    }
-    .dish-gluten-es {
-      font-size: clamp(13px, 1.05vw, 20px); font-weight: 800; color: #166534;
-      line-height: 1.16; overflow-wrap: anywhere;
-    }
-    .dish-gluten-en {
-      font-size: clamp(11px, 0.9vw, 16px); font-style: italic; color: #4d7c4d;
-      line-height: 1.15; overflow-wrap: anywhere;
-    }
-
-    /* ─── ALLERGEN ICONS ── */
-    .dish-allergens {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(var(--icon-base), 1fr));
-      gap: calc(var(--icon-base) * 0.12);
-      justify-content: start;
-      align-content: center;
-      width: min(45%, 400px);
-      max-width: 400px;
-      flex-shrink: 0;
-      margin-left: 0.4vw;
-    }
-    .allergen-row { display: contents; }
-    .alg-icon-wrap {
-      width: var(--icon-base); height: var(--icon-base); overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      position: relative;
-    }
-    .alg-icon-wrap img {
-      width: 70%; height: 70%; object-fit: contain;
-    }
-    .alg-icon-wrap.trace-icon { opacity: 0.75; }
-    .trace-label {
-      position: absolute; bottom: -3px; right: -3px;
-      font-size: calc(var(--icon-base) * 0.22); font-weight: 800; color: #92400e;
-      background: #fef3c7; border: 2px solid #fcd34d; border-radius: 50px;
-      padding: 0.1vw 0.5vw; letter-spacing: 0.3px; white-space: nowrap;
-      line-height: 1.1; text-align: left; max-width: 100%;
-    }
-    .no-allergen {
-      background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 12px;
-      padding: calc(var(--text-base) * 0.25) calc(var(--text-base) * 0.4);
-      color: #065f46; font-weight: 800; font-size: var(--text-sm);
-      display: flex; flex-direction: row; align-items: center; gap: calc(var(--text-base) * 0.07);
-      max-width: 100%; width: auto; flex-wrap: nowrap;
-    }
-    .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
-    .no-allergen .shield-ok svg {
-      width: calc(var(--text-base) * 1.2); height: calc(var(--text-base) * 1.2);
-      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
-    }
-    .no-allergen .shield-ok svg path { stroke: var(--success); }
-    .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
-    .no-allergen-txt .es { white-space: normal; overflow-wrap: anywhere; }
-    .no-allergen .en { font-style: italic; font-size: calc(var(--text-sm) * 0.82); opacity: 0.7; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
-    .sin-gluten-note {
-      margin-top: calc(var(--text-base) * 0.25);
-      background: #f0fdf4; border: 1px solid #86efac; border-radius: calc(var(--text-base) * 0.15);
-      padding: calc(var(--text-base) * 0.15) calc(var(--text-base) * 0.3);
-      font-size: var(--text-sm); color: #166534;
-      line-height: 1.16;
-    }
-    .sin-gluten-note .es { font-weight: 800; color: #166534; }
-    .sin-gluten-note .en { font-style: italic; color: #4d7c4d; font-size: calc(var(--text-sm) * 0.82); }
-
-    /* ─── SIDEBAR LEGEND ─── */
-    .sidebar {
-      width: 20vw; background: white; border-radius: 14px;
-      padding: 1vw 0.8vw; display: flex; flex-direction: column;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-    }
-    .legend-title { font-size: 1.2vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5vw; margin-bottom: 0.6vw; }
-    .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
-    .legend-list { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-content: space-between; flex: 1; }
-    .legend-item { display: flex; align-items: center; gap: 0.45vw; flex: 0 0 auto; }
-    .legend-circle { width: 3.4vw; height: 3.4vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-    .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-    .legend-text-wrap { line-height: 1.15; min-width: 0; }
-    .legend-es { font-size: clamp(12px, 1.5vw, 20px); font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; white-space: nowrap; }
-    .legend-en { font-size: clamp(10px, 1.2vw, 16px); color: #64748b; font-style: italic; display: block; white-space: nowrap; }
+    .legend-text-wrap { line-height: 1.1; min-width: 0; }
+    .legend-es { font-size: clamp(12px, 1.35vw, 19px); font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; white-space: nowrap; }
+    .legend-en { font-size: clamp(10px, 1.05vw, 15px); color: #64748b; font-style: italic; display: block; white-space: nowrap; }
 
     /* ─── FOOTER ─── */
     .footer { background: #0b1f3a; padding: 0.5vw 2.5vw; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
@@ -1528,12 +989,24 @@ function calculatePages(platos) {
   if (!mainCol) return { pages: [], totalPages: 0, dwellMs: 8000 };
 
   const availableH = mainCol.clientHeight;
-  const rowH = dishRowHeight();
-  if (rowH === 0) return { pages: [], totalPages: 0, dwellMs: 8000 };
+  let rowH = dishRowHeight();
+  if (rowH === 0) {
+    // Primer render: aún no hay filas que medir. Estimamos con un máximo
+    // razonable de filas y luego recomputeDishPagination() lo recalcula.
+    rowH = availableH > 0 ? availableH / 6 : 120;
+  }
+  if (availableH === 0) {
+    // Entorno sin layout (tests) o contenedor aún no dimensionado:
+    // usamos una altura nominal para no devolver páginas vacías.
+    return {
+      pages: platos.map(p => [p]),
+      totalPages: platos.length,
+      dwellMs: 8000,
+      rotationEnabled: false
+    };
+  }
 
   const maxRows = Math.max(1, Math.floor(availableH / rowH));
-  const totalPages = Math.max(1, Math.ceil(platos.length / maxRows)); // NOTE: typo fix needed
-  // Actually let me recalculate properly:
   const pages = [];
   for (let i = 0; i < platos.length; i += maxRows) {
     pages.push(platos.slice(i, i + maxRows));
@@ -1572,11 +1045,11 @@ function renderDishPage(pageIndex) {
   mainCol.style.opacity = 0;
   mainCol.style.transform = 'translateY(6px)';
 
-  // Limpiar e inyectar filas de esta página
-  mainCol.innerHTML = '';
+  // Limpiar filas previas (preservando el contenedor dish-pagination)
+  mainCol.querySelectorAll('.dish-row, .no-data').forEach(el => el.remove());
   page.forEach(p => {
     const row = createDishRow(p);
-    mainCol.appendChild(row);
+    mainCol.insertAdjacentHTML('beforeend', row);
   });
 
   // Reaparecer
@@ -1586,7 +1059,7 @@ function renderDishPage(pageIndex) {
   });
 
   // Actualizar indicador de página
-  updateDishPaginationDots();
+  setDishPageDotsHTML();
 }
 
 // Navegación manual: siguiente página
@@ -1625,7 +1098,7 @@ function setDishPageDotsHTML() {
     `<button class="page-dot${i === dishPagination.current ? ' active' : ''}"
             aria-label="Ir a página ${i + 1}" onclick="goToDishPage(${i})"></button>`
   ).join('');
-  container.innerHTML = dots.join('');
+  container.innerHTML = dots;
 }
 
 // Iniciar rotación automática
@@ -1682,7 +1155,7 @@ function createDishRow(plato) {
         const a = ALLERGENS.find(x => x.id === id);
         if (!a) return '';
         return `<div class="alg-icon-wrap" title="${a.es}">
-          <img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'>
+          <img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'">
           </div>`;
       }).join('')}</div>`;
     }
@@ -1738,12 +1211,21 @@ function initDishPagination(platos) {
     mainCol.addEventListener('mouseenter', pauseRotation);
     mainCol.addEventListener('mouseleave', resumeRotation);
   }
+
+  // Tras el primer pintado hay filas reales que medir: recalculamos la
+  // paginación para ajustar el número de filas por página con precisión.
+  if (!dishPagination._measured) {
+    requestAnimationFrame(() => {
+      dishPagination._measured = true;
+      recomputeDishPagination();
+    });
+  }
 }
 
 // ── RE-CALCULAR al cambiar ventana ──
 function recomputeDishPagination() {
   if (!latestComedorData) return;
-  initDishPagination(latestComedorData.platos || []);
+  initDishPagination((latestComedorData.platos || []).filter(p => !p.oculto));
 }
 
 // ── Integración con renderMenu ──
@@ -1760,8 +1242,7 @@ function renderMenu(data) {
   document.getElementById('footer-updated').textContent = `Actualizado a las ${now}`;
 
   // Asegurar que la rotación y paginación se reactiven al redimensionar
-  // window.removeEventListener removed - fitDishRows no longer exists
-  window.addEventListener('resize', () => requestAnimationFrame(recomputeDishPagination));
+  // (el listener global de resize llama a recomputeDishPagination)
 }
 
 // ══════════════════════════════════════════════
@@ -1894,8 +1375,11 @@ function initFirebase() {
 
 // startSizeAutoAdjust ya no existe - se usa paginación automática
 function showNoData() {
-  document.getElementById('main-col').innerHTML =
+  const mainCol = document.getElementById('main-col');
+  const dots = mainCol.querySelector('#dish-pagination');
+  mainCol.innerHTML =
     '<div class="no-data"><span class="icon">🍽️</span><p>Menú del día no publicado</p><small>Today\'s menu has not been published yet</small></div>';
+  if (dots) mainCol.appendChild(dots);
   document.getElementById('header-date').textContent = formatDateEs(null);
 }
 function showOfflineState() {

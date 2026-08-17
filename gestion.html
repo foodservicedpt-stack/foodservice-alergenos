@@ -11,6 +11,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
+      --text-scale: 1;
       --primary: #1d4ed8;
       --primary-light: #3b82f6;
       --surface: #ffffff;
@@ -158,12 +159,21 @@
       background: white; border-radius: var(--radius);
       box-shadow: var(--shadow); margin-bottom: 20px;
       border: 2px solid transparent; transition: border-color 0.2s, box-shadow 0.2s; overflow: hidden;
+      user-select: none; -webkit-user-select: none;
     }
     .dish-card:hover { border-color: #bfdbfe; box-shadow: 0 8px 24px rgba(59,130,246,0.12); }
+    .dish-card input, .dish-card textarea { user-select: text; -webkit-user-select: text; -webkit-user-drag: none; }
     .dish-header {
       background: linear-gradient(90deg, #1e3a5f, #1d4ed8);
       padding: 14px 20px; display: flex; align-items: center; gap: 14px;
+      cursor: grab;
     }
+    .dish-header:active { cursor: grabbing; }
+    .drag-handle {
+      flex-shrink: 0; color: rgba(255,255,255,0.5); font-size: 1.1rem;
+      cursor: grab; padding: 4px 6px; letter-spacing: 2px; user-select: none;
+    }
+    .drag-handle:hover { color: rgba(255,255,255,0.9); }
     .dish-num {
       width: 32px; height: 32px; border-radius: 50%;
       background: rgba(255,255,255,0.2); color: white;
@@ -1092,6 +1102,7 @@ function renderDish(plato, idx, total) {
   div.id = `dish-card-${plato.id}`;
   div.innerHTML = `
     <div class="dish-header">
+      <span class="drag-handle" title="Arrastrar para reordenar">⠿</span>
       <div class="dish-num">${idx + 1}</div>
       <div class="dish-names-row">
         <input class="input-es" type="text" placeholder="🇪🇸  Nombre en español"
@@ -1162,15 +1173,20 @@ function moveDish(dishId, direction) {
     [platos[idx], platos[idx + 1]] = [platos[idx + 1], platos[idx]];
   } else return;
   renderCurrentTab();
+  markUnsaved();
+}
 
 // ── DRAG & DROP REORDERING ──
 let dragSrcEl = null;
 
 function handleDragStart(e) {
-  dragSrcEl = this;
+  const card = e.target.closest('.dish-card');
+  if (!card) return;
+  dragSrcEl = card;
   e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', this.dataset.dishId);
-  this.classList.add('dragging');
+  e.dataTransfer.setData('text/plain', card.dataset.dishId);
+  card.classList.add('dragging');
+  if (e.target !== card) card.style.opacity = '0.5';
 }
 
 function handleDragOver(e) {
@@ -1180,7 +1196,8 @@ function handleDragOver(e) {
 }
 
 function handleDragEnter(e) {
-  const card = this;
+  const card = e.target.closest('.dish-card');
+  if (!card || card === dragSrcEl) return;
   const rect = card.getBoundingClientRect();
   const midY = rect.top + rect.height / 2;
   
@@ -1193,15 +1210,17 @@ function handleDragEnter(e) {
 }
 
 function handleDragLeave(e) {
-  this.classList.remove('drag-over', 'drag-over-bottom');
+  const card = e.target.closest('.dish-card');
+  if (card) card.classList.remove('drag-over', 'drag-over-bottom');
 }
 
 function handleDrop(e) {
   if (e.stopPropagation) e.stopPropagation();
   
-  if (dragSrcEl !== this) {
+  const card = e.target.closest('.dish-card');
+  if (dragSrcEl && card && dragSrcEl !== card) {
     const srcId = dragSrcEl.dataset.dishId;
-    const targetId = this.dataset.dishId;
+    const targetId = card.dataset.dishId;
     const platos = state[currentMenuTab].platos;
     
     const srcIdx = platos.findIndex(p => p.id === srcId);
@@ -1209,7 +1228,7 @@ function handleDrop(e) {
     
     if (srcIdx !== -1 && targetIdx !== -1 && srcIdx !== targetIdx) {
       // Determinar si insertar antes o después basado en la posición del cursor
-      const rect = this.getBoundingClientRect();
+      const rect = card.getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
       const insertAfter = e.clientY > midY;
       
@@ -1224,7 +1243,7 @@ function handleDrop(e) {
     }
   }
   
-  this.classList.remove('drag-over', 'drag-over-bottom');
+  if (card) card.classList.remove('drag-over', 'drag-over-bottom');
   return false;
 }
 
@@ -1246,8 +1265,6 @@ function attachDragEvents() {
     card.addEventListener('dragleave', handleDragLeave);
     card.addEventListener('drop', handleDrop);
   });
-}
-  markUnsaved();
 }
 function renumberDishes() { document.querySelectorAll('.dish-num').forEach((el,i) => el.textContent=i+1); }
 function updateField(dishId, field, value) { const d = state[currentMenuTab].platos.find(p=>p.id===dishId); if(d){d[field]=value; markUnsaved();} }
@@ -2037,7 +2054,9 @@ function handleSizeChange(e) {
   }
   
   // Apply to CSS (vista previa instantánea dentro de este mismo panel)
-  document.documentElement.style.setProperty(target, `${value}${unit}`);
+  const cssProp = target === 'textScale' ? '--text-scale' : target;
+  const suffix = target === 'textScale' ? '' : unit;
+  document.documentElement.style.setProperty(cssProp, `${value}${suffix}`);
   
   // Guardar en localStorage al instante
   saveTVSettings();
@@ -2045,8 +2064,9 @@ function handleSizeChange(e) {
 
 let tvSettingsSaveTimer = null;
 function saveTVSettings() {
+  const textScaleSlider = document.querySelector('.size-control[data-target="textScale"]');
   const settings = {
-    textScale: getComputedStyle(document.documentElement).getPropertyValue('--text-scale').trim(),
+    textScale: textScaleSlider ? textScaleSlider.value : '1',
     dishNameSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size').trim(),
     dishEnSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size').trim(),
     turnoTitleSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-title-size').trim(),
@@ -2072,11 +2092,12 @@ function saveTVSettings() {
   const panel = document.getElementById('panel');
   if (panel && !panel.classList.contains('visible')) panel.classList.add('visible');
 })();
-</script>
 
 function applyCalibrationToTV() {
   // Recolectar la configuración actual del control de escala
-  const textScale = parseFloat(document.querySelector('.size-control[data-target="textScale"]').value);
+  const ctrl = document.querySelector('.size-control[data-target="textScale"]');
+  const textScale = ctrl ? parseFloat(ctrl.value) : 1;
+  if (!ctrl) return;
   
   // Construir la configuración a guardar (solo textScale, los demás se derivan en la TV)
   const settings = { textScale: textScale.toString() };
@@ -2091,5 +2112,5 @@ function applyCalibrationToTV() {
   
   // Mostrar feedback al usuario
   showToast('💾 Configuración calibrada y guardada en Firebase', 'success');
-  
-  // Cerrar el panel de calibración si existe
+}
+</script>
