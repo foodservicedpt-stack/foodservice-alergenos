@@ -97,13 +97,13 @@
     /* ─── DISH ROW ─── */
     .dish-row {
       background: #ffffff; border-radius: 14px;
-      padding: 0.8vw 1.2vw;
+      padding: 0.7vw 1.2vw;
       display: flex; align-items: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       flex: 1 1 0; min-height: 0;
       border-left: 5px solid transparent;
       overflow: hidden;
-      gap: 0.8vw;
+      gap: 1.5vw;
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
     .dish-row:nth-child(even) { border-left-color: #10b981; }
@@ -139,10 +139,17 @@
     /* ─── ALLERGEN ICONS ── */
     .dish-allergens {
       display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
-      gap: 0.3vw; flex-shrink: 0; margin-left: 0.5vw;
+      gap: 0.4vw; flex-shrink: 0;
     }
+    .allergen-section { display: flex; flex-direction: column; align-items: flex-end; gap: 0.15vw; }
+    .section-label {
+      font-size: clamp(9px, 0.75vw, 13px); font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.8px; padding: 0.1vw 0.5vw; border-radius: 4px; line-height: 1.1;
+    }
+    .contain-label { color: #1e40af; background: #dbeafe; }
+    .trace-label { color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; }
     .allergen-grid {
-      display: flex; flex-wrap: wrap; gap: 0.4vw; justify-content: flex-end;
+      display: flex; flex-wrap: wrap; gap: 0.35vw; justify-content: flex-end;
     }
     .alg-icon-wrap {
       width: var(--icon-base); height: var(--icon-base); overflow: hidden;
@@ -150,14 +157,7 @@
       flex-shrink: 0; position: relative;
     }
     .alg-icon-wrap img { width: 80%; height: 80%; object-fit: contain; }
-    .alg-icon-wrap.trace-icon { opacity: 0.75; }
-    .trace-row { display: flex; justify-content: flex-end; }
-    .trace-label {
-      font-size: clamp(11px, 0.9vw, 16px); font-weight: 800; color: #92400e;
-      background: #fef3c7; border: 2px solid #fcd34d; border-radius: 50px;
-      padding: 0.15vw 0.6vw; letter-spacing: 0.3px; white-space: nowrap;
-      line-height: 1.1; text-align: left;
-    }
+    .alg-icon-wrap.trace-icon { opacity: 0.6; border: 2px solid #fcd34d; border-radius: 8px; }
     .no-allergen {
       background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 12px;
       padding: 0.6vw 1vw; color: #065f46; font-weight: 800;
@@ -174,28 +174,29 @@
     .no-allergen-txt .es { font-size: clamp(14px, 1.4vw, 22px); white-space: nowrap; }
     .no-allergen-txt .en { font-style: italic; font-size: clamp(11px, 1vw, 16px); opacity: 0.7; font-weight: 600; white-space: nowrap; }
     .sin-gluten-note {
-      background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;
-      padding: 0.3vw 0.6vw; font-size: clamp(12px, 1vw, 18px); color: #166534;
-      line-height: 1.16; text-align: right;
+      background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px;
+      padding: 0.15vw 0.5vw; font-size: clamp(10px, 0.8vw, 14px); color: #166534;
+      line-height: 1.1; align-self: flex-start; margin-top: 0.15vw; white-space: nowrap;
     }
-    .sin-gluten-note .es { font-weight: 800; color: #166534; }
-    .sin-gluten-note .en { font-style: italic; color: #4d7c4d; font-size: 0.85em; }
+    .sin-gluten-note .sin-gluten-es { font-weight: 800; }
+    .sin-gluten-note .sin-gluten-en { font-style: italic; color: #4d7c4d; }
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
       width: 20vw; background: white; border-radius: 14px;
-      padding: 1vw 0.8vw; display: flex; flex-direction: column;
+      padding: 0.8vw 0.7vw; display: flex; flex-direction: column;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      flex-shrink: 0; max-height: 100%; overflow: hidden;
     }
-    .legend-title { font-size: 1.2vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5vw; margin-bottom: 0.6vw; }
+    .legend-title { font-size: 1.1vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4vw; margin-bottom: 0.4vw; flex-shrink: 0; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
-    .legend-list { display: flex; flex-direction: column; justify-content: space-between; align-content: stretch; flex: 1; }
-    .legend-item { display: flex; align-items: center; gap: 0.45vw; flex: 0 0 auto; }
-    .legend-circle { width: 2.7vw; height: 2.7vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .legend-list { display: flex; flex-direction: column; justify-content: space-between; align-content: stretch; flex: 1; min-height: 0; }
+    .legend-item { display: flex; align-items: center; gap: 0.4vw; flex: 0 0 auto; }
+    .legend-circle { width: 2.3vw; height: 2.3vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
     .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-    .legend-text-wrap { line-height: 1.1; min-width: 0; }
-    .legend-es { font-size: clamp(12px, 1.35vw, 19px); font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; white-space: nowrap; }
-    .legend-en { font-size: clamp(10px, 1.05vw, 15px); color: #64748b; font-style: italic; display: block; white-space: nowrap; }
+    .legend-text-wrap { line-height: 1.1; min-width: 0; overflow: hidden; }
+    .legend-es { font-size: clamp(10px, 1.15vw, 16px); font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .legend-en { font-size: clamp(8px, 0.9vw, 13px); color: #64748b; font-style: italic; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ─── FOOTER ─── */
     .footer { background: #0b1f3a; padding: 0.5vw 2.5vw; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
@@ -1129,6 +1130,18 @@ function createDishRow(plato) {
   const contiene = plato.contiene || [];
   const trazas = plato.trazas || [];
 
+  const containIcons = [];
+  contiene.forEach(id => {
+    const a = ALLERGENS.find(x => x.id === id);
+    if (a) containIcons.push(`<div class="alg-icon-wrap" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`);
+  });
+
+  const traceIcons = [];
+  trazas.forEach(id => {
+    const a = ALLERGENS.find(x => x.id === id);
+    if (a) traceIcons.push(`<div class="alg-icon-wrap trace-icon" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`);
+  });
+
   let allergensHtml = '';
   if (contiene.length === 0 && trazas.length === 0) {
     allergensHtml = `<div class="no-allergen">
@@ -1137,29 +1150,24 @@ function createDishRow(plato) {
       <span class="no-allergen-txt"><span class="es">Libre de alérgenos</span><span class="en">Allergen-free</span></span>
     </div>`;
   } else {
-    const iconItems = [];
-    contiene.forEach(id => {
-      const a = ALLERGENS.find(x => x.id === id);
-      if (a) iconItems.push(`<div class="alg-icon-wrap" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`);
-    });
-    trazas.forEach(id => {
-      const a = ALLERGENS.find(x => x.id === id);
-      if (a) iconItems.push(`<div class="alg-icon-wrap trace-icon" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`);
-    });
-    allergensHtml = `<div class="allergen-grid">${iconItems.join('')}</div>`;
-    if (trazas.length > 0) {
-      allergensHtml += `<div class="trace-row"><span class="trace-label">⚠ TRAZAS</span></div>`;
+    if (containIcons.length > 0) {
+      allergensHtml += `<div class="allergen-section contain"><span class="section-label contain-label">CONTIENE</span><div class="allergen-grid">${containIcons.join('')}</div></div>`;
     }
-    if (plato.sinGluten) {
-      allergensHtml += `<div class="sin-gluten-note"><div class="sin-gluten-es">🌾 Opción sin gluten disponible</div><div class="sin-gluten-en">Gluten-free option available</div></div>`;
+    if (traceIcons.length > 0) {
+      allergensHtml += `<div class="allergen-section traces"><span class="section-label trace-label">⚠ TRAZAS</span><div class="allergen-grid traces-grid">${traceIcons.join('')}</div></div>`;
     }
   }
+
+  const sinGlutenHtml = plato.sinGluten
+    ? `<div class="sin-gluten-note"><span class="sin-gluten-es">🌾 Sin gluten</span> <span class="sin-gluten-en">Gluten-free</span></div>`
+    : '';
 
   return `
     <article class="dish-row" role="listitem" aria-label="${plato.nombreEs || 'Plato sin nombre'}">
       <div class="dish-content">
         <h3 class="dish-name-es">${plato.nombreEs || 'PLATO SIN NOMBRE'}</h3>
         ${plato.nombreEn ? `<p class="dish-name-en">${plato.nombreEn}</p>` : ''}
+        ${sinGlutenHtml}
       </div>
       <div class="dish-allergens">${allergensHtml}</div>
     </article>`;
