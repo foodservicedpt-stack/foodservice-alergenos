@@ -92,18 +92,18 @@
     .body { display: flex; flex: 1; min-height: 0; padding: 1.2vw; gap: 1.2vw; }
 
     /* ─── MAIN COL ─── */
-    .main-col { flex: 1; display: flex; flex-direction: column; gap: 0.7vw; min-height: 0; overflow: hidden; }
+    .main-col { flex: 1; display: flex; flex-direction: column; gap: 0.5vw; min-height: 0; overflow: hidden; }
 
     /* ─── DISH ROW ─── */
     .dish-row {
       background: #ffffff; border-radius: 14px;
-      padding: 0.7vw 1.2vw;
+      padding: 0.6vw 1vw;
       display: flex; align-items: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       flex: 1 1 0; min-height: 0;
       border-left: 5px solid transparent;
       overflow: hidden;
-      gap: 1.5vw;
+      gap: 1vw;
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
     .dish-row:nth-child(even) { border-left-color: #10b981; }
@@ -139,17 +139,18 @@
     /* ─── ALLERGEN ICONS ── */
     .dish-allergens {
       display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
-      gap: 0.4vw; flex-shrink: 0;
+      gap: 0.15vw; flex-shrink: 0;
     }
-    .allergen-section { display: flex; flex-direction: column; align-items: flex-end; gap: 0.15vw; }
+    .allergen-section { display: flex; flex-direction: row; align-items: center; gap: 0.25vw; }
     .section-label {
-      font-size: clamp(9px, 0.75vw, 13px); font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.8px; padding: 0.1vw 0.5vw; border-radius: 4px; line-height: 1.1;
+      font-size: clamp(8px, 0.65vw, 11px); font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.5px; padding: 0.08vw 0.4vw; border-radius: 3px; line-height: 1.1;
+      white-space: nowrap;
     }
     .contain-label { color: #1e40af; background: #dbeafe; }
     .trace-label { color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; }
     .allergen-grid {
-      display: flex; flex-wrap: wrap; gap: 0.6vw; justify-content: flex-end;
+      display: flex; flex-wrap: wrap; gap: 0.35vw; justify-content: flex-end;
     }
     .alg-icon-wrap {
       width: var(--icon-base); height: var(--icon-base); overflow: hidden;
@@ -157,11 +158,11 @@
       flex-shrink: 0; position: relative;
     }
     .alg-icon-wrap img { width: 80%; height: 80%; object-fit: contain; }
-    .alg-icon-wrap.trace-icon { opacity: 0.6; }
+    .alg-icon-wrap.trace-icon { opacity: 0.75; }
     .no-allergen {
-      background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 12px;
-      padding: 0.6vw 1vw; color: #065f46; font-weight: 800;
-      display: flex; flex-direction: row; align-items: center; gap: 0.5vw;
+      background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 10px;
+      padding: 0.4vw 0.8vw; color: #065f46; font-weight: 800;
+      display: flex; flex-direction: row; align-items: center; gap: 0.4vw;
       white-space: nowrap;
     }
     .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
@@ -174,13 +175,13 @@
     .no-allergen-txt .es { font-size: clamp(14px, 1.4vw, 22px); white-space: nowrap; }
     .no-allergen-txt .en { font-style: italic; font-size: clamp(11px, 1vw, 16px); opacity: 0.7; font-weight: 600; white-space: nowrap; }
     .sin-gluten-note {
-      background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px;
-      padding: 0.2vw 0.5vw; font-size: clamp(9px, 0.75vw, 13px); color: #166534;
-      line-height: 1.15; align-self: flex-start; margin-top: 0.2vw;
-      display: flex; align-items: center; gap: 0.35vw;
+      background: #f0fdf4; border: 1px solid #86efac; border-radius: 5px;
+      padding: 0.15vw 0.4vw; font-size: clamp(8px, 0.7vw, 12px); color: #166534;
+      line-height: 1.1; align-self: flex-start; margin-top: 0.15vw;
+      display: flex; align-items: center; gap: 0.3vw;
     }
     .sin-gluten-icon {
-      position: relative; width: clamp(16px, 1.5vw, 24px); height: clamp(16px, 1.5vw, 24px);
+      position: relative; width: clamp(14px, 1.3vw, 20px); height: clamp(14px, 1.3vw, 20px);
       flex-shrink: 0; display: inline-flex;
     }
     .sin-gluten-icon img { width: 100%; height: 100%; object-fit: contain; }
