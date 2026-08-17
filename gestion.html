@@ -212,15 +212,10 @@
     .gluten-toggle input:checked + .gluten-toggle-box::after {
       content: '✓'; color: white; font-size: 0.8rem; font-weight: 900; line-height: 1;
     }
-    .btn-move {
-      padding: 6px 10px; border-radius: 8px;
-      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
-      color: #fff; cursor: pointer; font-size: 0.9rem; font-weight: 700;
-      transition: all 0.15s; flex-shrink: 0; display:flex; align-items:center; justify-content:center;
-    }
-    .btn-move:hover:not(.disabled) { background: rgba(255,255,255,0.28); }
-    .btn-move.disabled { opacity: 0.3; cursor: not-allowed; }
-    .dish-move { display:flex; gap:4px; }
+.dish-card.dragging { opacity: 0.5; cursor: grabbing; }
+.dish-card.drag-over { border-top: 3px solid #3b82f6; }
+.dish-card.drag-over-bottom { border-bottom: 3px solid #3b82f6; }
+.dish-move { display:flex; gap:4px; }
     .btn-hide-dish {
       padding: 8px 14px; border-radius: 8px;
       background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
@@ -658,46 +653,25 @@
     <!-- AJUSTES TAB CONTENT -->
     <div id="tab-content-ajustes" class="turno-content">
       <div id="ajustes-config">
-        <h3>Ajustes de Tamaños</h3>
+        <h3>Ajustes de Tamaños y Calibración</h3>
+        
+        <p class="muted">Estos controles ajustan la escala de texto que se aplica en la pantalla del comedor. <br>100% = tamaño normal. Ajusta según la distancia de visión.</p>
         
         <div class="ajuste-item">
-          <label>Platos (Español) [vw]</label>
+          <label>Escala de texto general</label>
           <div class="ajuste-row">
-            <input type="range" class="size-control" data-target="--dish-name-size" data-unit="vw" value="13">
-            <input type="number" class="size-display" data-display="--dish-name-size" value="13">
+            <input type="range" class="size-control" data-target="textScale" data-unit="scale" value="1">
+            <input type="number" class="size-display" data-display="textScale" value="1" min="0.5" max="2" step="0.1">
+            <span class="label-pct" id="textScalePct">100%</span>
           </div>
         </div>
         
-        <div class="ajuste-item">
-          <label>Platos (Inglés) [vw]</label>
-          <div class="ajuste-row">
-            <input type="range" class="size-control" data-target="--dish-en-size" data-unit="vw" value="5">
-            <input type="number" class="size-display" data-display="--dish-en-size" value="5">
-          </div>
-        </div>
+        <p class="muted small">Arrastra el control o escribe un número: < 100% = texto más pequeño, > 100% = texto más grande.</p>
         
         <div class="ajuste-item">
-          <label>Turnos (tamaño)</label>
-          <div class="ajuste-row">
-            <input type="range" class="size-control" data-target="--turno-title-size" data-unit="vw" value="2.4">
-            <input type="number" class="size-display" data-display="--turno-title-size" value="2.4">
-          </div>
-        </div>
-        
-        <div class="ajuste-item">
-          <label>Recordatorios (Español) [vw]</label>
-          <div class="ajuste-row">
-            <input type="range" class="size-control" data-target="--carousel-es-size" data-unit="vw" value="3">
-            <input type="number" class="size-display" data-display="--carousel-es-size" value="3">
-          </div>
-        </div>
-        
-        <div class="ajuste-item">
-          <label>Recordatorios (Inglés) [vw]</label>
-          <div class="ajuste-row">
-            <input type="range" class="size-control" data-target="--carousel-en-size" data-unit="vw" value="2">
-            <input type="number" class="size-display" data-display="--carousel-en-size" value="2">
-          </div>
+          <label>Confirmar cambio en la pantalla TV</label>
+          <button class="btn-publish" onclick="applyCalibrationToTV()">Aplicar a TV ahora</button>
+          <small>Guarda la configuración en Firebase; la TV la recibirá en tiempo real.</small>
         </div>
       </div>
     </div>
@@ -1107,11 +1081,14 @@ function renderCurrentTab() {
   btn.onclick = addDish;
   btn.innerHTML = '<span class="plus">＋</span> Añadir plato';
   container.appendChild(btn);
+  attachDragEvents();
 }
 function renderDish(plato, idx, total) {
   const container = document.getElementById('dish-list');
   const div = document.createElement('div');
   div.className = `dish-card${plato.oculto ? ' dish-hidden' : ''}`;
+  div.dataset.dishId = plato.id;
+  div.draggable = true;
   div.id = `dish-card-${plato.id}`;
   div.innerHTML = `
     <div class="dish-header">
@@ -1131,10 +1108,6 @@ function renderDish(plato, idx, total) {
           <span class="gluten-toggle-box"></span>
           <span>🌾 Sin gluten</span>
         </label>
-      </div>
-      <div class="dish-move" style="display:flex; gap:4px;">
-        <button class="btn-move${idx === 0 ? ' disabled' : ''}" onclick="moveDish('${plato.id}', 'up')" title="Mover arriba" ${idx === 0 ? 'disabled' : ''}>⬆️</button>
-        <button class="btn-move${idx === total - 1 ? ' disabled' : ''}" onclick="moveDish('${plato.id}', 'down')" title="Mover abajo" ${idx === total - 1 ? 'disabled' : ''}>⬇️</button>
       </div>
       <button class="btn-hide-dish${plato.oculto ? ' is-hidden' : ''}" id="hidebtn-${plato.id}"
               onclick="toggleDishHidden('${plato.id}')"
@@ -1189,6 +1162,91 @@ function moveDish(dishId, direction) {
     [platos[idx], platos[idx + 1]] = [platos[idx + 1], platos[idx]];
   } else return;
   renderCurrentTab();
+
+// ── DRAG & DROP REORDERING ──
+let dragSrcEl = null;
+
+function handleDragStart(e) {
+  dragSrcEl = this;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', this.dataset.dishId);
+  this.classList.add('dragging');
+}
+
+function handleDragOver(e) {
+  if (e.preventDefault) e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  return false;
+}
+
+function handleDragEnter(e) {
+  const card = this;
+  const rect = card.getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  
+  card.classList.remove('drag-over-bottom');
+  if (e.clientY > midY) {
+    card.classList.add('drag-over-bottom');
+  } else {
+    card.classList.add('drag-over');
+  }
+}
+
+function handleDragLeave(e) {
+  this.classList.remove('drag-over', 'drag-over-bottom');
+}
+
+function handleDrop(e) {
+  if (e.stopPropagation) e.stopPropagation();
+  
+  if (dragSrcEl !== this) {
+    const srcId = dragSrcEl.dataset.dishId;
+    const targetId = this.dataset.dishId;
+    const platos = state[currentMenuTab].platos;
+    
+    const srcIdx = platos.findIndex(p => p.id === srcId);
+    const targetIdx = platos.findIndex(p => p.id === targetId);
+    
+    if (srcIdx !== -1 && targetIdx !== -1 && srcIdx !== targetIdx) {
+      // Determinar si insertar antes o después basado en la posición del cursor
+      const rect = this.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const insertAfter = e.clientY > midY;
+      
+      const [removed] = platos.splice(srcIdx, 1);
+      let newTargetIdx = platos.findIndex(p => p.id === targetId);
+      if (insertAfter) newTargetIdx++;
+      platos.splice(newTargetIdx, 0, removed);
+      
+      renderCurrentTab();
+      markUnsaved();
+      showToast('📦 Plato reordenado', 'info');
+    }
+  }
+  
+  this.classList.remove('drag-over', 'drag-over-bottom');
+  return false;
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging', 'drag-over', 'drag-over-bottom');
+  document.querySelectorAll('.dish-card').forEach(card => {
+    card.classList.remove('drag-over', 'drag-over-bottom');
+  });
+}
+
+// Función para añadir eventos de drag & drop a las tarjetas renderizadas
+function attachDragEvents() {
+  document.querySelectorAll('.dish-card').forEach(card => {
+    card.setAttribute('draggable', 'true');
+    card.addEventListener('dragstart', handleDragStart);
+    card.addEventListener('dragend', handleDragEnd);
+    card.addEventListener('dragover', handleDragOver);
+    card.addEventListener('dragenter', handleDragEnter);
+    card.addEventListener('dragleave', handleDragLeave);
+    card.addEventListener('drop', handleDrop);
+  });
+}
   markUnsaved();
 }
 function renumberDishes() { document.querySelectorAll('.dish-num').forEach((el,i) => el.textContent=i+1); }
@@ -1923,17 +1981,29 @@ if (document.readyState === 'loading') {
 }
 
 // Initialize size control sliders
+  });
+}
+
+// Initialize size control sliders
 function initSizeControls() {
   // Load current values from document.documentElement
   document.querySelectorAll('.size-control').forEach(ctrl => {
     const target = ctrl.dataset.target;
     const unit = ctrl.dataset.unit || '';
-    const currentValue = getComputedStyle(document.documentElement).getPropertyValue(target).trim();
-    const numericValue = parseFloat(currentValue) || 0;
-    ctrl.value = numericValue;
+    // Si es textScale, establecer valor inicial y actualizar display percentage
+    if (target === 'textScale') {
+      const currentStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-scale').trim();
+      const numericValue = parseFloat(currentStyle) || 1;
+      ctrl.value = numericValue;
+      updateScaleDisplay(ctrl);
+    } else {
+      const currentValue = getComputedStyle(document.documentElement).getPropertyValue(target).trim();
+      const numericValue = parseFloat(currentValue) || 0;
+      ctrl.value = numericValue;
+    }
     // Update display
     const displayCtrl = document.querySelector(`.size-display[data-display="${target}"]`);
-    if (displayCtrl) displayCtrl.value = numericValue;
+    if (displayCtrl) displayCtrl.value = ctrl.value;
   });
 
   // Handle slider changes
@@ -1947,39 +2017,39 @@ function initSizeControls() {
   });
 }
 
+function updateScaleDisplay(ctrl) {
+  const pct = Math.round(parseFloat(ctrl.value) * 100);
+  const pctDisplay = document.getElementById('textScalePct');
+  if (pctDisplay) pctDisplay.textContent = `${pct}%`;
+}
+
 function handleSizeChange(e) {
   const ctrl = e.target;
   const target = ctrl.dataset.target || ctrl.closest('.ajuste-row').querySelector('.size-control').dataset.target;
-  let value = parseFloat(ctrl.value) || 0;
+  let value = parseFloat(ctrl.value) || 1;
   const unit = ctrl.dataset.unit || '';
   
-  // Ensure minimum values
-  if (ctrl.classList.contains('size-control')) {
-    value = Math.max(0.1, Math.min(30, value));
+  // Ensure valid range for scale
+  if (target === 'textScale') {
+    value = Math.max(0.5, Math.min(2.0, value));
     ctrl.value = value;
-    // Sync display
-    const displayCtrl = document.querySelector(`.size-display[data-display="${target}"]`);
-    if (displayCtrl) displayCtrl.value = value;
+    updateScaleDisplay(ctrl);
   } else {
     value = Math.max(0.1, Math.min(30, value));
-    // Sync slider
-    const sliderCtrl = document.querySelector(`.size-control[data-target="${target}"]`);
-    if (sliderCtrl) sliderCtrl.value = value;
+    ctrl.value = value;
   }
   
   // Apply to CSS (vista previa instantánea dentro de este mismo panel)
   document.documentElement.style.setProperty(target, `${value}${unit}`);
   
-  // Guarda en localStorage al instante (por si gestión y TV comparten
-  // navegador) y en Firebase con un pequeño debounce, para que la TV
-  // reciba el cambio en tiempo real aunque esté en otro dispositivo —
-  // que es el caso normal de uso (PC de gestión + televisor aparte).
+  // Guardar en localStorage al instante
   saveTVSettings();
 }
 
 let tvSettingsSaveTimer = null;
 function saveTVSettings() {
   const settings = {
+    textScale: getComputedStyle(document.documentElement).getPropertyValue('--text-scale').trim(),
     dishNameSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size').trim(),
     dishEnSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size').trim(),
     turnoTitleSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-title-size').trim(),
@@ -1997,7 +2067,8 @@ function saveTVSettings() {
   clearTimeout(tvSettingsSaveTimer);
   tvSettingsSaveTimer = setTimeout(() => {
     if (!fbReady) return;
-    firebase.database().ref('tvSettings').set(settings).catch(e => console.warn('tvSettings:', e));
+    firebase.database().ref('tvSettings').set(settings).catch(e => console.warn(e));
+    showToast('💾 Configuración guardada en Firebase', 'info');
   }, 400);
 }
 (function ensurePanelVisible() {
@@ -2005,5 +2076,23 @@ function saveTVSettings() {
   if (panel && !panel.classList.contains('visible')) panel.classList.add('visible');
 })();
 </script>
-</body>
-</html>
+
+function applyCalibrationToTV() {
+  // Recolectar la configuración actual del control de escala
+  const textScale = parseFloat(document.querySelector('.size-control[data-target="textScale"]').value);
+  
+  // Construir la configuración a guardar (solo textScale, los demás se derivan en la TV)
+  const settings = { textScale: textScale.toString() };
+  
+  // Guardar en localStorage
+  localStorage.setItem('tvSettings', JSON.stringify(settings));
+  
+  // Guardar en Firebase (si está disponible)
+  if (fbReady) {
+    firebase.database().ref('tvSettings').set(settings).catch(e => console.warn('tvSettings:', e));
+  }
+  
+  // Mostrar feedback al usuario
+  showToast('💾 Configuración calibrada y guardada en Firebase', 'success');
+  
+  // Cerrar el panel de calibración si existe
