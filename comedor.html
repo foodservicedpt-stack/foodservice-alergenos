@@ -109,7 +109,7 @@
     .dish-row:nth-child(even) { border-left-color: #10b981; }
     @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
 
-    .dish-info { flex: 1; padding-right: 0.4vw; min-width: 0; display: flex; flex-direction: column; gap: 0.45vw; }
+    .dish-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.3vw; }
     .dish-name-es {
       font-size: var(--dish-name-size); font-weight: 900; color: #0f172a;
       text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.08;
@@ -139,7 +139,7 @@
     /* ─── ALLERGEN ICONS ── */
     .dish-allergens {
       display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
-      gap: 0.15vw; flex-shrink: 0;
+      gap: 0.15vw; flex-shrink: 0; margin-left: auto;
     }
     .allergen-section { display: flex; flex-direction: row; align-items: center; gap: 0.25vw; }
     .section-label {
@@ -515,9 +515,8 @@
   <div class="cierre-card">
     <img src="./img/Encabezado.png" alt="Food Service DPT" class="cierre-logo" onerror="this.style.display='none'">
     <div class="cierre-kicker">Food Service DPT</div>
-    <div class="cierre-title">Comedor cerrado</div>
-    <div class="cierre-message-es" id="cierre-message-es">El comedor está cerrado</div>
-    <div class="cierre-message-en" id="cierre-message-en">The dining room is closed</div>
+    <div class="cierre-title">COMEDOR CERRADO</div>
+    <div class="cierre-message-en">CAFETERIA CLOSED</div>
     <div class="cierre-clock-wrap">
       <div class="cierre-clock" id="cierre-clock">--:--:--</div>
     </div>
@@ -629,8 +628,6 @@ function refreshCierre() {
   const active = cierreActivo();
   overlay.classList.toggle('visible', active);
   if (!active) return;
-  document.getElementById('cierre-message-es').textContent = cierreConfig?.mensajeEs || 'El comedor está cerrado';
-  document.getElementById('cierre-message-en').textContent = cierreConfig?.mensajeEn || 'The dining room is closed';
   updateCierreClock();
   // El cierre tiene prioridad sobre los avisos temporales de turno.
   dismissTurno();
