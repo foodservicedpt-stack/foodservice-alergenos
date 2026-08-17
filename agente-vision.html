@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>👁️ Agente de Visión - Accesibilidad en Tiempo Real</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="./firebase-config.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #f1f5f9;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    h1 .eye-icon { font-size: 36px; }
+    .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 30px; }
+    
+    /* ─── ESTADO DE CONEXIÓN ─── */
+    .connection-status {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+    .status-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ef4444;
+      animation: pulse 2s infinite;
+    }
+    .status-dot.connected { background: #10b981; }
+    .status-dot.scanning { background: #f59e0b; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    .status-text { font-size: 16px; font-weight: 600; }
+    .status-text small { display: block; color: #94a3b8; font-weight: 400; font-size: 13px; margin-top: 4px; }
+    
+    .btn-capture {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-capture:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
+    .btn-capture:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
+    /* ─── PANEL PRINCIPAL ─── */
+    .main-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    /* ─── VISTA PREVIA ─── */
+    .preview-card {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      overflow: hidden;
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .preview-title { font-size: 16px; font-weight: 700; color: #e2e8f0; }
+    .preview-timestamp { font-size: 12px; color: #64748b; }
+    
+    .screenshot-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #screenshot-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .no-screenshot {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      gap: 12px;
+    }
+    .no-screenshot .icon { font-size: 48px; opacity: 0.3; }
+    
+    .scan-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(180deg, 
+        rgba(59,130,246,0) 0%, 
+        rgba(59,130,246,0.1) 50%, 
+        rgba(59,130,246,0) 100%);
+      pointer-events: none;
+      opacity: 0;
+    }
+    .scan-overlay.active {
+      opacity: 1;
+      animation: scanMove 2s linear infinite;
+    }
+    @keyframes scanMove { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+    
+    /* ─── MÉTRICAS ─── */
+    .metrics-card {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .metrics-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .metrics-title { font-size: 16px; font-weight: 700; color: #e2e8f0; }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .metric-item {
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .metric-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .metric-value { font-size: 24px; font-weight: 700; color: #f1f5f9; }
+    .metric-value.good { color: #10b981; }
+    .metric-value.warning { color: #f59e0b; }
+    .metric-value.bad { color: #ef4444; }
+    .metric-unit { font-size: 12px; color: #64748b; font-weight: 400; }
+    
+    /* ─── CONTROLES DE AJUSTE ─── */
+    .controls-section {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    
+    .control-item {
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    .control-value { 
+      background: rgba(59,130,246,0.2); 
+      padding: 4px 10px; 
+      border-radius: 4px; 
+      font-size: 13px; 
+      font-weight: 700;
+      color: #60a5fa;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #334155;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #60a5fa; }
+    
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .toggle-label { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+    .toggle-sublabel { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    
+    .toggle-switch {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      background: #334155;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .toggle-switch.active { background: #10b981; }
+    .toggle-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .toggle-switch.active .toggle-knob { transform: translateX(24px); }
+    
+    /* ─── RECOMENDACIONES IA ─── */
+    .ai-recommendations {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .rec-list { display: flex; flex-direction: column; gap: 10px; }
+    .rec-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      border-left: 4px solid #64748b;
+    }
+    .rec-item.info { border-left-color: #3b82f6; }
+    .rec-item.success { border-left-color: #10b981; }
+    .rec-item.warning { border-left-color: #f59e0b; }
+    .rec-item.error { border-left-color: #ef4444; }
+    
+    .rec-icon { font-size: 20px; flex-shrink: 0; }
+    .rec-content { flex: 1; }
+    .rec-title { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+    .rec-desc { font-size: 13px; color: #94a3b8; line-height: 1.4; }
+    
+    .no-recs {
+      text-align: center;
+      padding: 40px 20px;
+      color: #64748b;
+      font-size: 14px;
+    }
+    
+    /* ─── LOG DE ACTIVIDAD ─── */
+    .activity-log {
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+    }
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      gap: 10px;
+    }
+    .log-time { color: #64748b; flex-shrink: 0; }
+    .log-msg { color: #e2e8f0; }
+    .log-msg.action { color: #60a5fa; }
+    .log-msg.success { color: #10b981; }
+    .log-msg.warning { color: #f59e0b; }
+    
+    /* Responsive */
+    @media (max-width: 900px) {
+      .main-panel { grid-template-columns: 1fr; }
+      .metrics-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="eye-icon">👁️</span> Agente de Visión para Accesibilidad</h1>
+    <p class="subtitle">Captura la pantalla del comedor, analiza visibilidad y aplica ajustes en tiempo real</p>
+    
+    <!-- ESTADO DE CONEXIÓN -->
+    <div class="connection-status">
+      <div class="status-indicator">
+        <div class="status-dot" id="status-dot"></div>
+        <div class="status-text">
+          <span id="status-text">Esperando conexión...</span>
+          <small id="status-subtext">Abre comedor.html en otra pestaña</small>
+        </div>
+      </div>
+      <button class="btn-capture" id="btn-capture" disabled>
+        <span>📸</span> Capturar Pantalla
+      </button>
+    </div>
+    
+    <!-- PANEL PRINCIPAL -->
+    <div class="main-panel">
+      <!-- VISTA PREVIA -->
+      <div class="preview-card">
+        <div class="preview-header">
+          <span class="preview-title">🖥️ Vista en Vivo</span>
+          <span class="preview-timestamp" id="preview-timestamp">--:--:--</span>
+        </div>
+        <div class="screenshot-container">
+          <img id="screenshot-img" alt="Captura de pantalla">
+          <div class="no-screenshot" id="no-screenshot">
+            <span class="icon">🖥️</span>
+            <span>Sin captura disponible</span>
+          </div>
+          <div class="scan-overlay" id="scan-overlay"></div>
+        </div>
+      </div>
+      
+      <!-- MÉTRICAS -->
+      <div class="metrics-card">
+        <div class="metrics-header">
+          <span class="metrics-title">📊 Métricas de Accesibilidad</span>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-label">Contraste WCAG</span>
+            <span class="metric-value" id="metric-contrast">--<span class="metric-unit">:1</span></span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Tamaño Texto</span>
+            <span class="metric-value" id="metric-text-size">--<span class="metric-unit">px</span></span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Iconos</span>
+            <span class="metric-value" id="metric-icon-size">--<span class="metric-unit">px</span></span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Overflow</span>
+            <span class="metric-value" id="metric-overflow">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CONTROLES DE AJUSTE -->
+    <div class="controls-section">
+      <div class="section-title">⚙️ Controles Manuales</div>
+      <div class="control-grid">
+        <div class="control-item">
+          <div class="control-label">
+            Tamaño Texto Principal
+            <span class="control-value" id="val-text-size">6.0vw</span>
+          </div>
+          <input type="range" id="ctrl-text-size" min="4" max="10" step="0.1" value="6">
+        </div>
+        
+        <div class="control-item">
+          <div class="control-label">
+            Tamaño Iconos Alérgenos
+            <span class="control-value" id="val-icon-size">5.5vw</span>
+          </div>
+          <input type="range" id="ctrl-icon-size" min="3" max="8" step="0.1" value="5.5">
+        </div>
+        
+        <div class="control-item">
+          <div class="control-label">
+            Padding Plato
+            <span class="control-value" id="val-dish-pad">1.4vw</span>
+          </div>
+          <input type="range" id="ctrl-dish-pad" min="0.8" max="2.5" step="0.1" value="1.4">
+        </div>
+        
+        <div class="control-item">
+          <div class="control-label">
+            Leyenda Iconos
+            <span class="control-value" id="val-legend-icon">3.0vw</span>
+          </div>
+          <input type="range" id="ctrl-legend-icon" min="2" max="5" step="0.1" value="3">
+        </div>
+      </div>
+      
+      <div style="margin-top: 16px;">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">🤖 Agente IA Automático</div>
+            <div class="toggle-sublabel">Ajusta automáticamente según reglas WCAG</div>
+          </div>
+          <div class="toggle-switch" id="toggle-auto">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+        
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">🔄 Auto-Captura Continua</div>
+            <div class="toggle-sublabel">Captura cada 5 segundos para análisis continuo</div>
+          </div>
+          <div class="toggle-switch" id="toggle-continuous">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- RECOMENDACIONES IA -->
+    <div class="ai-recommendations">
+      <div class="section-title">💡 Recomendaciones del Agente</div>
+      <div class="rec-list" id="rec-list">
+        <div class="no-recs">
+          <p>🔍 El agente analizará la pantalla y mostrará recomendaciones aquí</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- LOG DE ACTIVIDAD -->
+    <div class="activity-log" id="activity-log">
+      <div class="log-entry">
+        <span class="log-time">--:--:--</span>
+        <span class="log-msg">Esperando primera captura...</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════════════
+    //  CONFIGURACIÓN FIREBASE
+    // ══════════════════════════════════════════════
+    let db = null;
+    const AGENT_CHANNEL = 'agente_accesibilidad';
+    
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      log('Conectado a Firebase', 'success');
+    } catch (e) {
+      log('Error conectando a Firebase: ' + e.message, 'warning');
+    }
+    
+    // ══════════════════════════════════════════════
+    //  ESTADO DEL AGENTE
+    // ══════════════════════════════════════════════
+    const state = {
+      connected: false,
+      autoMode: false,
+      continuousCapture: false,
+      lastCapture: null,
+      metrics: {
+        contrastRatio: 0,
+        textSize: 0,
+        iconSize: 0,
+        hasOverflow: false
+      },
+      controls: {
+        textSize: 6.0,
+        iconSize: 5.5,
+        dishPad: 1.4,
+        legendIcon: 3.0
+      }
+    };
+    
+    // ══════════════════════════════════════════════
+    //  ELEMENTOS DOM
+    // ══════════════════════════════════════════════
+    const els = {
+      statusDot: document.getElementById('status-dot'),
+      statusText: document.getElementById('status-text'),
+      statusSubtext: document.getElementById('status-subtext'),
+      btnCapture: document.getElementById('btn-capture'),
+      screenshotImg: document.getElementById('screenshot-img'),
+      noScreenshot: document.getElementById('no-screenshot'),
+      scanOverlay: document.getElementById('scan-overlay'),
+      previewTimestamp: document.getElementById('preview-timestamp'),
+      metricContrast: document.getElementById('metric-contrast'),
+      metricTextSize: document.getElementById('metric-text-size'),
+      metricIconSize: document.getElementById('metric-icon-size'),
+      metricOverflow: document.getElementById('metric-overflow'),
+      ctrlTextSize: document.getElementById('ctrl-text-size'),
+      ctrlIconSize: document.getElementById('ctrl-icon-size'),
+      ctrlDishPad: document.getElementById('ctrl-dish-pad'),
+      ctrlLegendIcon: document.getElementById('ctrl-legend-icon'),
+      valTextSize: document.getElementById('val-text-size'),
+      valIconSize: document.getElementById('val-icon-size'),
+      valDishPad: document.getElementById('val-dish-pad'),
+      valLegendIcon: document.getElementById('val-legend-icon'),
+      toggleAuto: document.getElementById('toggle-auto'),
+      toggleContinuous: document.getElementById('toggle-continuous'),
+      recList: document.getElementById('rec-list'),
+      activityLog: document.getElementById('activity-log')
+    };
+    
+    // ══════════════════════════════════════════════
+    //  LOG DE ACTIVIDAD
+    // ══════════════════════════════════════════════
+    function log(msg, type = '') {
+      const now = new Date().toLocaleTimeString('es-ES');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `
+        <span class="log-time">${now}</span>
+        <span class="log-msg ${type}">${msg}</span>
+      `;
+      els.activityLog.insertBefore(entry, els.activityLog.firstChild);
+      
+      // Mantener solo últimas 50 entradas
+      while (els.activityLog.children.length > 50) {
+        els.activityLog.removeChild(els.activityLog.lastChild);
+      }
+    }
+    
+    // ══════════════════════════════════════════════
+    //  CAPTURA DE PANTALLA
+    // ══════════════════════════════════════════════
+    async function captureScreen() {
+      try {
+        if (!state.connected) {
+          log('No hay conexión con la pestaña del comedor', 'warning');
+          return;
+        }
+        
+        // Mostrar animación de escaneo
+        els.scanOverlay.classList.add('active');
+        
+        // Solicitar captura a la pestaña del comedor
+        if (db) {
+          await db.ref(`${AGENT_CHANNEL}/commands`).set({
+            action: 'capture_screenshot',
+            timestamp: Date.now(),
+            requestedBy: 'agent_panel'
+          });
+        }
+        
+        log('Solicitando captura de pantalla...', 'action');
+        
+      } catch (e) {
+        log('Error capturando pantalla: ' + e.message, 'error');
+      } finally {
+        setTimeout(() => els.scanOverlay.classList.remove('active'), 2000);
+      }
+    }
+    
+    // ══════════════════════════════════════════════
+    //  ANALIZAR IMAGEN CON IA (simulado)
+    // ══════════════════════════════════════════════
+    function analyzeImage(imgData) {
+      // En una implementación real, aquí enviarías la imagen a una API de IA
+      // Por ahora, usamos las métricas recibidas de comedor.html
+      
+      const recommendations = [];
+      const m = state.metrics;
+      
+      // Analizar contraste
+      if (m.contrastRatio < 4.5) {
+        recommendations.push({
+          type: 'error',
+          icon: '❌',
+          title: 'Contraste insuficiente',
+          desc: `El contraste es ${m.contrastRatio.toFixed(1)}:1. Mínimo recomendado: 4.5:1 (WCAG AA)`
+        });
+      } else if (m.contrastRatio < 7) {
+        recommendations.push({
+          type: 'warning',
+          icon: '⚠️',
+          title: 'Contraste mejorable',
+          desc: `El contraste es ${m.contrastRatio.toFixed(1)}:1. Óptimo: 7:1 (WCAG AAA)`
+        });
+      } else {
+        recommendations.push({
+          type: 'success',
+          icon: '✅',
+          title: 'Contraste excelente',
+          desc: `Contraste de ${m.contrastRatio.toFixed(1)}:1 cumple WCAG AAA`
+        });
+      }
+      
+      // Analizar tamaño de texto
+      if (m.textSize < 28) {
+        recommendations.push({
+          type: 'warning',
+          icon: '📏',
+          title: 'Texto pequeño',
+          desc: `Texto principal de ${m.textSize}px. Recomendado mínimo 28px para pantallas grandes`
+        });
+      } else {
+        recommendations.push({
+          type: 'success',
+          icon: '✅',
+          title: 'Tamaño de texto adecuado',
+          desc: `Texto de ${m.textSize}px es legible a distancia`
+        });
+      }
+      
+      // Analizar iconos
+      if (m.iconSize < 48) {
+        recommendations.push({
+          type: 'info',
+          icon: '🔍',
+          title: 'Iconos pequeños',
+          desc: `Iconos de ${m.iconSize}px. Considera aumentar para mejor visibilidad`
+        });
+      }
+      
+      // Analizar overflow
+      if (m.hasOverflow) {
+        recommendations.push({
+          type: 'error',
+          icon: '🚨',
+          title: 'Contenido cortado',
+          desc: 'Se ha detectado overflow. El agente está ajustando tamaños automáticamente'
+        });
+      }
+      
+      updateRecommendations(recommendations);
+      
+      // Si modo automático, aplicar ajustes
+      if (state.autoMode) {
+        applyAutoAdjustments(m);
+      }
+    }
+    
+    // ══════════════════════════════════════════════
+    //  ACTUALIZAR RECOMENDACIONES
+    // ══════════════════════════════════════════════
+    function updateRecommendations(recs) {
+      if (recs.length === 0) {
+        els.recList.innerHTML = '<div class="no-recs"><p>🔍 El agente analizará la pantalla y mostrará recomendaciones aquí</p></div>';
+        return;
+      }
+      
+      els.recList.innerHTML = recs.map(rec => `
+        <div class="rec-item ${rec.type}">
+          <span class="rec-icon">${rec.icon}</span>
+          <div class="rec-content">
+            <div class="rec-title">${rec.title}</div>
+            <div class="rec-desc">${rec.desc}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // ══════════════════════════════════════════════
+    //  APLICAR AJUSTES AUTOMÁTICOS
+    // ══════════════════════════════════════════════
+    //  AUTO-AJUSTE INTELIGENTE - Agente de Visión
+    // ══════════════════════════════════════════════
+    function applyAutoAdjustments(metrics) {
+      const adjustments = {};
+      let changed = false;
+      
+      // Reglas de accesibilidad WCAG 2.1
+      // Texto mínimo 28px para legibilidad en pantallas grandes
+      if (metrics.textSize < 28) {
+        const incrementPx = 4; // Incremento en pixels
+        const incrementVw = incrementPx / (window.innerWidth / 100); // Convertir a vw
+        const newSize = Math.min(12, state.controls.textSize + incrementVw);
+        if (Math.abs(newSize - state.controls.textSize) > 0.1) {
+          adjustments.dishNameSize = newSize * (window.innerWidth / 100); // Enviar en px
+          state.controls.textSize = newSize;
+          changed = true;
+          log(`🤖 Auto-ajuste: texto a ${(newSize * (window.innerWidth / 100)).toFixed(0)}px`, 'action');
+        }
+      }
+      
+      // Si hay overflow, reducir tamaños proporcionalmente
+      if (metrics.hasOverflow) {
+        const reduction = 0.92; // Reducir 8%
+        const newDishName = Math.max(24, metrics.textSize * reduction);
+        const newDishEn = Math.max(16, (metrics.textSize * 0.36) * reduction);
+        const newPrice = Math.max(18, (metrics.textSize * 0.5) * reduction);
+        
+        if (newDishName < metrics.textSize) {
+          adjustments.dishNameSize = newDishName;
+          adjustments.dishEnSize = newDishEn;
+          adjustments.dishPriceSize = newPrice;
+          state.controls.textSize = newDishName / (window.innerWidth / 100);
+          changed = true;
+          log(`🤖 Auto-ajuste: overflow detectado, reduciendo todo un 8%`, 'action');
+        }
+      }
+      
+      // Mejorar contraste si es insuficiente (< 4.5:1 WCAG AA)
+      if (metrics.contrastRatio < 4.5 && metrics.contrastRatio > 0) {
+        log(`⚠️ Contraste insuficiente: ${metrics.contrastRatio.toFixed(2)}:1 (mínimo 4.5:1)`, 'warning');
+      }
+      
+      // Aplicar ajustes si hay cambios
+      if (changed) {
+        sendAdjustments(adjustments);
+        updateControlValues();
+      }
+    }
+    
+    // ══════════════════════════════════════════════
+    //  ENVIAR AJUSTES A COMER.HTML
+    // ══════════════════════════════════════════════
+    function sendAdjustments(adjustments) {
+      if (!db) {
+        log('❌ Firebase no disponible', 'error');
+        return;
+      }
+      
+      console.log('[Agente] Enviando ajustes:', adjustments);
+      
+      db.ref(`${AGENT_CHANNEL}/adjustments`).set({
+        ...adjustments,
+        timestamp: Date.now(),
+        source: 'agent_panel'
+      }).then(() => {
+        console.log('[Agente] ✅ Ajustes enviados correctamente');
+        log('Ajustes enviados a comedor.html', 'success');
+        
+        // NO limpiar los ajustes - dejar que comedor los aplique
+        // El listener de comedor se encarga de aplicarlos
+      }).catch(e => {
+        console.error('[Agente] Error enviando ajustes:', e);
+        log('Error enviando ajustes: ' + e.message, 'error');
+      });
+    }
+    
+    // ══════════════════════════════════════════════
+    //  ACTUALIZAR VALORES DE CONTROLES
+    // ══════════════════════════════════════════════
+    function updateControlValues() {
+      els.ctrlTextSize.value = state.controls.textSize;
+      els.ctrlIconSize.value = state.controls.iconSize;
+      els.ctrlDishPad.value = state.controls.dishPad;
+      els.ctrlLegendIcon.value = state.controls.legendIcon;
+      
+      els.valTextSize.textContent = state.controls.textSize.toFixed(1) + 'vw';
+      els.valIconSize.textContent = state.controls.iconSize.toFixed(1) + 'vw';
+      els.valDishPad.textContent = state.controls.dishPad.toFixed(1) + 'vw';
+      els.valLegendIcon.textContent = state.controls.legendIcon.toFixed(1) + 'vw';
+    }
+    
+    // ══════════════════════════════════════════════
+    //  ACTUALIZAR MÉTRICAS EN UI
+    // ══════════════════════════════════════════════
+    function updateMetricsUI() {
+      const m = state.metrics;
+      
+      // Contraste
+      els.metricContrast.textContent = m.contrastRatio.toFixed(1);
+      els.metricContrast.className = 'metric-value ' + 
+        (m.contrastRatio >= 7 ? 'good' : m.contrastRatio >= 4.5 ? 'warning' : 'bad');
+      
+      // Tamaño texto
+      els.metricTextSize.textContent = m.textSize.toFixed(0);
+      els.metricTextSize.className = 'metric-value ' + 
+        (m.textSize >= 28 ? 'good' : m.textSize >= 24 ? 'warning' : 'bad');
+      
+      // Tamaño iconos
+      els.metricIconSize.textContent = m.iconSize.toFixed(0);
+      els.metricIconSize.className = 'metric-value ' + 
+        (m.iconSize >= 64 ? 'good' : m.iconSize >= 48 ? 'warning' : 'bad');
+      
+      // Overflow
+      els.metricOverflow.textContent = m.hasOverflow ? '⚠️ Sí' : '✅ No';
+      els.metricOverflow.className = 'metric-value ' + (m.hasOverflow ? 'bad' : 'good');
+    }
+    
+    // ══════════════════════════════════════════════
+    //  ESCUCHAR DATOS DE COMER.HTML
+    // ══════════════════════════════════════════════
+    if (db) {
+      // Escuchar métricas en tiempo real
+      db.ref(`${AGENT_CHANNEL}/metrics`).on('value', snapshot => {
+        const data = snapshot.val();
+        if (data) {
+          state.connected = true;
+          state.metrics = {
+            contrastRatio: data.contrastRatio || 0,
+            textSize: data.textSize || 0,
+            iconSize: data.iconSize || 0,
+            hasOverflow: data.hasOverflow || false
+          };
+          
+          // Actualizar UI
+          els.statusDot.className = 'status-dot connected';
+          els.statusText.textContent = '✅ Conectado al comedor';
+          els.statusSubtext.textContent = 'Recibiendo métricas en tiempo real';
+          els.btnCapture.disabled = false;
+          
+          updateMetricsUI();
+          
+          // Si hay captura, analizar
+          if (data.screenshot) {
+            els.screenshotImg.src = data.screenshot;
+            els.screenshotImg.style.display = 'block';
+            els.noScreenshot.style.display = 'none';
+            els.previewTimestamp.textContent = new Date(data.timestamp).toLocaleTimeString('es-ES');
+            
+            analyzeImage(data.screenshot);
+            state.lastCapture = Date.now();
+          }
+          
+          log(`Métricas actualizadas: contraste ${data.contrastRatio?.toFixed(1)}:1`, 'success');
+        }
+      });
+      
+      // Escuchar confirmación de ajustes aplicados
+      db.ref(`${AGENT_CHANNEL}/adjustments_applied`).on('value', snapshot => {
+        const data = snapshot.val();
+        if (data && data.timestamp > (state.lastAdjustment || 0)) {
+          log(`Ajustes aplicados en comedor: ${JSON.stringify(data)}`, 'success');
+          state.lastAdjustment = data.timestamp;
+        }
+      });
+    }
+    
+    // ══════════════════════════════════════════════
+    //  EVENT LISTENERS
+    // ══════════════════════════════════════════════
+    els.btnCapture.addEventListener('click', captureScreen);
+    
+    // Controles manuales
+    els.ctrlTextSize.addEventListener('input', e => {
+      state.controls.textSize = parseFloat(e.target.value);
+      els.valTextSize.textContent = state.controls.textSize.toFixed(1) + 'vw';
+      // Enviar tamaño de nombre de plato en pixels
+      const dishNamePx = state.controls.textSize * (window.innerWidth / 100);
+      sendAdjustments({ dishNameSize: dishNamePx });
+    });
+    
+    els.ctrlIconSize.addEventListener('input', e => {
+      state.controls.iconSize = parseFloat(e.target.value);
+      els.valIconSize.textContent = state.controls.iconSize.toFixed(1) + 'vw';
+      // El tamaño de iconos se calcula automáticamente basado en dishNameSize
+      log('Iconos se ajustan automáticamente según tamaño de texto', 'info');
+    });
+    
+    els.ctrlDishPad.addEventListener('input', e => {
+      state.controls.dishPad = parseFloat(e.target.value);
+      els.valDishPad.textContent = state.controls.dishPad.toFixed(1) + 'vw';
+      // El padding se ajusta automáticamente
+      log('Padding se ajusta automáticamente', 'info');
+    });
+    
+    els.ctrlLegendIcon.addEventListener('input', e => {
+      state.controls.legendIcon = parseFloat(e.target.value);
+      els.valLegendIcon.textContent = state.controls.legendIcon.toFixed(1) + 'vw';
+      // Los iconos de leyenda se ajustan automáticamente
+      log('Iconos de leyenda se ajustan automáticamente', 'info');
+    });
+    
+    // Toggle Auto Mode
+    els.toggleAuto.addEventListener('click', () => {
+      state.autoMode = !state.autoMode;
+      els.toggleAuto.classList.toggle('active', state.autoMode);
+      log(state.autoMode ? 'Modo AUTO activado' : 'Modo AUTO desactivado', 'action');
+    });
+    
+    // Toggle Continuous Capture
+    let captureInterval = null;
+    els.toggleContinuous.addEventListener('click', () => {
+      state.continuousCapture = !state.continuousCapture;
+      els.toggleContinuous.classList.toggle('active', state.continuousCapture);
+      
+      if (state.continuousCapture) {
+        captureInterval = setInterval(captureScreen, 5000);
+        log('Auto-captura iniciada (cada 5s)', 'action');
+      } else {
+        if (captureInterval) clearInterval(captureInterval);
+        log('Auto-captura detenida', 'action');
+      }
+    });
+    
+    // Inicializar
+    updateControlValues();
+    log('Panel del agente iniciado', 'success');
+  </script>
+</body>
+</html>

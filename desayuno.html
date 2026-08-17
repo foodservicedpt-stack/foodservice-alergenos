@@ -708,7 +708,7 @@ let translateTimers = {};
 function autoTranslate(dishId) { markUnsaved(); renderPreview(); clearTimeout(translateTimers[dishId]); translateTimers[dishId] = setTimeout(()=>manualTranslate(dishId), 1400); }
 async function manualTranslate(dishId) {
   const dish = state.platos.find(p=>p.id===dishId); if(!dish||!dish.nombreEs.trim()) return;
-  const geminiKey = firebaseConfig.geminiApiKey;
+  const geminiKey = window.firebaseConfig.geminiApiKey;
   if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
     try {
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
@@ -869,12 +869,12 @@ window.addEventListener('DOMContentLoaded', () => {
   renderPreview();
 
   try {
-    if (!firebaseConfig || firebaseConfig.apiKey === 'TU_API_KEY_AQUI') {
+    if (!window.firebaseConfig || window.firebaseConfig.apiKey === 'TU_API_KEY_AQUI') {
       document.getElementById('firebase-warn').classList.add('visible');
       setStatus('Firebase no configurado', '#ef4444');
       return;
     }
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(window.firebaseConfig);
     fbReady = true;
     firebase.database().ref('menu/desayuno').once('value')
       .then(snap => applyLoadedData(snap.val()))

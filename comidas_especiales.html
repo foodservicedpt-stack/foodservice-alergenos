@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Service DPT — Carta Especial</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="./firebase-config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --dish-name-size: 5.5vw;
+      --dish-en-size: 2vw;
+      --icon-size: 5vw;
+      --icon-gap: 0.6vw;
+      --dish-pad: 1.4vw;
+      --legend-icon: 2.8vw;
+      --legend-text: 1.3vw;
+      --header-h: 14vh;
+      --turno-title-size: 2vw;
+      --turno-msg-es-size: 3vw;
+      --turno-msg-en-size: 1.8vw;
+      --turno-countdown-size: 1.8vw;
+      --carousel-es-size: 2.6vw;
+      --carousel-en-size: 1.7vw;
+      --carousel-farewell-es-size: 4vw;
+      --carousel-farewell-en-size: 2vw;
+      --no-allergen-scale: 1;
+      --dish-gluten-scale: 1;
+      
+      /* Colores elegantes oscuros */
+      --bg-dark: #0a0a0a;
+      --bg-card: #141414;
+      --bg-header: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 50%, #0d0d0d 100%);
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --accent-gold: #c9a962;
+      --accent-gold-dim: #8b7355;
+      --border-color: #2a2a2a;
+      --shadow-color: rgba(0,0,0,0.5);
+    }
+
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg-dark);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    /* ─── LAYOUT MASTER ─── */
+    .screen { display: flex; flex-direction: column; width: 100vw; height: 100vh; }
+
+    /* ─── HEADER ─── */
+    .header {
+      background: var(--bg-header);
+      height: var(--header-h);
+      display: flex; align-items: center; padding: 0 2.5vw; gap: 2vw;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.6);
+      border-bottom: 2px solid var(--accent-gold-dim);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+    }
+    .header-logo { 
+      height: 70%; 
+      max-height: 75px; 
+      object-fit: contain; 
+      filter: brightness(1.2) drop-shadow(0 0 15px rgba(201,169,98,0.3)); 
+    }
+    .header-divider { 
+      width: 3px; 
+      height: 60%; 
+      background: linear-gradient(to bottom, var(--accent-gold), var(--accent-gold-dim)); 
+      border-radius: 2px; 
+    }
+    .header-title .es { 
+      font-size: clamp(26px,4vw,58px); 
+      font-weight: 900; 
+      letter-spacing: 6px; 
+      color: var(--accent-gold); 
+      text-transform: uppercase; 
+      text-shadow: 0 2px 10px rgba(201,169,98,0.3);
+    }
+    .header-title .en { 
+      font-size: clamp(12px,1.5vw,24px); 
+      color: var(--text-secondary); 
+      letter-spacing: 5px; 
+      text-transform: uppercase; 
+      font-style: italic; 
+      margin-top: 4px;
+    }
+    .header-spacer { flex: 1; }
+    .header-datetime { 
+      text-align: right; 
+      color: var(--text-primary); 
+      line-height: 1.2; 
+      min-width: 280px;
+    }
+    .header-date { 
+      font-size: clamp(16px,2vw,30px); 
+      font-weight: 700; 
+      color: var(--text-secondary); 
+      text-transform: none; 
+      letter-spacing: 1px;
+    }
+    .header-time { 
+      font-size: clamp(42px,6.5vw,85px); 
+      font-weight: 900; 
+      color: var(--accent-gold); 
+      letter-spacing: 4px;
+      text-shadow: 0 0 20px rgba(201,169,98,0.4);
+    }
+
+    /* ─── BODY ─── */
+    .body { 
+      display: flex; 
+      flex: 1; 
+      min-height: 0; 
+      padding: 1.2vw; 
+      gap: 1.2vw; 
+      background: radial-gradient(ellipse at top, #1a1a1a 0%, var(--bg-dark) 70%);
+    }
+
+    /* ─── MAIN COL ─── */
+    .main-col {
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.7vw;
+      min-height: 0; 
+      overflow: hidden;
+    }
+    .main-col.grid-mode {
+      display: grid;
+      grid-template-columns: repeat(var(--grid-cols, 1), 1fr);
+      grid-auto-rows: 1fr;
+      gap: 0.7vw;
+    }
+    .main-col.grid-mode .dish-row { 
+      flex-direction: column; 
+      align-items: stretch; 
+    }
+    .main-col.grid-mode .dish-allergens {
+      width: 100%; 
+      max-width: 100%; 
+      align-items: flex-start;
+      flex-direction: column; 
+      margin-left: 0; 
+      margin-top: 0.5vw;
+    }
+
+    /* ─── DISH ROW ─── */
+    .dish-row {
+      background: var(--bg-card); 
+      border-radius: 16px;
+      padding: var(--dish-pad) calc(var(--dish-pad) * 1.2);
+      display: flex; 
+      align-items: flex-start;
+      box-shadow: 0 4px 20px var(--shadow-color);
+      flex: 1; 
+      flex-shrink: 0;
+      border-left: 5px solid var(--accent-gold-dim);
+      gap: 0.7vw;
+      min-height: 6vw;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+    .dish-row:hover {
+      border-color: var(--accent-gold);
+      box-shadow: 0 6px 30px rgba(201,169,98,0.15);
+    }
+    @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
+
+    .dish-info { 
+      flex: 1; 
+      padding-right: 0.4vw; 
+      min-width: 0; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.45vw; 
+    }
+    .dish-name-es {
+      font-size: var(--dish-name-size); 
+      font-weight: 900; 
+      color: var(--text-primary);
+      text-transform: uppercase; 
+      letter-spacing: 0.08em; 
+      line-height: 1.1;
+      white-space: normal; 
+      overflow: hidden; 
+      overflow-wrap: break-word; 
+      word-break: break-word;
+      display: -webkit-box; 
+      -webkit-box-orient: vertical; 
+      -webkit-line-clamp: 2; 
+      line-clamp: 2;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .dish-name-en {
+      font-size: calc(var(--dish-en-size) * 1.15); 
+      color: var(--text-secondary); 
+      font-style: italic; 
+      line-height: 1.1;
+      white-space: normal; 
+      overflow: hidden; 
+      overflow-wrap: break-word; 
+      word-break: break-word;
+      display: -webkit-box; 
+      -webkit-box-orient: vertical; 
+      -webkit-line-clamp: 2; 
+      line-clamp: 2;
+    }
+    .dish-gluten-note {
+      display: flex; 
+      flex-direction: row; 
+      align-items: center; 
+      gap: 0.6vw;
+      padding: 0.4vw 0.7vw; 
+      border-radius: 10px;
+      border: 1.5px solid var(--accent-gold-dim); 
+      background: rgba(201,169,98,0.1);
+      max-width: 100%; 
+      align-self: flex-start; 
+      box-sizing: border-box;
+    }
+    .dish-gluten-icon { flex-shrink: 0; display: flex; }
+    .dish-gluten-icon svg {
+      width: calc(var(--dish-en-size) * 1.5 * var(--dish-gluten-scale, 1)); 
+      height: calc(var(--dish-en-size) * 1.5 * var(--dish-gluten-scale, 1));
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
+    }
+    .dish-gluten-txt { 
+      display: flex; 
+      flex-direction: column; 
+      line-height: 1.18; 
+      min-width: 0; 
+    }
+    .dish-gluten-es {
+      font-size: calc(var(--dish-en-size) * 1.35 * var(--dish-gluten-scale, 1)); 
+      font-weight: 800; 
+      color: var(--accent-gold);
+      overflow-wrap: anywhere;
+    }
+    .dish-gluten-en {
+      font-size: calc(var(--dish-en-size) * 1.05 * var(--dish-gluten-scale, 1)); 
+      font-style: italic; 
+      color: var(--text-secondary);
+      overflow-wrap: anywhere; 
+      opacity: 0.92;
+    }
+
+    /* ─── ALLERGEN ICONS ─── */
+    .dish-allergens { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: flex-start; 
+      justify-content: center; 
+      gap: 0.3vw; 
+      flex-shrink: 0; 
+      width: min(32%, 300px); 
+      max-width: 300px; 
+      margin-left: 0.4vw; 
+    }
+    .allergen-row { 
+      display: flex; 
+      align-items: center; 
+      gap: var(--icon-gap); 
+      flex-wrap: wrap; 
+      justify-content: flex-start; 
+      max-width: 100%; 
+    }
+    .alg-icon-wrap {
+      width: var(--icon-size); 
+      height: var(--icon-size); 
+      overflow: hidden;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+    }
+    .alg-icon-wrap img { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: contain; 
+      border-radius: 50%; 
+      filter: brightness(1.1);
+    }
+    .alg-icon-wrap.trace-icon { opacity: 0.75; }
+    .trace-label {
+      font-size: calc(var(--icon-size) * 0.28); 
+      font-weight: 800; 
+      color: #d4a843;
+      background: rgba(201,169,98,0.15); 
+      border: 2px solid var(--accent-gold-dim); 
+      border-radius: 50px;
+      padding: 0.2vw 0.7vw; 
+      letter-spacing: 0.5px; 
+      white-space: nowrap;
+      line-height: 1.1; 
+      text-align: left; 
+      max-width: 100%;
+    }
+    .no-allergen {
+      background: rgba(16,185,129,0.1); 
+      border: 2px solid #059669; 
+      border-radius: 12px;
+      padding: 0.55vw 1.1vw; 
+      color: #6ee7b7; 
+      font-weight: 800;
+      font-size: calc(var(--dish-en-size) * 1.05 * var(--no-allergen-scale, 1));
+      display: flex; 
+      flex-direction: row; 
+      align-items: center; 
+      gap: 0.7vw;
+      max-width: 100%; 
+      width: auto; 
+      flex-wrap: nowrap;
+    }
+    .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
+    .no-allergen .shield-ok svg {
+      width: calc(var(--dish-name-size) * 1.15); 
+      height: calc(var(--dish-name-size) * 1.15);
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+    }
+    .no-allergen-txt { 
+      display: flex; 
+      flex-direction: column; 
+      line-height: 1.1; 
+      min-width: 0; 
+    }
+    .no-allergen-txt .es { white-space: normal; overflow-wrap: anywhere; }
+    .no-allergen .en { 
+      font-style: italic; 
+      font-size: 0.82em; 
+      opacity: 0.7; 
+      font-weight: 600; 
+      white-space: normal; 
+      overflow-wrap: anywhere; 
+    }
+
+    /* ─── SIDEBAR LEGEND ─── */
+    .sidebar {
+      flex: 0 0 min(250px, 23vw);
+      width: min(24vw, 340px);
+      max-width: 360px;
+      background: var(--bg-card); 
+      border-radius: 16px;
+      padding: 1vw 0.8vw; 
+      display: flex; 
+      flex-direction: column;
+      box-shadow: 0 4px 20px var(--shadow-color);
+      border: 1px solid var(--border-color);
+      min-height: 0;
+      overflow: hidden;
+    }
+    .legend-title { 
+      font-size: 1.1vw; 
+      font-weight: 800; 
+      color: var(--accent-gold); 
+      text-transform: uppercase; 
+      letter-spacing: 2px; 
+      border-bottom: 2px solid var(--border-color); 
+      padding-bottom: 0.5vw; 
+      margin-bottom: 0.6vw;
+      text-shadow: 0 2px 8px rgba(201,169,98,0.2);
+    }
+    .legend-title .en { 
+      display: block; 
+      font-style: italic; 
+      font-weight: 400; 
+      text-transform: none; 
+      letter-spacing: 0; 
+      font-size: 0.85em; 
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .legend-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      align-content: start;
+      justify-items: start;
+      flex: 1;
+      min-height: 0;
+      overflow-y: hidden;
+    }
+    .legend-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55vw;
+      min-width: 0;
+      width: 100%;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .legend-item:last-child { border-bottom: none; }
+    .legend-circle {
+      width: var(--legend-icon);
+      height: var(--legend-icon);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .legend-circle img { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: contain; 
+      border-radius: 50%; 
+      filter: brightness(1.1);
+    }
+    .legend-text-wrap {
+      line-height: 1.15;
+      min-width: 0;
+      width: calc(100% - var(--legend-icon) - 0.55vw);
+    }
+    .legend-es {
+      font-size: var(--legend-text);
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      display: block;
+      white-space: normal;
+      letter-spacing: 0.5px;
+    }
+    .legend-en {
+      font-size: calc(var(--legend-text) * 0.85);
+      color: var(--text-secondary);
+      font-style: italic;
+      display: block;
+      white-space: normal;
+    }
+    @media (max-width: 1100px) {
+      .body { flex-wrap: wrap; }
+      .sidebar { width: 100%; max-width: 100%; }
+    }
+
+    /* ─── FOOTER ─── */
+    .footer { 
+      background: linear-gradient(90deg, #0d0d0d, #1a1a1a, #0d0d0d); 
+      padding: 0.5vw 2.5vw; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      flex-shrink: 0;
+      border-top: 1px solid var(--border-color);
+    }
+    .footer-brand { 
+      color: var(--text-secondary); 
+      font-size: clamp(10px,1vw,14px); 
+      letter-spacing: 1.5px; 
+    }
+    .footer-updated { 
+      color: var(--text-secondary); 
+      font-size: clamp(9px,0.9vw,13px); 
+    }
+    .live-dot { 
+      display: inline-block; 
+      width: 8px; 
+      height: 8px; 
+      border-radius: 50%; 
+      background: #10b981; 
+      margin-right: 6px; 
+      animation: blink 2s infinite;
+      box-shadow: 0 0 10px #10b981;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .no-data { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      color: var(--text-secondary); 
+      gap: 16px; 
+    }
+    .no-data .icon { font-size: 5vw; }
+    .no-data p { font-size: 2vw; font-weight: 600; }
+    .no-data small { font-size: 1.2vw; opacity: 0.7; max-width: 60vw; text-align: center; line-height: 1.5; }
+    .fade-update { animation: none; }
+    @keyframes fadeUpdate { 0%{opacity:1;transform:scale(1)} 100%{opacity:1;transform:scale(1)} }
+
+    /* ═══════════════════════════════════════════════════
+       TURNO OVERLAY — Pantalla completa elegante
+    ═══════════════════════════════════════════════════ */
+    #turno-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    #turno-overlay.visible { opacity: 1; pointer-events: auto; }
+
+    .turno-scrim {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+    }
+
+    .turno-card-tv {
+      position: relative; z-index: 1;
+      width: 90vw; max-width: 1500px;
+      border-radius: 2.5vw;
+      padding: clamp(20px, 3vw, 48px) clamp(24px, 5vw, 80px);
+      text-align: center;
+      overflow: hidden;
+      box-shadow: 0 3vw 6vw rgba(0,0,0,0.8), 0 0 0 3px rgba(201,169,98,0.3);
+      transform: scale(0.85) translateY(3vw);
+      transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease;
+      animation: cardGlow 2.5s ease-in-out infinite;
+      opacity: 0;
+      background: linear-gradient(135deg, rgba(20,20,20,0.95), rgba(30,30,30,0.9));
+      border: 2px solid var(--accent-gold-dim);
+    }
+    @keyframes cardGlow {
+      0%, 100% { box-shadow: 0 4vw 8vw rgba(0,0,0,0.8), 0 0 0 4px rgba(201,169,98,0.2); }
+      50%      { box-shadow: 0 4vw 8vw rgba(0,0,0,0.8), 0 0 0 10px rgba(201,169,98,0.35); }
+    }
+    #turno-overlay.visible .turno-card-tv { transform: scale(1) translateY(0); opacity: 1; }
+
+    .turno-bell {
+      font-size: clamp(34px, 7vw, 112px); line-height: 1;
+      display: block; margin-bottom: 1vw;
+      animation: bellRing 0.6s ease-in-out 0.3s 3;
+      transform-origin: top center;
+      filter: drop-shadow(0 0 20px rgba(201,169,98,0.5));
+    }
+    @keyframes bellRing {
+      0%,100% { transform: rotate(0deg); }
+      20%      { transform: rotate(-20deg); }
+      40%      { transform: rotate(20deg); }
+      60%      { transform: rotate(-12deg); }
+      80%      { transform: rotate(12deg); }
+    }
+
+    .turno-title {
+      font-size: clamp(16px, var(--turno-title-size), 36px);
+      font-weight: 900; letter-spacing: 4px;
+      text-transform: uppercase; 
+      color: var(--accent-gold);
+      opacity: 0.85;
+      margin-bottom: 1vw;
+    }
+
+    .turno-msg-es {
+      font-size: clamp(20px, var(--turno-msg-es-size), 52px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      line-height: 1.05;
+      margin-bottom: 1vw;
+      color: var(--text-primary);
+      text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      word-break: break-word;
+    }
+
+    .turno-msg-en {
+      font-size: clamp(14px, var(--turno-msg-en-size), 30px);
+      font-style: italic;
+      opacity: 0.85;
+      margin-bottom: 1.5vw;
+      line-height: 1.2;
+      color: var(--text-secondary);
+    }
+
+    .turno-countdown-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0.6vw;
+    }
+    .turno-countdown-label {
+      font-size: clamp(13px, var(--turno-countdown-size), 30px); 
+      font-weight: 900;
+      opacity: 0.85; 
+      letter-spacing: 2px; 
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .turno-progress-track {
+      width: min(65%, 900px); 
+      height: clamp(10px, 1.3vw, 20px); 
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1); 
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+    .turno-progress-bar {
+      height: 100%; 
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--accent-gold-dim), var(--accent-gold));
+      transition: width 1s linear;
+    }
+
+    .turno-carousel {
+      position: relative;
+      margin: 2vw 0;
+      padding: 1.5vw;
+      border-radius: 1.5vw;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      min-height: 20vh;
+      border: 1px solid var(--border-color);
+    }
+    .carousel-track {
+      display: flex;
+      transition: transform 0.8s cubic-bezier(0.4,0,0.2,1);
+      will-change: transform;
+    }
+    .carousel-slide {
+      flex: 0 0 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2vw;
+      padding: 2vw;
+    }
+    .carousel-slide.farewell {
+      background: linear-gradient(135deg, rgba(201,169,98,0.1), rgba(201,169,98,0.03));
+      border-radius: 1vw;
+      border: 1px solid rgba(201,169,98,0.2);
+      justify-content: center;
+      min-height: 18vh;
+    }
+    .carousel-farewell-es {
+      font-size: clamp(22px, var(--carousel-farewell-es-size), 48px);
+      font-weight: 900;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 15px rgba(201,169,98,0.3);
+    }
+    .carousel-farewell-en {
+      font-size: clamp(14px, var(--carousel-farewell-en-size), 26px);
+      font-style: italic;
+      color: var(--text-secondary);
+      opacity: 0.8;
+    }
+    .carousel-reminder-img {
+      max-width: 100%;
+      max-height: 14vh;
+      object-fit: contain;
+      filter: brightness(1.1) drop-shadow(0 2px 10px rgba(0,0,0,0.5));
+      border-radius: 8px;
+    }
+
+    .carousel-nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.8vw;
+      margin-top: 1vw;
+    }
+    .carousel-dot {
+      width: clamp(8px, 1vw, 14px);
+      height: clamp(8px, 1vw, 14px);
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .carousel-dot.active {
+      background: var(--accent-gold);
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 12px rgba(201,169,98,0.6);
+    }
+    .carousel-dot:hover:not(.active) {
+      background: rgba(255,255,255,0.4);
+    }
+
+    /* Animación de entrada para platos */
+    .dish-row {
+      animation: dishEnter 0.5s ease-out forwards;
+      opacity: 0;
+    }
+    @keyframes dishEnter {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="screen">
+  
+  <div class="header">
+    <img src="./img/Encabezado.png" alt="Food Service DPT" class="header-logo" onerror="this.style.display='none'">
+    <div class="header-divider"></div>
+    <div class="header-title">
+      <div class="es">CARTA</div>
+      <div class="en">Special Menu</div>
+    </div>
+    <div class="header-spacer"></div>
+    <div class="header-datetime">
+      <div class="header-date" id="header-date">Cargando...</div>
+      <div class="header-time" id="header-time">--:--</div>
+    </div>
+  </div>
+  
+  <div class="body">
+    <div class="main-col" id="main-col">
+      <div class="no-data">
+        <span class="icon">⏳</span>
+        <p>Cargando menú especial...</p>
+        <small>Espera un momento</small>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="legend-title">ALÉRGENOS<span class="en">Allergen Legend</span></div>
+      <div class="legend-list" id="legend-list"></div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <div class="footer-brand">FOOD SERVICE DPT</div>
+    <div class="footer-updated"><span class="live-dot"></span>Actualizado: <span id="last-updated">--:--:--</span></div>
+  </div>
+
+  <!-- TURNO OVERLAY -->
+  <div id="turno-overlay">
+    <div class="turno-scrim"></div>
+    <div class="turno-card-tv">
+      <span class="turno-bell">🔔</span>
+      <div class="turno-title">Próximo turno</div>
+      <div class="turno-msg-es" id="turno-msg-es">Comida</div>
+      <div class="turno-msg-en" id="turno-msg-en">Lunch</div>
+      
+      <div class="turno-countdown-wrap">
+        <div class="turno-countdown-label">Comienza en</div>
+        <div class="turno-progress-track">
+          <div class="turno-progress-bar" id="turno-progress-bar" style="width:100%"></div>
+        </div>
+      </div>
+      
+      <div class="turno-carousel" id="turno-carousel">
+        <div class="carousel-track" id="carousel-track">
+          <!-- Se llena dinámicamente -->
+        </div>
+        <div class="carousel-nav" id="carousel-nav"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG & STATE
+// ═══════════════════════════════════════════════════
+const ALERGENS = [
+  { id:'gluten',     es:'Gluten',     en:'Gluten',           img:'alergenos_gluten.svg' },
+  { id:'lacteos',    es:'Lácteos',    en:'Dairy',            img:'alergenos_lacteos.svg' },
+  { id:'huevos',     es:'Huevos',     en:'Eggs',             img:'alergenos_huevos.svg' },
+  { id:'pescado',    es:'Pescado',    en:'Fish',             img:'alergenos_pescado.svg' },
+  { id:'crustaceos', es:'Crustáceos', en:'Crustaceans',      img:'alergenos_crustaceos.svg' },
+  { id:'moluscos',   es:'Moluscos',   en:'Molluscs',         img:'alergenos_moluscos.svg' },
+  { id:'cacahuetes', es:'Cacahuetes', en:'Peanuts',          img:'alergenos_cacahuetes.svg' },
+  { id:'soja',       es:'Soja',       en:'Soy',              img:'alergenos_soja.svg' },
+  { id:'cascara',    es:'Frutos Cáscara', en:'Nuts',         img:'alergenos_cascara.svg' },
+  { id:'apio',       es:'Apio',       en:'Celery',           img:'alergenos_apio.svg' },
+  { id:'mostaza',    es:'Mostaza',    en:'Mustard',          img:'alergenos_mostaza.svg' },
+  { id:'sesamo',     es:'Sésamo',     en:'Sesame',           img:'alergenos_sesamo.svg' },
+  { id:'sulfitos',   es:'Sulfitos',   en:'Sulphites',        img:'alergenos_sulfitos.svg' },
+  { id:'altramuces', es:'Altramuces', en:'Lupin',            img:'alergenos_altramuces.svg' }
+];
+
+let db, dishesRef, turnosRef, configRef;
+let currentDishes = [];
+let currentTurnos = {};
+let currentConfig = {};
+let turnoTimer = null;
+let carouselInterval = null;
+let currentSlideIndex = 0;
+let totalSlides = 0;
+
+// ═══════════════════════════════════════════════════
+// INIT FIREBASE
+// ═══════════════════════════════════════════════════
+function initFirebase() {
+  try {
+    // 1. ¿Ha cargado el SDK de Firebase? (gstatic.com bloqueado en la red, etc.)
+    if (typeof firebase === 'undefined') {
+      showOfflineState('El SDK de Firebase no ha cargado. Revisa que este dispositivo tenga acceso a www.gstatic.com.');
+      return;
+    }
+    if (!window.firebaseConfig || window.firebaseConfig.apiKey === 'TU_API_KEY_AQUI') {
+      showOfflineState('firebase-config.js no tiene una configuración válida (falta o sigue con el valor de ejemplo).');
+      return;
+    }
+    // 2. ¿La configuración es válida para Firebase? (proyecto borrado, apiKey revocada...)
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
+    } catch (initErr) {
+      showOfflineState('firebase.initializeApp() falló: ' + (initErr && initErr.message || initErr));
+      return;
+    }
+    db = firebase.database();
+    dishesRef = db.ref('menuEspecial/dishes');
+    turnosRef = db.ref('menuEspecial/turnos');
+    configRef = db.ref('menuEspecial/config');
+
+    // 3. Error real de conexión/permisos (reglas de seguridad, etc.) — el
+    // caso que más se confunde con "falta configurar" si no se ve el
+    // error real. Cada listener recibe su propio callback de error.
+    dishesRef.on('value', snap => {
+      const data = snap.val() || {};
+      currentDishes = Object.entries(data)
+        .map(([id, d]) => ({ id, ...d }))
+        .filter(d => !d.hidden)
+        .sort((a,b) => (a.order||0) - (b.order||0));
+      renderDishes();
+      updateLastUpdated();
+    }, err => {
+      console.error(err);
+      showOfflineState('No se pudo leer datos de Firebase (' + (err?.code || 'error desconocido') + '): ' + (err?.message || err));
+    });
+
+    turnosRef.on('value', snap => {
+      currentTurnos = snap.val() || {};
+      checkTurno();
+    }, err => console.error('turnosRef:', err));
+
+    configRef.on('value', snap => {
+      currentConfig = snap.val() || {};
+    }, err => console.error('configRef:', err));
+
+  } catch(e) {
+    console.error(e);
+    showOfflineState('Error inesperado al iniciar: ' + (e && e.message || e));
+  }
+}
+
+function showOfflineState(reason) {
+  const el = document.getElementById('main-col');
+  if (!el) return;
+  el.classList.remove('grid-mode');
+  el.innerHTML =
+    `<div class="no-data"><span class="icon">⚠️</span><p>No se pudo conectar con Firebase</p><small>${escapeHtml(reason || 'Motivo desconocido — revisa la consola del navegador (F12).')}</small></div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// DATE & TIME
+// ═══════════════════════════════════════════════════
+function updateDateTime() {
+  const now = new Date();
+  const dateEl = document.getElementById('header-date');
+  const timeEl = document.getElementById('header-time');
+  
+  const options = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  let dateStr = now.toLocaleDateString('es-ES', options);
+  dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+  
+  dateEl.textContent = dateStr;
+  
+  const hours = String(now.getHours()).padStart(2,'0');
+  const minutes = String(now.getMinutes()).padStart(2,'0');
+  timeEl.textContent = `${hours}:${minutes}`;
+}
+
+function updateLastUpdated() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-ES');
+  document.getElementById('last-updated').textContent = timeStr;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER LEGEND
+// ═══════════════════════════════════════════════════
+function renderLegend() {
+  const list = document.getElementById('legend-list');
+  list.innerHTML = ALERGENS.map(a => `
+    <div class="legend-item">
+      <div class="legend-circle">
+        <img src="./img/${a.img}" alt="${a.es}" onerror="this.style.display='none'">
+      </div>
+      <div class="legend-text-wrap">
+        <span class="legend-es">${a.es}</span>
+        <span class="legend-en">${a.en}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER DISHES
+// ═══════════════════════════════════════════════════
+// Decide el nº de columnas midiendo el espacio REAL disponible, no un
+// número fijo de platos — un plato con muchos alérgenos necesita todo el
+// ancho posible, así que solo se pasa a mosaico si con 1 columna
+// quedaría demasiado apretado de verdad.
+function decideGridCols(dishCount) {
+  if (dishCount <= 1) return 1;
+  const headerEl = document.querySelector('.header');
+  const headerH = headerEl?.getBoundingClientRect().height || window.innerHeight * 0.14;
+  const availH = Math.max(100, window.innerHeight - headerH - 40);
+  const MIN_ROW_H = 130;
+
+  const listBudget = availH / dishCount;
+  if (listBudget >= MIN_ROW_H) return 1;
+
+  const twoColBudget = availH / Math.ceil(dishCount / 2);
+  if (twoColBudget >= MIN_ROW_H || dishCount <= 8) return 2;
+
+  return 3;
+}
+
+function renderDishes() {
+  const container = document.getElementById('main-col');
+  
+  if (currentDishes.length === 0) {
+    container.innerHTML = `
+      <div class="no-data">
+        <span class="icon">🍽️</span>
+        <p>No hay platos especiales disponibles</p>
+        <small>Pronto habrá novedades</small>
+      </div>
+    `;
+    requestAnimationFrame(fitLegend);
+    return;
+  }
+  
+  // Antes se pasaba a mosaico con más de 2 platos fuera cual fuera su
+  // contenido. Ahora se mide el espacio real: solo se sacrifica ancho por
+  // más alto si con 1 columna quedaría demasiado apretado de verdad (un
+  // plato con muchos alérgenos necesita todo el ancho posible).
+  const gridColsSpecial = decideGridCols(currentDishes.length);
+  container.classList.toggle('grid-mode', gridColsSpecial > 1);
+  container.style.setProperty('--grid-cols', gridColsSpecial);
+  
+  container.innerHTML = currentDishes.map((dish, idx) => {
+    const hasAllergens = dish.contains && dish.contains.length > 0;
+    const containsData = dish.contains || [];
+    const tracesData = dish.traces || [];
+    
+    let allergenHTML = '';
+    if (hasAllergens) {
+      const containsIcons = containsData.map(id => {
+        const alg = ALERGENS.find(a => a.id === id);
+        if (!alg) return '';
+        return `<div class="alg-icon-wrap"><img src="./img/${alg.img}" alt="${alg.es}" title="${alg.es}" onerror="this.style.display='none'"></div>`;
+      }).join('');
+      
+      const tracesIcons = tracesData.map(id => {
+        const alg = ALERGENS.find(a => a.id === id);
+        if (!alg) return '';
+        return `<div class="alg-icon-wrap trace-icon"><img src="./img/${alg.img}" alt="${alg.es}" title="Trazas: ${alg.es}" onerror="this.style.display='none'"></div>`;
+      }).join('');
+      
+      const traceLabel = tracesData.length > 0 ? '<div class="trace-label">TRAZAS</div>' : '';
+      
+      allergenHTML = `
+        <div class="dish-allergens">
+          <div class="allergen-row">${containsIcons}</div>
+          ${tracesIcons || traceLabel ? `<div class="allergen-row">${tracesIcons}${traceLabel}</div>` : ''}
+        </div>
+      `;
+    } else {
+      allergenHTML = `
+        <div class="dish-allergens">
+          <div class="no-allergen">
+            <div class="shield-ok">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="no-allergen-txt">
+              <span class="es">Sin alérgenos</span>
+              <span class="en">No allergens</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    const glutenHTML = dish.sinGluten ? `
+      <div class="dish-gluten-note">
+        <div class="dish-gluten-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M4.93 4.93L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="dish-gluten-txt">
+          <span class="dish-gluten-es">Sin gluten</span>
+          <span class="dish-gluten-en">Gluten free</span>
+        </div>
+      </div>
+    ` : '';
+    
+    const delay = idx * 100;
+    
+    return `
+      <div class="dish-row" style="animation-delay: ${delay}ms">
+        <div class="dish-info">
+          <div class="dish-name-es">${escapeHtml(dish.name_es || 'Sin nombre')}</div>
+          <div class="dish-name-en">${escapeHtml(dish.name_en || '')}</div>
+          ${glutenHTML}
+        </div>
+        ${allergenHTML}
+      </div>
+    `;
+  }).join('');
+
+  requestAnimationFrame(fitDishRows);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ═══════════════════════════════════════════════════
+// TURNO LOGIC
+// ═══════════════════════════════════════════════════
+function checkTurno() {
+  if (turnoTimer) {
+    clearTimeout(turnoTimer);
+    turnoTimer = null;
+  }
+  
+  const now = new Date();
+  const currentDay = now.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  
+  let nextTurno = null;
+  let minDiff = Infinity;
+  
+  for (const [day, turnos] of Object.entries(currentTurnos)) {
+    if (!turnos.enabled) continue;
+    
+    const turnoList = turnos.turnos || [];
+    for (const turno of turnoList) {
+      if (!turno.enabled) continue;
+      
+      const [h, m] = turno.hora.split(':').map(Number);
+      const turnoTime = h * 60 + m;
+      
+      let diff = turnoTime - currentTime;
+      if (diff < 0) diff += 24 * 60;
+      
+      if (diff < minDiff && diff <= 30) {
+        minDiff = diff;
+        nextTurno = turno;
+      }
+    }
+  }
+  
+  if (nextTurno && minDiff >= 0) {
+    showTurnoOverlay(nextTurno, minDiff);
+  }
+}
+
+function showTurnoOverlay(turno, minutesUntil) {
+  const overlay = document.getElementById('turno-overlay');
+  const msgEs = document.getElementById('turno-msg-es');
+  const msgEn = document.getElementById('turno-msg-en');
+  const progressBar = document.getElementById('turno-progress-bar');
+  
+  msgEs.textContent = turno.nombre_es || 'Turno';
+  msgEn.textContent = turno.nombre_en || 'Shift';
+  
+  overlay.classList.add('visible');
+  
+  const duration = minutesUntil * 60 * 1000;
+  const startTime = Date.now();
+  
+  function updateProgress() {
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, duration - elapsed);
+    const percent = (remaining / duration) * 100;
+    
+    progressBar.style.width = `${percent}%`;
+    
+    if (remaining > 0) {
+      turnoTimer = setTimeout(updateProgress, 1000);
+    } else {
+      overlay.classList.remove('visible');
+    }
+  }
+  
+  updateProgress();
+  
+  // Auto-hide after 8 seconds or when countdown ends
+  setTimeout(() => {
+    if (overlay.classList.contains('visible')) {
+      overlay.classList.remove('visible');
+    }
+  }, 8000);
+}
+
+// ═══════════════════════════════════════════════════
+// CAROUSEL
+// ═══════════════════════════════════════════════════
+function initCarousel() {
+  const track = document.getElementById('carousel-track');
+  const nav = document.getElementById('carousel-nav');
+  
+  const slides = [];
+  
+  // Farewell slide
+  const farewell = currentConfig.farewell || {
+    es: '¡Buen provecho!',
+    en: 'Enjoy your meal!'
+  };
+  slides.push({
+    type: 'farewell',
+    html: `
+      <div class="carousel-farewell-es">${escapeHtml(farewell.es)}</div>
+      <div class="carousel-farewell-en">${escapeHtml(farewell.en)}</div>
+    `
+  });
+  
+  // Reminder images
+  const reminders = currentConfig.recordatorios || ['recordatorio_1.png', 'recordatorio_2.png'];
+  reminders.forEach(img => {
+    slides.push({
+      type: 'reminder',
+      html: `<img src="./img/${img}" alt="Recordatorio" class="carousel-reminder-img" onerror="this.style.display='none'">`
+    });
+  });
+  
+  totalSlides = slides.length;
+  currentSlideIndex = 0;
+  
+  track.innerHTML = slides.map((slide, i) => `
+    <div class="carousel-slide ${slide.type}">${slide.html}</div>
+  `).join('');
+  
+  nav.innerHTML = slides.map((_, i) => `
+    <div class="carousel-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></div>
+  `).join('');
+  
+  // Click handlers
+  nav.querySelectorAll('.carousel-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      currentSlideIndex = parseInt(dot.dataset.index);
+      updateCarousel();
+      resetCarouselTimer();
+    });
+  });
+  
+  startCarouselTimer();
+}
+
+function updateCarousel() {
+  const track = document.getElementById('carousel-track');
+  const dots = document.querySelectorAll('.carousel-dot');
+  
+  track.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+  
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('active', i === currentSlideIndex);
+  });
+}
+
+function startCarouselTimer() {
+  if (carouselInterval) clearInterval(carouselInterval);
+  carouselInterval = setInterval(() => {
+    currentSlideIndex = (currentSlideIndex + 1) % totalSlides;
+    updateCarousel();
+  }, 5000);
+}
+
+function resetCarouselTimer() {
+  if (carouselInterval) clearInterval(carouselInterval);
+  startCarouselTimer();
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+
+// Función para detectar tamaño de pantalla y ajustar elementos
+// ═══════════════════════════════════════════════════
+// AUTOAJUSTE DE TAMAÑOS — mismo motor que comedor.html
+// ═══════════════════════════════════════════════════
+// La versión anterior calculaba el tamaño UNA VEZ a partir de una
+// estimación de "pulgadas de pantalla" (diagonal en px / 96), sin volver
+// a comprobar nunca si el resultado cabía de verdad. Esa estimación es
+// poco fiable — en esta misma TV hemos visto window.innerWidth/Height
+// mucho más pequeños de lo que la pantalla física sugeriría. Aquí se
+// parte de un cálculo generoso basado en el espacio real disponible y,
+// crucialmente, se COMPRUEBA con el DOM real si cabe, reduciendo solo lo
+// justo y necesario si no — igual que en comedor.html, para que nunca se
+// recorte contenido en silencio (ni el nombre del plato, ni "sin
+// gluten", ni los alérgenos).
+
+const DEBUG_MODE = new URLSearchParams(location.search).get('debug') === '1';
+function updateDebugPanel(vals) {
+  if (!DEBUG_MODE) return;
+  let panel = document.getElementById('debug-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'debug-panel';
+    panel.style.cssText = 'position:fixed;bottom:40px;left:8px;z-index:9999;background:rgba(0,0,0,0.85);color:#0f0;font:12px monospace;padding:8px 12px;border-radius:6px;line-height:1.6;white-space:pre;pointer-events:none;';
+    document.body.appendChild(panel);
+  }
+  panel.textContent =
+    `window: ${window.innerWidth}x${window.innerHeight}\n` +
+    `platos: ${vals.dishCount} | filas grid: ${vals.gridRows} | cols: ${vals.gridCols}\n` +
+    `availH: ${vals.availH.toFixed(0)} | availW: ${vals.availW.toFixed(0)} | budget/fila: ${vals.heightBudget.toFixed(0)}\n` +
+    `nombre FINAL: ${vals.finalNameFs.toFixed(0)}px | en: ${vals.finalEnFs.toFixed(0)}px | icono[0]: ${vals.finalIconFirst.toFixed(0)}px\n` +
+    `iteraciones reducción: ${vals.shrinkIterations} | ¿sigue sin caber?: ${vals.stillOverflowing}`;
+}
+
+function adjustSizes(gridRows, gridCols) {
+  const root = document.documentElement.style;
+  const headerEl = document.querySelector('.header');
+  const sidebarEl = document.querySelector('.sidebar');
+  const headerH = headerEl?.getBoundingClientRect().height || window.innerHeight * 0.14;
+  const sidebarW = sidebarEl?.getBoundingClientRect().width || window.innerWidth * 0.19;
+  const availH = Math.max(100, window.innerHeight - headerH - 40);
+  const availW = Math.max(200, window.innerWidth - sidebarW - 40);
+
+  const refRows = Math.min(Math.max(1, gridRows), 6);
+  const heightBudget = availH / refRows;
+  // El ancho que importa es el de la CELDA (con varias columnas, cada
+  // plato solo tiene una fracción del ancho total), no el de toda la
+  // pantalla — si no, un nombre largo en una celda estrecha se calcula
+  // como si tuviera todo el ancho disponible, imposible de encajar sin
+  // envolver a 3+ líneas.
+  const cellW = availW / Math.max(1, gridCols || 1);
+
+  const nameFs = Math.max(28, Math.min(heightBudget * 1.0, cellW * 0.13));
+  const enFs = Math.max(14, nameFs * 0.36);
+  const legendIcon = Math.max(18, Math.min(availH * 0.05, availW * 0.035));
+  const legendText = Math.max(12, legendIcon * 0.4);
+
+  root.setProperty('--dish-name-size', nameFs + 'px');
+  root.setProperty('--dish-en-size', enFs + 'px');
+  root.setProperty('--dish-pad', Math.max(8, heightBudget * 0.16) + 'px');
+  root.setProperty('--legend-icon', legendIcon + 'px');
+  root.setProperty('--legend-text', legendText + 'px');
+  return { availH, availW, heightBudget };
+}
+
+// Sin overflow:hidden en .dish-row (ver CSS), así que una fila nunca
+// recorta su propio contenido — como mucho crece más de lo ideal. El
+// único desbordamiento real posible es que el CONJUNTO no quepa en
+// main-col, o que un nombre de plato muy largo se trunque con "…" por
+// su propio line-clamp (recorte VISIBLE, no silencioso).
+function dishContentOverflows(mainCol, rows) {
+  if (mainCol.scrollHeight > mainCol.clientHeight + 1) return true;
+  return rows.some(r => {
+    const nameEl = r.querySelector('.dish-name-es');
+    const enEl = r.querySelector('.dish-name-en');
+    return (nameEl && nameEl.scrollHeight > nameEl.clientHeight + 1) ||
+           (enEl && enEl.scrollHeight > enEl.clientHeight + 1);
+  });
+}
+
+function fitNoAllergenBadges() {
+  const badges = [...document.querySelectorAll('.no-allergen')];
+  if (!badges.length) return;
+  const root = document.documentElement.style;
+  root.setProperty('--no-allergen-scale', '1');
+  let scale = 1, guard = 0;
+  const overflowing = () => badges.some(b => b.scrollWidth > b.parentElement.clientWidth + 1);
+  while (overflowing() && guard++ < 12) {
+    scale *= 0.94;
+    root.setProperty('--no-allergen-scale', scale.toFixed(3));
+  }
+}
+
+// Cada fila calcula y aplica su PROPIO tamaño de icono — un plato con un
+// solo alérgeno no tiene por qué quedarse con el mismo icono pequeño que
+// uno con varios alérgenos + trazas.
+function fitAllergenIcons() {
+  const rows = [...document.querySelectorAll('.dish-row')];
+  if (!rows.length) return;
+  const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 40;
+  const iconCap = nameFs * 1.7;
+
+  rows.forEach(row => {
+    const rowH = row.getBoundingClientRect().height;
+    const rowW = row.getBoundingClientRect().width;
+    if (!rowH || !rowW) return;
+    const gap = Math.max(4, Math.round(rowW * 0.006));
+
+    const hasTraces = !!row.querySelector('.trace-label');
+    let maxIcons = 1, maxRows = 1;
+    const ars = row.querySelectorAll('.allergen-row');
+    if (ars.length > maxRows) maxRows = ars.length;
+    ars.forEach(ar => {
+      let cnt = ar.querySelectorAll('.alg-icon-wrap').length;
+      if (ar.querySelector('.trace-label')) cnt += 2;
+      if (cnt > maxIcons) maxIcons = cnt;
+    });
+
+    const allergenW = rowW * (hasTraces ? 0.46 : 0.58);
+    const byWidth = (allergenW - gap * (maxIcons - 1)) / maxIcons;
+    const availableHeight = rowH * (hasTraces ? 0.85 : 0.95);
+    const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
+    let icon = Math.min(byWidth, byHeight, iconCap);
+    icon = Math.max(24, icon);
+
+    row.style.setProperty('--icon-size', icon + 'px');
+    row.style.setProperty('--icon-gap', gap + 'px');
+  });
+}
+
+function fitLegend() {
+  const list = document.getElementById('legend-list');
+  if (!list) return;
+  const items = [...list.querySelectorAll('.legend-item')];
+  if (!items.length) return;
+
+  const containerH = list.getBoundingClientRect().height;
+  const containerW = list.getBoundingClientRect().width;
+  if (!containerH || !containerW) return;
+
+  let ic = Math.min(containerH / items.length * 0.8, containerW * 0.16);
+  ic = Math.max(18, ic);
+  let txt = ic * 0.5;
+  txt = Math.max(12, txt);
+
+  const applySize = (iconPx, textPx) => {
+    document.documentElement.style.setProperty('--legend-icon', iconPx + 'px');
+    document.documentElement.style.setProperty('--legend-text', textPx + 'px');
+    const vPad = Math.max(2, iconPx * 0.14);
+    items.forEach(item => {
+      item.style.padding = vPad + 'px 2px';
+      const esEl = item.querySelector('.legend-es');
+      const enEl = item.querySelector('.legend-en');
+      if (esEl) esEl.style.fontSize = textPx + 'px';
+      if (enEl) enEl.style.fontSize = Math.max(8, textPx * 0.85) + 'px';
+    });
+  };
+  applySize(ic, txt);
+
+  let guard = 0;
+  while (list.scrollHeight > list.clientHeight + 1 && guard++ < 40) {
+    ic = Math.max(9, ic * 0.95);
+    txt = Math.max(7, txt * 0.95);
+    applySize(ic, txt);
+  }
+}
+
+function fitDishRows() {
+  const mainCol = document.getElementById('main-col');
+  if (!mainCol) return;
+  const rows = [...mainCol.querySelectorAll('.dish-row')];
+  if (!rows.length) { fitLegend(); return; }
+
+  const gridCols = parseInt(getComputedStyle(mainCol).getPropertyValue('--grid-cols')) || 1;
+  const gridRows = Math.ceil(rows.length / gridCols);
+
+  const { availH, availW, heightBudget } = adjustSizes(gridRows, gridCols);
+  document.documentElement.style.setProperty('--dish-gluten-scale', '1');
+  fitAllergenIcons();
+  fitNoAllergenBadges();
+
+  let guard = 0;
+  while (dishContentOverflows(mainCol, rows) && guard++ < 18) {
+    const root = document.documentElement.style;
+    const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 20;
+    const enFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 12;
+    const glutenScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-gluten-scale')) || 1;
+    root.setProperty('--dish-name-size', Math.max(16, nameFs * 0.95) + 'px');
+    root.setProperty('--dish-en-size', Math.max(11, enFs * 0.95) + 'px');
+    root.setProperty('--dish-gluten-scale', Math.max(0.6, glutenScale * 0.95).toFixed(3));
+    rows.forEach(row => {
+      const iconSize = parseFloat(getComputedStyle(row).getPropertyValue('--icon-size')) || 30;
+      const iconGap = parseFloat(getComputedStyle(row).getPropertyValue('--icon-gap')) || 6;
+      row.style.setProperty('--icon-size', Math.max(22, iconSize * 0.95) + 'px');
+      row.style.setProperty('--icon-gap', Math.max(3, iconGap * 0.95) + 'px');
+    });
+    fitNoAllergenBadges();
+  }
+
+  fitLegend();
+
+  updateDebugPanel({
+    dishCount: currentDishes.length, gridRows, gridCols, availH, availW, heightBudget,
+    finalNameFs: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 0,
+    finalEnFs: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 0,
+    finalIconFirst: rows[0] ? parseFloat(getComputedStyle(rows[0]).getPropertyValue('--icon-size')) || 0 : 0,
+    shrinkIterations: guard,
+    stillOverflowing: dishContentOverflows(mainCol, rows),
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
+  renderLegend();
+  updateDateTime();
+  setInterval(updateDateTime, 1000);
+
+  // Reajustar al cambiar tamaño de ventana
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => requestAnimationFrame(fitDishRows), 200);
+  });
+  
+  // Listen for config changes
+  configRef.on('value', snap => {
+    currentConfig = snap.val() || {};
+    initCarousel();
+  });
+});
+</script>
+</body>
+</html>
