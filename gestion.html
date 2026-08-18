@@ -1433,8 +1433,14 @@ async function manualTranslate(dishId) {
 2. Use natural restaurant/menu English, not literal translations. E.g. "Judías Verdes con Tomate" → "Green Beans in Tomato Sauce" (not "with Tomato"). "Frutos del Bosque" → "Wild Berries". "Carne con Tomate" → "Tomato-Braised Meat". "Salsa verde" → "Green Sauce".
 3. Keep it concise like a menu item (2-5 words max when possible).
 4. Common patterns: "con X" → "in X Sauce" or "with X". "de X" → "X" (adjective form). "a la Y" → "Y-Style".
-5. For generic names like "Ensalada", make it appetizing: "Garden Salad", "Mixed Salad", "Fresh Salad". For "Fruta" use "Fresh Fruit". For "Pan" use "Bread". For "Helado" always include the flavor.
-6. Return ONLY the translation, nothing else, no explanations: ${dish.nombreEs.trim()}` }] }] })
+5. CRITICAL - Proper noun/adjective ORDER: In English, cuisine/style adjectives come BEFORE the dish name.
+   - "Pansit Filipino" → "Filipino Pansit" (NOT "Pansit Filipino")
+   - "Paella Valenciana" → "Valencian Paella"
+   - "Gazpacho Andaluz" → "Andalusian Gazpacho"
+   - "Cocido Madrileño" → "Madrid-Style Stew"
+   - "Crema Catalana" → "Catalan Cream"
+6. For generic names like "Ensalada", make it appetizing: "Garden Salad", "Mixed Salad", "Fresh Salad". For "Fruta" use "Fresh Fruit". For "Pan" use "Bread". For "Helado" always include the flavor.
+7. Return ONLY the translation, nothing else, no explanations: ${dish.nombreEs.trim()}` }] }] })
       });
       const data = await resp.json();
       if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
