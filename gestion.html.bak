@@ -7,14 +7,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="./firebase-config.js"></script>
-  <script src="./allergen-data.js"></script>
-  <script src="./utils.js"></script>
-  <script src="./translation.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --text-scale: 1;
       --primary: #1d4ed8;
       --primary-light: #3b82f6;
       --surface: #ffffff;
@@ -162,21 +158,12 @@
       background: white; border-radius: var(--radius);
       box-shadow: var(--shadow); margin-bottom: 20px;
       border: 2px solid transparent; transition: border-color 0.2s, box-shadow 0.2s; overflow: hidden;
-      user-select: none; -webkit-user-select: none;
     }
     .dish-card:hover { border-color: #bfdbfe; box-shadow: 0 8px 24px rgba(59,130,246,0.12); }
-    .dish-card input, .dish-card textarea { user-select: text; -webkit-user-select: text; -webkit-user-drag: none; }
     .dish-header {
       background: linear-gradient(90deg, #1e3a5f, #1d4ed8);
       padding: 14px 20px; display: flex; align-items: center; gap: 14px;
-      cursor: grab;
     }
-    .dish-header:active { cursor: grabbing; }
-    .drag-handle {
-      flex-shrink: 0; color: rgba(255,255,255,0.5); font-size: 1.1rem;
-      cursor: grab; padding: 4px 6px; letter-spacing: 2px; user-select: none;
-    }
-    .drag-handle:hover { color: rgba(255,255,255,0.9); }
     .dish-num {
       width: 32px; height: 32px; border-radius: 50%;
       background: rgba(255,255,255,0.2); color: white;
@@ -225,10 +212,15 @@
     .gluten-toggle input:checked + .gluten-toggle-box::after {
       content: '✓'; color: white; font-size: 0.8rem; font-weight: 900; line-height: 1;
     }
-.dish-card.dragging { opacity: 0.5; cursor: grabbing; }
-.dish-card.drag-over { border-top: 3px solid #3b82f6; }
-.dish-card.drag-over-bottom { border-bottom: 3px solid #3b82f6; }
-.dish-move { display:flex; gap:4px; }
+    .btn-move {
+      padding: 6px 10px; border-radius: 8px;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
+      color: #fff; cursor: pointer; font-size: 0.9rem; font-weight: 700;
+      transition: all 0.15s; flex-shrink: 0; display:flex; align-items:center; justify-content:center;
+    }
+    .btn-move:hover:not(.disabled) { background: rgba(255,255,255,0.28); }
+    .btn-move.disabled { opacity: 0.3; cursor: not-allowed; }
+    .dish-move { display:flex; gap:4px; }
     .btn-hide-dish {
       padding: 8px 14px; border-radius: 8px;
       background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
@@ -695,7 +687,25 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ALLERGENS loaded from allergen-data.js
+// ══════════════════════════════════════════════
+//  ALÉRGENOS
+// ══════════════════════════════════════════════
+const ALLERGENS = [
+  { id:'gluten',     es:'GLUTEN',     en:'Gluten',       color:'#e67e22', icon:'./img/alergenos_gluten.svg'     },
+  { id:'crustaceos', es:'CRUSTÁCEOS', en:'Crustaceans',  color:'#3498db', icon:'./img/alergenos_crustaceos.svg' },
+  { id:'huevos',     es:'HUEVOS',     en:'Eggs',         color:'#f39c12', icon:'./img/alergenos_huevos.svg'     },
+  { id:'pescado',    es:'PESCADO',    en:'Fish',         color:'#2c3e50', icon:'./img/alergenos_pescado.svg'    },
+  { id:'cacahuetes', es:'CACAHUETES', en:'Peanuts',      color:'#d35400', icon:'./img/alergenos_cacahuetes.svg' },
+  { id:'soja',       es:'SOJA',       en:'Soy',          color:'#27ae60', icon:'./img/alergenos_soja.svg'       },
+  { id:'lacteos',    es:'LÁCTEOS',    en:'Dairy',        color:'#5d4037', icon:'./img/alergenos_lacteos.svg'    },
+  { id:'cascara',    es:'F.CÁSCARA',  en:'Tree nuts',    color:'#c0392b', icon:'./img/alergenos_cascara.svg'    },
+  { id:'apio',       es:'APIO',       en:'Celery',       color:'#8bc34a', icon:'./img/alergenos_apio.svg'       },
+  { id:'mostaza',    es:'MOSTAZA',    en:'Mustard',      color:'#b8860b', icon:'./img/alergenos_mostaza.svg'    },
+  { id:'sesamo',     es:'SÉSAMO',     en:'Sesame',       color:'#7f8c8d', icon:'./img/alergenos_sesamo.svg'     },
+  { id:'sulfitos',   es:'SULFITOS',   en:'Sulphites',    color:'#8e44ad', icon:'./img/alergenos_sulfitos.svg'   },
+  { id:'moluscos',   es:'MOLUSCOS',   en:'Molluscs',     color:'#1abc9c', icon:'./img/alergenos_moluscos.svg'   },
+  { id:'altramuces', es:'ALTRAMUCES', en:'Lupins',       color:'#f1c40f', icon:'./img/alergenos_altramuces.svg' }
+];
 
 // ══════════════════════════════════════════════
 //  COLORES PREDEFINIDOS PARA TURNOS
@@ -736,7 +746,10 @@ let unsaved = false;
 // ══════════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════════
-// todayStr, escHtml, normalizeAllergenList, normalizeDish loaded from utils.js
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function showToast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -754,7 +767,29 @@ function markSaved() {
   document.getElementById('status-dot').style.background = '#10b981';
   document.getElementById('status-text').textContent = 'Publicado en TV ✓';
 }
-// escHtml, normalizeAllergenList, normalizeDish loaded from utils.js
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function normalizeAllergenList(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).map(v => String(v).trim()).filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return [value.trim()];
+  }
+  if (value && typeof value === 'object') {
+    return Object.values(value).filter(Boolean).map(v => (typeof v === 'string' ? v : (v && typeof v === 'object' && v.id ? String(v.id) : String(v)))).map(v => String(v).trim()).filter(Boolean);
+  }
+  return [];
+}
+function normalizeDish(plato) {
+  if (!plato || typeof plato !== 'object') return plato;
+  return {
+    ...plato,
+    contiene: normalizeAllergenList(plato.contiene),
+    trazas: normalizeAllergenList(plato.trazas),
+    oculto: Boolean(plato.oculto),
+    sinGluten: Boolean(plato.sinGluten)
+  };
+}
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   return `${r},${g},${b}`;
@@ -1051,18 +1086,14 @@ function renderCurrentTab() {
   btn.onclick = addDish;
   btn.innerHTML = '<span class="plus">＋</span> Añadir plato';
   container.appendChild(btn);
-  attachDragEvents();
 }
 function renderDish(plato, idx, total) {
   const container = document.getElementById('dish-list');
   const div = document.createElement('div');
   div.className = `dish-card${plato.oculto ? ' dish-hidden' : ''}`;
-  div.dataset.dishId = plato.id;
-  div.draggable = true;
   div.id = `dish-card-${plato.id}`;
   div.innerHTML = `
     <div class="dish-header">
-      <span class="drag-handle" title="Arrastrar para reordenar">⠿</span>
       <div class="dish-num">${idx + 1}</div>
       <div class="dish-names-row">
         <input class="input-es" type="text" placeholder="🇪🇸  Nombre en español"
@@ -1079,6 +1110,10 @@ function renderDish(plato, idx, total) {
           <span class="gluten-toggle-box"></span>
           <span>🌾 Sin gluten</span>
         </label>
+      </div>
+      <div class="dish-move" style="display:flex; gap:4px;">
+        <button class="btn-move${idx === 0 ? ' disabled' : ''}" onclick="moveDish('${plato.id}', 'up')" title="Mover arriba" ${idx === 0 ? 'disabled' : ''}>⬆️</button>
+        <button class="btn-move${idx === total - 1 ? ' disabled' : ''}" onclick="moveDish('${plato.id}', 'down')" title="Mover abajo" ${idx === total - 1 ? 'disabled' : ''}>⬇️</button>
       </div>
       <button class="btn-hide-dish${plato.oculto ? ' is-hidden' : ''}" id="hidebtn-${plato.id}"
               onclick="toggleDishHidden('${plato.id}')"
@@ -1135,98 +1170,6 @@ function moveDish(dishId, direction) {
   renderCurrentTab();
   markUnsaved();
 }
-
-// ── DRAG & DROP REORDERING ──
-let dragSrcEl = null;
-
-function handleDragStart(e) {
-  const card = e.target.closest('.dish-card');
-  if (!card) return;
-  dragSrcEl = card;
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', card.dataset.dishId);
-  card.classList.add('dragging');
-  if (e.target !== card) card.style.opacity = '0.5';
-}
-
-function handleDragOver(e) {
-  if (e.preventDefault) e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  return false;
-}
-
-function handleDragEnter(e) {
-  const card = e.target.closest('.dish-card');
-  if (!card || card === dragSrcEl) return;
-  const rect = card.getBoundingClientRect();
-  const midY = rect.top + rect.height / 2;
-  
-  card.classList.remove('drag-over-bottom');
-  if (e.clientY > midY) {
-    card.classList.add('drag-over-bottom');
-  } else {
-    card.classList.add('drag-over');
-  }
-}
-
-function handleDragLeave(e) {
-  const card = e.target.closest('.dish-card');
-  if (card) card.classList.remove('drag-over', 'drag-over-bottom');
-}
-
-function handleDrop(e) {
-  if (e.stopPropagation) e.stopPropagation();
-  
-  const card = e.target.closest('.dish-card');
-  if (dragSrcEl && card && dragSrcEl !== card) {
-    const srcId = dragSrcEl.dataset.dishId;
-    const targetId = card.dataset.dishId;
-    const platos = state[currentMenuTab].platos;
-    
-    const srcIdx = platos.findIndex(p => p.id === srcId);
-    const targetIdx = platos.findIndex(p => p.id === targetId);
-    
-    if (srcIdx !== -1 && targetIdx !== -1 && srcIdx !== targetIdx) {
-      // Determinar si insertar antes o después basado en la posición del cursor
-      const rect = card.getBoundingClientRect();
-      const midY = rect.top + rect.height / 2;
-      const insertAfter = e.clientY > midY;
-      
-      const [removed] = platos.splice(srcIdx, 1);
-      let newTargetIdx = platos.findIndex(p => p.id === targetId);
-      if (insertAfter) newTargetIdx++;
-      platos.splice(newTargetIdx, 0, removed);
-      
-      renderCurrentTab();
-      markUnsaved();
-      showToast('📦 Plato reordenado', 'info');
-    }
-  }
-  
-  if (card) card.classList.remove('drag-over', 'drag-over-bottom');
-  return false;
-}
-
-function handleDragEnd(e) {
-  dragSrcEl = null;
-  this.classList.remove('dragging', 'drag-over', 'drag-over-bottom');
-  document.querySelectorAll('.dish-card').forEach(card => {
-    card.classList.remove('drag-over', 'drag-over-bottom');
-  });
-}
-
-// Función para añadir eventos de drag & drop a las tarjetas renderizadas
-function attachDragEvents() {
-  document.querySelectorAll('.dish-card').forEach(card => {
-    card.setAttribute('draggable', 'true');
-    card.addEventListener('dragstart', handleDragStart);
-    card.addEventListener('dragend', handleDragEnd);
-    card.addEventListener('dragover', handleDragOver);
-    card.addEventListener('dragenter', handleDragEnter);
-    card.addEventListener('dragleave', handleDragLeave);
-    card.addEventListener('drop', handleDrop);
-  });
-}
 function renumberDishes() { document.querySelectorAll('.dish-num').forEach((el,i) => el.textContent=i+1); }
 function updateField(dishId, field, value) { const d = state[currentMenuTab].platos.find(p=>p.id===dishId); if(d){d[field]=value; markUnsaved();} }
 function toggleDishHidden(dishId) {
@@ -1265,7 +1208,164 @@ function toggleSinGluten(dishId, checked) {
   markUnsaved();
 }
 
-// CORRECTOR_PLATOS, CORRECTOR_INGLES, correctTranslation, toTitleCaseSmart loaded from shared modules (allergen-data.js, translation.js)
+// ──────── TRANSLATION ────────
+// Glosario de corrección post-traducción: corrige errores comunes de Gemini
+// cuando confunde términos culinarios con otros significados en inglés
+const CORRECTOR_PLATOS = {
+  'berlina': 'doughnut',
+  'berlinas': 'doughnuts',
+  'donut': 'doughnut',
+  'donuts': 'doughnuts',
+  'sedán': 'sedan',
+  'sedanes': 'sedans',
+  'tortilla española': 'Spanish omelette',
+  'tortilla de patatas': 'Spanish omelette',
+  'croqueta': 'croquette',
+  'croquetas': 'croquettes',
+  'empanadilla': 'pastry',
+  'empanadillas': 'pastries',
+  'alitas de pollo': 'chicken wings',
+  'varita de merluza': 'fish finger',
+  'varitas de merluza': 'fish fingers',
+  'filete': 'steak',
+  'filetes': 'steaks',
+  'hamburguesa': 'burger',
+  'hamburguesas': 'burgers',
+  'sándwich': 'sandwich',
+  'sándwiches': 'sandwiches',
+  'bocadillo': 'sandwich',
+  'bocadillos': 'sandwiches',
+  'ensaladilla': 'salad',
+  'ensaladillas': 'salads',
+  'patata frita': 'fries',
+  'patatas fritas': 'fries',
+  'patatas bravas': 'braised potatoes',
+  'pimientos de padrón': 'padron peppers',
+  'jamón serrano': 'serrano ham',
+  'jamón ibérico': 'iberian ham',
+  'chorizo': 'chorizo',
+  'salchicha': 'sausage',
+  'salchichas': 'sausages',
+  'calamares': 'squid',
+  'calamar': 'squid',
+  'gamba': 'prawn',
+  'gambas': 'prawns',
+  'langostino': 'prawn',
+  'langostinos': 'prawns',
+  'mejillón': 'mussel',
+  'mejillones': 'mussels',
+  'almeja': 'clam',
+  'almejas': 'clams',
+  'ostra': 'oyster',
+  'ostras': 'oysters',
+  'bacalao': 'cod',
+  'merluza': 'hake',
+  'salmonete': 'red mullet',
+  'dorada': 'sea bream',
+  'lubina': 'sea bass',
+  'bacaladilla': 'cod fillet',
+  'boquerón': 'anchovy',
+  'boquerones': 'anchovies',
+  'sardina': 'sardine',
+  'sardinas': 'sardines',
+  'atún': 'tuna',
+  'atunes': 'tunas',
+  'caballa': 'mackerel',
+  'caballas': 'mackerels',
+  'besugo': 'sea bream',
+  'besugos': 'sea breams',
+  'gallo': 'rooster',
+  'gallina': 'hen',
+  'pollo': 'chicken',
+  'pollos': 'chickens',
+  'pavo': 'turkey',
+  'cordero': 'lamb',
+  'cerdo': 'pork',
+  'ternera': 'beef',
+  'conejo': 'rabbit',
+  'conejos': 'rabbits',
+  'pato': 'duck',
+  'patos': 'ducks',
+  'yogur': 'yoghurt',
+  'flan': 'crème caramel',
+  'natilla': 'custard',
+  'arroz con leche': 'rice pudding',
+  'gelatina': 'jelly',
+  'macedonia': 'fruit salad',
+  'macedonia de frutas': 'fruit salad',
+  'bizcocho': 'sponge cake',
+  'bizcochos': 'sponge cakes',
+  'tarta': 'cake',
+  'tortas': 'cakes',
+  'galleta': 'biscuit',
+  'galletas': 'biscuits',
+  'helado': 'ice cream',
+  'helados': 'ice creams',
+  'sorbete': 'sorbet',
+  'sorbetes': 'sorbets',
+  'batido': 'milkshake',
+  'batidos': 'milkshakes',
+  'zumo': 'juice',
+  'zumos': 'juices',
+  'refresco': 'soft drink',
+  'refrescos': 'soft drinks',
+  'agua': 'water',
+  'aguas': 'waters',
+  'pan': 'bread',
+  'panes': 'breads',
+  'tostada': 'toast',
+  'tostadas': 'toasts',
+  'croissant': 'croissant',
+  'croissants': 'croissants',
+  'bollería': 'pastry',
+  'bollerías': 'pastries',
+  'brazo de gitano': 'jelly roll',
+  'pionono': 'pionono',
+  'rosquilla': 'doughnut',
+  'rosquillas': 'doughnuts',
+  'churro': 'churro',
+  'churros': 'churros',
+  'buñuelo': 'fritter',
+  'buñuelos': 'fritters',
+  'pancake': 'pancake',
+  'pancakes': 'pancakes',
+  'waffle': 'waffle',
+  'waffles': 'waffles',
+  'bagel': 'bagel',
+  'bagels': 'bagels',
+  'muffin': 'muffin',
+  'muffins': 'muffins',
+  'tostada con tomate': 'tomato toast',
+  'pan con tomate': 'tomato bread',
+  'pa amb tomàquet': 'tomato bread',
+};
+
+// Correcciones en inglés directo para errores comunes de Gemini
+const CORRECTOR_INGLES = {
+  'sedans': 'doughnuts',
+  'sedan': 'doughnut',
+  'sedans filled': 'doughnuts filled',
+  'sedan filled': 'doughnut filled',
+};
+
+function correctTranslation(text) {
+  if (!text) return text;
+  let corrected = text;
+  const lower = text.toLowerCase();
+  for (const [wrong, right] of Object.entries(CORRECTOR_PLATOS)) {
+    const pattern = new RegExp('\\b' + wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+    if (pattern.test(lower)) {
+      corrected = corrected.replace(pattern, right);
+    }
+  }
+  for (const [wrong, right] of Object.entries(CORRECTOR_INGLES)) {
+    const pattern = new RegExp('\\b' + wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+    if (pattern.test(lower)) {
+      corrected = corrected.replace(pattern, right);
+    }
+  }
+  return corrected;
+}
 
 function _applyTranslation(dishId, dish, en){
   dish.nombreEn = en;
@@ -1278,11 +1378,37 @@ let translateTimers = {};
 function autoTranslate(dishId) { markUnsaved(); clearTimeout(translateTimers[dishId]); translateTimers[dishId] = setTimeout(()=>manualTranslate(dishId), 1400); }
 async function manualTranslate(dishId) {
   const dish = state[currentMenuTab].platos.find(p=>p.id===dishId); if(!dish||!dish.nombreEs.trim()) return;
-  const en = await autoTranslateDish(dish);
-  if (en) _applyTranslation(dishId, dish, en);
+  const geminiKey = firebaseConfig.geminiApiKey;
+  if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: `You are translating Spanish dish names from a school cafeteria menu. Many Spanish food words have double meanings in English (e.g. "berlina" = doughnut, NOT sedan; "croqueta" = croquette, NOT anything else). Always choose the culinary meaning. Return ONLY the translation, nothing else, no explanations: ${dish.nombreEs.trim()}` }] }] })
+      });
+      const data = await resp.json();
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+       const en = correctTranslation(data.candidates[0].content.parts[0].text.trim());
+         _applyTranslation(dishId, dish, en);
+        return;
+      }
+    } catch(e){ console.warn('Gemini translation failed:', e); }
+  }
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(dish.nombreEs.trim())}&langpair=es|en`;
+    const json = await (await fetch(url)).json();
+    if (json.responseStatus===200) {
+      _applyTranslation(dishId, dish, toTitleCaseSmart(json.responseData.translatedText));
+    }
+  } catch(e){ console.warn(e); }
 }
-// toTitleCase loaded from utils.js
-
+function toTitleCase(str) { return str.toLowerCase().replace(/\b\w/g, c=>c.toUpperCase()); }
+// Title case natural: mantiene en minúscula palabras funcionales salvo la primera
+function toTitleCaseSmart(str){
+  const small = new Set(['with','in','and','of','the','a','an','on','to','sauce','style']);
+  const words = str.toLowerCase().split(/\s+/);
+  return words.map((w,i)=> (i>0 && small.has(w)) ? w : w.replace(/^[\wà-ÿ]/, c=>c.toUpperCase())).join(' ');
+}
 
 // ──────── PUBLISH MENU ────────
 async function publishMenu() {
@@ -1775,37 +1901,18 @@ if (document.readyState === 'loading') {
   initApp();
 }
 
-window.addEventListener('beforeunload', () => {
-  try {
-    if (typeof firebase !== 'undefined' && firebase.apps?.length) {
-      const db = firebase.database();
-      db.ref('menu/comedor').off();
-      db.ref('turnos').off();
-      db.ref('recordatorios').off();
-      db.ref('cierreComedor').off();
-    }
-  } catch(e) {}
-});
-
+// Initialize size control sliders
 function initSizeControls() {
   // Load current values from document.documentElement
   document.querySelectorAll('.size-control').forEach(ctrl => {
     const target = ctrl.dataset.target;
     const unit = ctrl.dataset.unit || '';
-    // Si es textScale, establecer valor inicial y actualizar display percentage
-    if (target === 'textScale') {
-      const currentStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-scale').trim();
-      const numericValue = parseFloat(currentStyle) || 1;
-      ctrl.value = numericValue;
-      updateScaleDisplay(ctrl);
-    } else {
-      const currentValue = getComputedStyle(document.documentElement).getPropertyValue(target).trim();
-      const numericValue = parseFloat(currentValue) || 0;
-      ctrl.value = numericValue;
-    }
+    const currentValue = getComputedStyle(document.documentElement).getPropertyValue(target).trim();
+    const numericValue = parseFloat(currentValue) || 0;
+    ctrl.value = numericValue;
     // Update display
     const displayCtrl = document.querySelector(`.size-display[data-display="${target}"]`);
-    if (displayCtrl) displayCtrl.value = ctrl.value;
+    if (displayCtrl) displayCtrl.value = numericValue;
   });
 
   // Handle slider changes
@@ -1819,42 +1926,39 @@ function initSizeControls() {
   });
 }
 
-function updateScaleDisplay(ctrl) {
-  const pct = Math.round(parseFloat(ctrl.value) * 100);
-  const pctDisplay = document.getElementById('textScalePct');
-  if (pctDisplay) pctDisplay.textContent = `${pct}%`;
-}
-
 function handleSizeChange(e) {
   const ctrl = e.target;
   const target = ctrl.dataset.target || ctrl.closest('.ajuste-row').querySelector('.size-control').dataset.target;
-  let value = parseFloat(ctrl.value) || 1;
+  let value = parseFloat(ctrl.value) || 0;
   const unit = ctrl.dataset.unit || '';
   
-  // Ensure valid range for scale
-  if (target === 'textScale') {
-    value = Math.max(0.5, Math.min(2.0, value));
-    ctrl.value = value;
-    updateScaleDisplay(ctrl);
-  } else {
+  // Ensure minimum values
+  if (ctrl.classList.contains('size-control')) {
     value = Math.max(0.1, Math.min(30, value));
     ctrl.value = value;
+    // Sync display
+    const displayCtrl = document.querySelector(`.size-display[data-display="${target}"]`);
+    if (displayCtrl) displayCtrl.value = value;
+  } else {
+    value = Math.max(0.1, Math.min(30, value));
+    // Sync slider
+    const sliderCtrl = document.querySelector(`.size-control[data-target="${target}"]`);
+    if (sliderCtrl) sliderCtrl.value = value;
   }
   
   // Apply to CSS (vista previa instantánea dentro de este mismo panel)
-  const cssProp = target === 'textScale' ? '--text-scale' : target;
-  const suffix = target === 'textScale' ? '' : unit;
-  document.documentElement.style.setProperty(cssProp, `${value}${suffix}`);
+  document.documentElement.style.setProperty(target, `${value}${unit}`);
   
-  // Guardar en localStorage al instante
+  // Guarda en localStorage al instante (por si gestión y TV comparten
+  // navegador) y en Firebase con un pequeño debounce, para que la TV
+  // reciba el cambio en tiempo real aunque esté en otro dispositivo —
+  // que es el caso normal de uso (PC de gestión + televisor aparte).
   saveTVSettings();
 }
 
 let tvSettingsSaveTimer = null;
 function saveTVSettings() {
-  const textScaleSlider = document.querySelector('.size-control[data-target="textScale"]');
   const settings = {
-    textScale: textScaleSlider ? textScaleSlider.value : '1',
     dishNameSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size').trim(),
     dishEnSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size').trim(),
     turnoTitleSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-title-size').trim(),
@@ -1872,33 +1976,13 @@ function saveTVSettings() {
   clearTimeout(tvSettingsSaveTimer);
   tvSettingsSaveTimer = setTimeout(() => {
     if (!fbReady) return;
-    firebase.database().ref('tvSettings').set(settings).catch(e => console.warn(e));
-    showToast('💾 Configuración guardada en Firebase', 'info');
+    firebase.database().ref('tvSettings').set(settings).catch(e => console.warn('tvSettings:', e));
   }, 400);
 }
 (function ensurePanelVisible() {
   const panel = document.getElementById('panel');
   if (panel && !panel.classList.contains('visible')) panel.classList.add('visible');
 })();
-
-function applyCalibrationToTV() {
-  // Recolectar la configuración actual del control de escala
-  const ctrl = document.querySelector('.size-control[data-target="textScale"]');
-  const textScale = ctrl ? parseFloat(ctrl.value) : 1;
-  if (!ctrl) return;
-  
-  // Construir la configuración a guardar (solo textScale, los demás se derivan en la TV)
-  const settings = { textScale: textScale.toString() };
-  
-  // Guardar en localStorage
-  localStorage.setItem('tvSettings', JSON.stringify(settings));
-  
-  // Guardar en Firebase (si está disponible)
-  if (fbReady) {
-    firebase.database().ref('tvSettings').set(settings).catch(e => console.warn('tvSettings:', e));
-  }
-  
-  // Mostrar feedback al usuario
-  showToast('💾 Configuración calibrada y guardada en Firebase', 'success');
-}
 </script>
+</body>
+</html>

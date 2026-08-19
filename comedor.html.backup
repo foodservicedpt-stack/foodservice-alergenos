@@ -7,63 +7,26 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="./firebase-config.js"></script>
-  <script src="./allergen-data.js"></script>
-  <script src="./utils.js"></script>
-  <script src="./translation.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      /* ── Unidades base ── */
-      --vp-min: 1vmin;                    /* 1% of smaller viewport dimension */
-      
-      /* ── ESCALA DE TEXTO (calibración desde gestión) ── */
-      --text-scale: 1;                     /* 1 = 100% normal; ajustado desde gestión */
-      
-      /* ── TEXT SIZES (main: dish names, countdown; secondary: EN, legend) ── */
-      --text-xs:    clamp(14px, calc(1.6vmin * var(--text-scale)), 20px);   /* timestamps, tiny UI      */
-      --text-sm:    clamp(24px, calc(3.5vmin * var(--text-scale)), 36px);   /* EN names, legend, labels   */
-      --text-base:  clamp(32px, calc(4.0vmin * var(--text-scale)), 48px);   /* Dish ES name (primary)    */
-      --text-lg:    clamp(40px, calc(5.0vmin * var(--text-scale)), 64px);   /* Turno titles, countdown    */
-      --text-xl:    clamp(56px, calc(7.0vmin * var(--text-scale)), 96px);   /* Hero numbers, clock       */
-
-      /* ── ICON SIZES ── */
-      --icon-xs:    clamp(24px, calc(2.8vmin * var(--text-scale)), 36px);   /* tiny UI icons            */
-      --icon-sm:    clamp(32px, calc(4.0vmin * var(--text-scale)), 52px);   /* legend, meta             */
-      --icon-base:  clamp(44px, calc(5.5vmin * var(--text-scale)), 72px);  /* Dish allergens (standard) */
-      --icon-lg:    clamp(64px, calc(8.0vmin * var(--text-scale)), 110px);  /* Hero: bell, escudo        */
-
-      /* ── SPACING (all derived from --text-base) ── */
-      --space-1:    calc(var(--text-base) * 0.125);  /* 4–6px                 */
-      --space-2:    calc(var(--text-base) * 0.25);   /* 8–12px                */
-      --space-3:    calc(var(--text-base) * 0.5);    /* 16–24px               */
-      --space-4:    calc(var(--text-base) * 1);      /* 32–48px               */
-      --space-5:    calc(var(--text-base) * 1.5);    /* 48–72px               */
-
-      /* ── HEADER ── */
-      --header-h: 10vh;
-
-      /* ── DISH (pueden ser sobrescritos por la calibración de gestión) ── */
-      --dish-name-size:   var(--text-base);
-      --dish-en-size:     var(--text-sm);
-      --dish-pad:         var(--space-2);
-
-      /* ── TURNO OVERLAY ── */
-      --turno-title-size:        var(--text-lg);
-      --turno-msg-es-size:       var(--text-xl);
-      --turno-msg-en-size:       var(--text-base);
-      --turno-countdown-size:    var(--text-lg);
-      --carousel-es-size:        var(--text-base);
-      --carousel-en-size:        var(--text-sm);
-      --carousel-farewell-es-size: var(--text-xl);
-      --carousel-farewell-en-size: var(--text-lg);
-
-      /* ── LEGEND ── */
-      --legend-icon:   var(--icon-sm);
-      --legend-text:   var(--text-sm);
-
-      /* ── FOOTER ── */
-      --footer-h: 6vh;
+      --dish-name-size: 6vw;
+      --dish-en-size: 2.2vw;
+      --icon-size: 5.5vw;
+      --icon-gap: 0.6vw;
+      --dish-pad: 1.4vw;
+      --legend-icon: 3vw;
+      --legend-text: 1.4vw;
+      --header-h: 11vh;
+      --turno-title-size: 2.2vw;
+      --turno-msg-es-size: 3.2vw;
+      --turno-msg-en-size: 2vw;
+      --turno-countdown-size: 2vw;
+      --carousel-es-size: 2.8vw;
+      --carousel-en-size: 1.8vw;
+      --carousel-farewell-es-size: 4.2vw;
+      --carousel-farewell-en-size: 2.2vw;
     }
 
     html, body {
@@ -84,35 +47,35 @@
     }
     .header-logo { height: 75%; max-height: 80px; object-fit: contain; filter: brightness(1.15) drop-shadow(0 0 10px rgba(96,165,250,0.3)); }
     .header-divider { width: 3px; height: 55%; background: rgba(255,255,255,0.2); border-radius: 2px; }
-    .header-title .es { font-size: var(--text-lg); font-weight: 900; letter-spacing: 3px; color: #ffffff; text-transform: uppercase; }
-    .header-title .en { font-size: var(--text-sm); color: #93c5fd; letter-spacing: 4px; text-transform: uppercase; font-style: italic; }
+    .header-title .es { font-size: clamp(22px,3.5vw,52px); font-weight: 900; letter-spacing: 3px; color: #ffffff; text-transform: uppercase; }
+    .header-title .en { font-size: clamp(11px,1.4vw,22px); color: #93c5fd; letter-spacing: 4px; text-transform: uppercase; font-style: italic; }
     .header-spacer { flex: 1; }
     .header-datetime { text-align: right; color: white; line-height: 1.3; }
-    .header-date { font-size: var(--text-base); font-weight: 700; color: #e0f2fe; text-transform: none; }
-    .header-time { font-size: var(--text-xl); font-weight: 900; color: #7dd3fc; letter-spacing: 2px; }
+    .header-date { font-size: clamp(14px,1.8vw,28px); font-weight: 700; color: #e0f2fe; text-transform: none; }
+    .header-time { font-size: clamp(20px,3vw,48px); font-weight: 900; color: #7dd3fc; letter-spacing: 2px; }
 
     /* ─── BODY ─── */
     .body { display: flex; flex: 1; min-height: 0; padding: 1.2vw; gap: 1.2vw; }
 
     /* ─── MAIN COL ─── */
-    .main-col { flex: 1; display: flex; flex-direction: column; gap: 0.5vw; min-height: 0; overflow: hidden; }
+    .main-col { flex: 1; display: flex; flex-direction: column; gap: 0.7vw; min-height: 0; overflow: hidden; }
 
     /* ─── DISH ROW ─── */
     .dish-row {
       background: #ffffff; border-radius: 14px;
-      padding: 0.6vw 1vw;
-      display: flex; align-items: center;
+      padding: var(--dish-pad) calc(var(--dish-pad) * 1.2);
+      display: flex; align-items: flex-start;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      flex: 1 1 0; min-height: 0;
+      flex: 1; min-height: 6vw; flex-shrink: 0;
       border-left: 5px solid transparent;
       overflow: hidden;
-      gap: 1vw;
+      gap: 0.7vw;
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
     .dish-row:nth-child(even) { border-left-color: #10b981; }
     @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
 
-    .dish-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.3vw; }
+    .dish-info { flex: 1; padding-right: 0.4vw; min-width: 0; display: flex; flex-direction: column; gap: 0.45vw; }
     .dish-name-es {
       font-size: var(--dish-name-size); font-weight: 900; color: #0f172a;
       text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.08;
@@ -120,7 +83,7 @@
       display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
     }
     .dish-name-en {
-      font-size: calc(var(--dish-en-size)); color: #334155; font-style: italic; line-height: 1.1;
+      font-size: calc(var(--dish-en-size) * 1.15); color: #64748b; font-style: italic; line-height: 1.1;
       white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
       display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
     }
@@ -139,91 +102,53 @@
       line-height: 1.15; overflow-wrap: anywhere;
     }
 
-    /* ─── ALLERGEN ICONS ── */
-    .dish-allergens {
-      display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
-      gap: 0.15vw; flex-shrink: 0; margin-left: auto;
-    }
-    .allergen-section { display: flex; flex-direction: row; align-items: center; gap: 0.25vw; }
-    .section-label {
-      font-size: clamp(8px, 0.65vw, 11px); font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.5px; padding: 0.08vw 0.4vw; border-radius: 3px; line-height: 1.1;
-      white-space: nowrap;
-    }
-    .contain-label { color: #1e40af; background: #dbeafe; }
-    .trace-label { color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; }
-    .allergen-grid {
-      display: flex; flex-wrap: wrap; gap: 0.35vw; justify-content: flex-end;
-    }
+    /* ─── ALLERGEN ICONS ─── */
+    .dish-allergens { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.3vw; flex-shrink: 0; width: min(32%, 320px); max-width: 320px; margin-left: 0.4vw; }
+    .allergen-row { display: flex; align-items: center; gap: var(--icon-gap); flex-wrap: wrap; justify-content: flex-start; max-width: 100%; }
     .alg-icon-wrap {
-      width: var(--icon-base); height: var(--icon-base);
+      width: var(--icon-size); height: var(--icon-size); overflow: hidden;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; position: relative;
+      flex-shrink: 0;
     }
-    .alg-bg {
-      position: absolute; inset: 0; border-radius: 50%;
-      width: 100%; height: 100%; z-index: 1;
-    }
-    .alg-icon-wrap img {
-      width: 80%; height: 80%; object-fit: contain;
-      position: relative; z-index: 2;
-    }
-    .alg-code {
-      position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-      font-size: clamp(7px, 0.6vw, 11px); font-weight: 900; color: #fff;
-      line-height: 1; padding: 1px 3px; border-radius: 2px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.6); pointer-events: none;
-      z-index: 3; white-space: nowrap;
-    }
+    .alg-icon-wrap img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
     .alg-icon-wrap.trace-icon { opacity: 0.75; }
+    .trace-label {
+      font-size: calc(var(--icon-size) * 0.28); font-weight: 800; color: #92400e;
+      background: #fef3c7; border: 2px solid #fcd34d; border-radius: 50px;
+      padding: 0.2vw 0.7vw; letter-spacing: 0.5px; white-space: nowrap;
+      line-height: 1.1; text-align: left; max-width: 100%;
+    }
     .no-allergen {
-      background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 8px;
-      padding: 0.25vw 0.5vw; color: #065f46; font-weight: 800;
-      display: inline-flex; align-items: center; gap: 0.3vw;
-      white-space: nowrap; font-size: clamp(10px, 0.85vw, 14px);
+      background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 12px;
+      padding: 0.55vw 1.1vw; color: #065f46; font-weight: 800;
+      font-size: calc(var(--dish-en-size) * 1.05 * var(--no-allergen-scale, 1));
+      display: flex; flex-direction: row; align-items: center; gap: 0.7vw;
+      max-width: 100%; width: auto; flex-wrap: nowrap;
     }
     .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
     .no-allergen .shield-ok svg {
-      width: clamp(18px, 2vw, 30px); height: clamp(18px, 2vw, 30px);
+      width: calc(var(--dish-name-size) * 1.15); height: calc(var(--dish-name-size) * 1.15);
       filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
     }
-    .no-allergen .shield-ok svg path { stroke: var(--success); }
-    .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.15; }
-    .no-allergen-txt .es { font-size: clamp(11px, 1vw, 16px); white-space: nowrap; }
-    .no-allergen-txt .en { font-style: italic; font-size: clamp(9px, 0.8vw, 13px); opacity: 0.8; font-weight: 600; white-space: nowrap; }
-    .sin-gluten-note {
-      background: #f0fdf4; border: 1px solid #86efac; border-radius: 5px;
-      padding: 0.15vw 0.4vw; font-size: clamp(8px, 0.7vw, 12px); color: #166534;
-      line-height: 1.1; align-self: flex-start; margin-top: 0.15vw;
-      display: flex; align-items: center; gap: 0.3vw;
-    }
-    .sin-gluten-icon {
-      position: relative; width: clamp(14px, 1.3vw, 20px); height: clamp(14px, 1.3vw, 20px);
-      flex-shrink: 0; display: inline-flex;
-    }
-    .sin-gluten-icon img { width: 100%; height: 100%; object-fit: contain; }
-    .sin-gluten-icon svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-    .sin-gluten-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
-    .sin-gluten-text .sin-gluten-es { font-weight: 800; color: #166534; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sin-gluten-text .sin-gluten-en { font-style: italic; color: #4d7c4d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+    .no-allergen-txt .es { white-space: normal; overflow-wrap: anywhere; }
+    .no-allergen .en { font-style: italic; font-size: 0.82em; opacity: 0.7; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
-      width: 16vw; background: white; border-radius: 14px;
-      padding: 0.8vw 0.6vw; display: flex; flex-direction: column;
+      width: 20vw; background: white; border-radius: 14px;
+      padding: 1vw 0.8vw; display: flex; flex-direction: column;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      flex-shrink: 0; max-height: 100%; overflow: hidden;
     }
-    .legend-title { font-size: 1vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4vw; margin-bottom: 0.4vw; flex-shrink: 0; }
+    .legend-title { font-size: 1.2vw; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5vw; margin-bottom: 0.6vw; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
-    .legend-list { display: flex; flex-direction: column; justify-content: space-between; align-content: stretch; flex: 1; min-height: 0; }
-    .legend-item { display: flex; align-items: center; gap: 0.35vw; flex: 0 0 auto; }
-    .legend-circle { width: 2.1vw; height: 2.1vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .legend-list { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-content: space-between; flex: 1; }
+    .legend-item { display: flex; align-items: center; gap: 0.45vw; flex: 0 0 auto; }
+    .legend-circle { width: 3.4vw; height: 3.4vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
     .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-    .legend-text-wrap { line-height: 1.1; min-width: 0; overflow: hidden; }
-    .legend-code { font-size: clamp(8px, 0.65vw, 11px); font-weight: 900; white-space: nowrap; }
-    .legend-es { font-size: clamp(9px, 1vw, 14px); font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .legend-en { font-size: clamp(7px, 0.8vw, 12px); color: #64748b; font-style: italic; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .legend-text-wrap { line-height: 1.15; min-width: 0; }
+    .legend-es { font-size: 1.1vw; font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; white-space: nowrap; }
+    .legend-en { font-size: 0.92vw; color: #64748b; font-style: italic; display: block; white-space: nowrap; }
 
     /* ─── FOOTER ─── */
     .footer { background: #0b1f3a; padding: 0.5vw 2.5vw; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
@@ -231,12 +156,7 @@
     .footer-updated { color: #94a3b8; font-size: clamp(9px,0.9vw,13px); }
     .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 6px; animation: blink 2s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-    /* ── PAGINACIÓN DE PLATOS ── */
-.dish-pagination { display: flex; justify-content: center; gap: 8px; padding: 10px 0; flex-shrink: 0; }
-.page-dot { width: clamp(12px, 1.5vmin, 16px); height: clamp(12px, 1.5vmin, 16px); border-radius: 50%; background: rgba(255,255,255,0.4); border: 2px solid rgba(0,0,0,0.3); transition: all 0.2s; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-.page-dot.active { background: #3b82f6; border-color: #1e40af; transform: scale(1.3); box-shadow: 0 2px 10px rgba(59,130,246,0.4); }
-
-.no-data { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; gap: 16px; }
+    .no-data { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; gap: 16px; }
     .no-data .icon { font-size: 5vw; }
     .no-data p { font-size: 2vw; font-weight: 600; }
     .no-data small { font-size: 1.2vw; opacity: 0.7; }
@@ -508,7 +428,6 @@
 
   <div class="body">
     <div class="main-col" id="main-col">
-      <div class="dish-pagination" id="dish-pagination" style="display:none;"></div>
       <div class="no-data">
         <span class="icon">⏳</span>
         <p>Conectando con Firebase...</p>
@@ -533,10 +452,11 @@
   <div class="cierre-card">
     <img src="./img/Encabezado.png" alt="Food Service DPT" class="cierre-logo" onerror="this.style.display='none'">
     <div class="cierre-kicker">Food Service DPT</div>
-    <div class="cierre-title">COMEDOR CERRADO</div>
-    <div class="cierre-message-en">DINING ROOM CLOSED</div>
+    <div class="cierre-title">Comedor cerrado</div>
+    <div class="cierre-message-es" id="cierre-message-es">El comedor está cerrado</div>
+    <div class="cierre-message-en" id="cierre-message-en">The dining room is closed</div>
     <div class="cierre-clock-wrap">
-      <div class="cierre-clock" id="cierre-clock">--:--</div>
+      <div class="cierre-clock" id="cierre-clock">--:--:--</div>
     </div>
   </div>
 </div>
@@ -570,6 +490,26 @@
 </div>
 
 <script>
+// ══════════════════════════════════════════════
+//  ALÉRGENOS
+// ══════════════════════════════════════════════
+const ALLERGENS = [
+  { id:'gluten',     es:'GLUTEN',     en:'Gluten',      color:'#e67e22', icon:'./img/alergenos_gluten.svg'     },
+  { id:'crustaceos', es:'CRUSTÁCEOS', en:'Crustaceans', color:'#3498db', icon:'./img/alergenos_crustaceos.svg' },
+  { id:'huevos',     es:'HUEVOS',     en:'Eggs',        color:'#f39c12', icon:'./img/alergenos_huevos.svg'     },
+  { id:'pescado',    es:'PESCADO',    en:'Fish',        color:'#2c3e50', icon:'./img/alergenos_pescado.svg'    },
+  { id:'cacahuetes', es:'CACAHUETES', en:'Peanuts',     color:'#d35400', icon:'./img/alergenos_cacahuetes.svg' },
+  { id:'soja',       es:'SOJA',       en:'Soy',         color:'#27ae60', icon:'./img/alergenos_soja.svg'       },
+  { id:'lacteos',    es:'LÁCTEOS',    en:'Dairy',       color:'#5d4037', icon:'./img/alergenos_lacteos.svg'    },
+  { id:'cascara',    es:'F.CÁSCARA',  en:'Tree nuts',   color:'#c0392b', icon:'./img/alergenos_cascara.svg'    },
+  { id:'apio',       es:'APIO',       en:'Celery',      color:'#8bc34a', icon:'./img/alergenos_apio.svg'       },
+  { id:'mostaza',    es:'MOSTAZA',    en:'Mustard',     color:'#b8860b', icon:'./img/alergenos_mostaza.svg'    },
+  { id:'sesamo',     es:'SÉSAMO',     en:'Sesame',      color:'#7f8c8d', icon:'./img/alergenos_sesamo.svg'     },
+  { id:'sulfitos',   es:'SULFITOS',   en:'Sulphites',   color:'#8e44ad', icon:'./img/alergenos_sulfitos.svg'   },
+  { id:'moluscos',   es:'MOLUSCOS',   en:'Molluscs',    color:'#1abc9c', icon:'./img/alergenos_moluscos.svg'   },
+  { id:'altramuces', es:'ALTRAMUCES', en:'Lupins',      color:'#f1c40f', icon:'./img/alergenos_altramuces.svg' }
+];
+
 // ══════════════════════════════════════════════
 //  ESTADO TURNOS
 // ══════════════════════════════════════════════
@@ -626,6 +566,8 @@ function refreshCierre() {
   const active = cierreActivo();
   overlay.classList.toggle('visible', active);
   if (!active) return;
+  document.getElementById('cierre-message-es').textContent = cierreConfig?.mensajeEs || 'El comedor está cerrado';
+  document.getElementById('cierre-message-en').textContent = cierreConfig?.mensajeEn || 'The dining room is closed';
   updateCierreClock();
   // El cierre tiene prioridad sobre los avisos temporales de turno.
   dismissTurno();
@@ -634,8 +576,9 @@ function updateCierreClock() {
   const now = new Date();
   const hh = String(now.getHours()).padStart(2,'0');
   const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
   const el = document.getElementById('cierre-clock');
-  if (el) el.textContent = `${hh}:${mm}`;
+  if (el) el.textContent = `${hh}:${mm}:${ss}`;
 }
 
 // ══════════════════════════════════════════════
@@ -745,52 +688,43 @@ function showTurno(t) {
   }, 1000);
 }
 
-// Garantiza que el overlay de turno respete siempre los suelos de legibilidad
-// definidos en :root mediante clamp(). Sólo ajusta espacios y rellenos, NUNCA
-// reduce el tamaño de fuente por debajo de los mínimos establecidos.
+// Autoajuste del aviso de turno, siguiendo el mismo principio usado por
+// el menú, los iconos y la leyenda. Evita que el texto o la cuenta atrás
+// se salgan de la tarjeta en pantallas pequeñas o con mucha altura reducida.
 function fitTurnoOverlay() {
   const card = document.getElementById('turno-card-tv');
   if (!card || !card.classList) return;
 
   const root = document.documentElement.style;
-  const availableH = window.innerHeight * 0.92;
-  const availableW = Math.min(1600, window.innerWidth * 0.92);
-  const cardH = card.scrollHeight;
+  const availableW = Math.max(260, card.clientWidth - 48);
+  const availableH = Math.max(180, window.innerHeight * 0.92);
+  const scale = Math.min(1, availableW / 1100, availableH / 760);
 
-  // 1) Si la card es más alta que el viewport, reducimos padding/gaps FIRST
-  if (cardH > availableH) {
-    const scale = Math.max(0.5, availableH / cardH); // nunca bajamos de 50%
-    const newPad = Math.max(16, 48 * scale);
-    card.style.padding = `${newPad}px ${Math.max(24, 80 * scale)}px`;
-    // Reducir min-height del carousel si existe
-    const carousel = document.getElementById('turno-carousel');
-    if (carousel) {
-      carousel.style.minHeight = Math.max(20, 36 * scale) + 'vh';
-    }
+  root.setProperty('--turno-title-size', Math.max(14, Math.min(36, 34 * scale)) + 'px');
+  root.setProperty('--turno-msg-es-size', Math.max(18, Math.min(52, 48 * scale)) + 'px');
+  root.setProperty('--turno-msg-en-size', Math.max(13, Math.min(30, 28 * scale)) + 'px');
+  root.setProperty('--turno-countdown-size', Math.max(12, Math.min(30, 26 * scale)) + 'px');
+  root.setProperty('--carousel-es-size', Math.max(16, Math.min(42, 38 * scale)) + 'px');
+  root.setProperty('--carousel-en-size', Math.max(12, Math.min(26, 24 * scale)) + 'px');
+  // El mensaje de despedida no comparte espacio con ninguna imagen, así que
+  // puede permitirse un tamaño bastante mayor que el resto de slides.
+  root.setProperty('--carousel-farewell-es-size', Math.max(22, Math.min(64, 56 * scale)) + 'px');
+  root.setProperty('--carousel-farewell-en-size', Math.max(14, Math.min(34, 30 * scale)) + 'px');
+
+  // Si el conjunto sigue sin caber, reduce gradualmente TODOS los tamaños
+  // (no solo la cuenta atrás) hasta que la tarjeta quepa en el televisor.
+  const shrinkVars = [
+    '--turno-title-size', '--turno-msg-es-size', '--turno-msg-en-size',
+    '--turno-countdown-size', '--carousel-es-size', '--carousel-en-size',
+    '--carousel-farewell-es-size', '--carousel-farewell-en-size'
+  ];
+  let guard = 0;
+  while (card.scrollHeight > window.innerHeight * 0.94 && guard++ < 10) {
+    shrinkVars.forEach(name => {
+      const current = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 20;
+      root.setProperty(name, Math.max(11, current * 0.94) + 'px');
+    });
   }
-
-  // 2) Asegurar que las variables CSS no se hayan ido por debajo de sus floors.
-  //    clamp() ya hace esto, pero forzamos lectura/escritura para "traer" el valor
-  //    calculado a style resolvido en caso de que alguien lo haya modificado.
-  const safeTitle = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--turno-title-size')) || 24, 24);
-  const safeMsgEs = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--turno-msg-es-size')) || 36, 36);
-  const safeMsgEn = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--turno-msg-en-size')) || 22, 22);
-  const safeCountdown = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--turno-countdown-size')) || 24, 24);
-  const safeCarouselEs = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-es-size')) || 32, 32);
-  const safeCarouselEn = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-en-size')) || 20, 20);
-  const safeFarewellEs = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-farewell-es-size')) || 44, 44);
-  const safeFarewellEn = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-farewell-en-size')) || 26, 26);
-
-  // Aplicar los seguros (esto es prácticamente un no-op si clamp() funciona,
-  // pero asegura que el DOM tenga el valor correcto resuelto)
-  root.setProperty('--turno-title-size', safeTitle + 'px');
-  root.setProperty('--turno-msg-es-size', safeMsgEs + 'px');
-  root.setProperty('--turno-msg-en-size', safeMsgEn + 'px');
-  root.setProperty('--turno-countdown-size', safeCountdown + 'px');
-  root.setProperty('--carousel-es-size', safeCarouselEs + 'px');
-  root.setProperty('--carousel-en-size', safeCarouselEn + 'px');
-  root.setProperty('--carousel-farewell-es-size', safeFarewellEs + 'px');
-  root.setProperty('--carousel-farewell-en-size', safeFarewellEn + 'px');
 }
 
 function updateCountdownUI(hora) {
@@ -950,288 +884,137 @@ function formatDateEs(dateStr) {
   const weekdayCapitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
   return `${weekdayCapitalized}, ${day} de ${month} de ${year}`;
 }
-
-// ── PAGINACIÓN Y ROTACIÓN DE PLATOS ──
-// En lugar de reducir fuentes hasta la ilegibilidad, dividimos los platos
-// en páginas que caben en el contenedor y rotamos automáticamente cada X s.
-// Si hay una sola página, no hay rotación ni puntos de paginación.
-
-let dishPagination = {
-  pages: [],           // Array de arrays: cada sub-array es una página de platos
-  current: 0,        // Índice de página actual
-  timer: null,       // setInterval timer
-  interval: 8000,    /* ms entre cambios de página (mínimo para leer con comodidad) */
-  isPaused: false,   /* true mientras el ratón esté sobre el área de platos */
-  totalDwellMs: 8000,
-  minDwellMs: 5000
-};
-
-function dishRowHeight() {
-  const first = document.querySelector('.dish-row');
-  if (!first) return 0;
-  const r = first.getBoundingClientRect();
-  return r.height;
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-function calculatePages(platos) {
-  const mainCol = document.getElementById('main-col');
-  if (!mainCol) return { pages: [], totalPages: 0, dwellMs: 8000 };
+// ══════════════════════════════════════════════
+//  AUTO-SIZING
+// ══════════════════════════════════════════════
+let sizeResizeObserver = null;
+// Si desde gestión se fija un tamaño manual de letra para los platos, se
+// usa como punto de partida en vez de la fórmula automática — pero el
+// bucle de fitDishRows() lo sigue protegiendo contra cortes reales.
+let manualDishSize = null;
+function adjustSizes(rowsCount, rowHeight) {
+  const root = document.documentElement.style;
+  const headerH = document.querySelector('.header')?.getBoundingClientRect().height || window.innerHeight * 0.11;
+  const sidebarW = document.querySelector('.sidebar')?.getBoundingClientRect().width || window.innerWidth * 0.19;
+  const availH = Math.max(100, window.innerHeight - headerH - 40);
+  const availW = Math.max(200, window.innerWidth - sidebarW - 40);
 
-  const availableH = mainCol.clientHeight;
-  let rowH = dishRowHeight();
-  if (rowH === 0) {
-    // Primer render: aún no hay filas que medir. Estimamos con un máximo
-    // razonable de filas y luego recomputeDishPagination() lo recalcula.
-    rowH = availableH > 0 ? availableH / 6 : 120;
-  }
-  if (availableH === 0) {
-    // Entorno sin layout (tests) o contenedor aún no dimensionado:
-    // usamos una altura nominal para no devolver páginas vacías.
-    return {
-      pages: platos.map(p => [p]),
-      totalPages: platos.length,
-      dwellMs: 8000,
-      rotationEnabled: false
-    };
-  }
-
-  const maxRows = Math.max(1, Math.floor(availableH / rowH));
-  const pages = [];
-  for (let i = 0; i < platos.length; i += maxRows) {
-    pages.push(platos.slice(i, i + maxRows));
+  let dishH = availH;
+  if (typeof rowHeight === 'number' && rowHeight > 0) {
+    dishH = Math.min(availH / Math.max(1, rowsCount), rowHeight * 2.2);
+  } else if (rowsCount > 0) {
+    dishH = Math.max(60, availH / rowsCount);
   }
 
-  const total = pages.length;
-  const dwellMs = dishPagination.totalDwellMs;
-  // If only one page, no rotation needed
-  if (total <= 1) {
-    dishPagination.pages = pages;
-    dishPagination.current = 0;
-    dishPagination.timer = null;
-    dishPagination.interval = 8000;
-    dishPagination.isPaused = false;
-    return { pages, totalPages: total, dwellMs, rotationEnabled: false };
-  }
+  const nameFs = Math.max(16, Math.min(dishH * 0.45, availW * 0.040));
+  const enFs = Math.max(12, Math.min(nameFs * 0.42, 24));
+  const iconSize = Math.max(24, Math.min(dishH * 0.48, availW * 0.055));
+  const legendIcon = Math.max(18, Math.min(iconSize, 60));
+  const legendText = Math.max(12, Math.min(legendIcon * 0.40, 16));
 
-  dishPagination.pages = pages;
-  dishPagination.current = 0;
-  dishPagination.totalDwellMs = dwellMs;
-  dishPagination.minDwellMs = 5000;
-  dishPagination.dwellMs = dwellMs;
-  dishPagination.rotationEnabled = true;
-  return { pages, totalPages: total, dwellMs, rotationEnabled: true };
+  root.setProperty('--dish-name-size', nameFs + 'px');
+  root.setProperty('--dish-en-size', enFs + 'px');
+  root.setProperty('--icon-size', iconSize + 'px');
+  root.setProperty('--icon-gap', Math.max(4, iconSize * 0.12) + 'px');
+  root.setProperty('--dish-pad', Math.max(8, dishH * 0.18) + 'px');
+  root.setProperty('--legend-icon', legendIcon + 'px');
+  root.setProperty('--legend-text', legendText + 'px');
 }
-
-// Renderizar la página actual de platos
-function renderDishPage(pageIndex) {
+function startSizeAutoAdjust() {
+  stopSizeAutoAdjust();
   const mainCol = document.getElementById('main-col');
   if (!mainCol) return;
-  const page = dishPagination.pages[pageIndex];
-  if (!page) return;
+  const ro = new ResizeObserver(() => requestAnimationFrame(fitDishRows));
+  ro.observe(mainCol);
+  sizeResizeObserver = ro;
+}
+function stopSizeAutoAdjust() {
+  if (sizeResizeObserver) {
+    sizeResizeObserver.disconnect();
+    sizeResizeObserver = null;
+  }
+}
 
-  // Desvanecer salida / entrar página nueva
-  mainCol.style.transition = 'opacity 220ms ease, transform 220ms ease';
-  mainCol.style.opacity = 0;
-  mainCol.style.transform = 'translateY(6px)';
-
-  // Limpiar filas previas (preservando el contenedor dish-pagination)
-  mainCol.querySelectorAll('.dish-row, .no-data').forEach(el => el.remove());
-  page.forEach(p => {
-    const row = createDishRow(p);
-    mainCol.insertAdjacentHTML('beforeend', row);
+// Comprueba si algo se está cortando de verdad: bien porque el nombre de
+// un plato necesita más de 2 líneas y el navegador lo recorta con "…",
+// bien porque las filas de platos en conjunto ya no caben en la columna
+// (lo que dejaría el último plato invisible fuera de pantalla — el peor
+// caso posible). Un elemento con line-clamp recortado siempre tiene
+// scrollHeight > clientHeight; es la forma estándar de detectarlo.
+function dishContentOverflows(mainCol, rows) {
+  if (mainCol.scrollHeight > mainCol.clientHeight + 1) return true;
+  return rows.some(r => {
+    const nameEl = r.querySelector('.dish-name-es');
+    const enEl = r.querySelector('.dish-name-en');
+    const allergensEl = r.querySelector('.dish-allergens');
+    return (nameEl && nameEl.scrollHeight > nameEl.clientHeight + 1) ||
+           (enEl && enEl.scrollHeight > enEl.clientHeight + 1) ||
+           (allergensEl && allergensEl.scrollHeight > allergensEl.clientHeight + 1);
   });
-
-  // Reaparecer
-  requestAnimationFrame(() => {
-    mainCol.style.opacity = '';
-    mainCol.style.transform = '';
-  });
-
-  // Actualizar indicador de página
-  setDishPageDotsHTML();
 }
 
-// Navegación manual: siguiente página
-function nextDishPage() {
-  if (!dishPagination.rotationEnabled) return;
-  const n = (dishPagination.current + 1) % dishPagination.pages.length;
-  goToDishPage(n);
-}
-
-// Navegación manual: página anterior
-function prevDishPage() {
-  if (!dishPagination.rotationEnabled) return;
-  const n = (dishPagination.current - 1 + dishPagination.pages.length) % dishPagination.pages.length;
-  goToDishPage(n);
-}
-
-// Ir a página directa (usado por los puntos)
-function goToDishPage(n) {
-  if (!dishPagination.rotationEnabled) return;
-  dishPagination.current = n;
-  stopRotation(); // stop any auto-rotation first
-  renderDishPage(n);
-  startRotation(); // restart timer
-}
-
-// Controles de paginación (por si hay controles manuales HTML)
-function setDishPageDotsHTML() {
-  const container = document.getElementById('dish-pagination');
-  if (!container) return;
-  if (dishPagination.pages.length <= 1) {
-    container.style.display = 'none';
-    return;
-  }
-  container.style.display = 'flex';
-  const dots = dishPagination.pages.map((_, i) =>
-    `<button class="page-dot${i === dishPagination.current ? ' active' : ''}"
-            aria-label="Ir a página ${i + 1}" onclick="goToDishPage(${i})"></button>`
-  ).join('');
-  container.innerHTML = dots;
-}
-
-// Iniciar rotación automática
-function startRotation() {
-  if (!dishPagination.rotationEnabled || dishPagination.pages.length <= 1) return;
-  stopRotation(); // asegura que no haya timers previos
-  dishPagination.timer = setInterval(() => {
-    if (dishPagination.isPaused) return;
-    const n = (dishPagination.current + 1) % dishPagination.pages.length;
-    goToDishPage(n);
-  }, dishPagination.interval);
-}
-
-// Detener rotación
-function stopRotation() {
-  if (dishPagination.timer) {
-    clearInterval(dishPagination.timer);
-    dishPagination.timer = null;
+// Evita que el badge "Libre de alérgenos" se salga de su columna y tape el
+// nombre del plato. Se resetea a escala 1 en cada pasada y solo se reduce
+// si el ancho real del texto no cabe de verdad.
+function fitNoAllergenBadges() {
+  const badges = [...document.querySelectorAll('.no-allergen')];
+  if (!badges.length) return;
+  const root = document.documentElement.style;
+  root.setProperty('--no-allergen-scale', '1');
+  let scale = 1, guard = 0;
+  const overflowing = () => badges.some(b => b.scrollWidth > b.parentElement.clientWidth + 1);
+  while (overflowing() && guard++ < 12) {
+    scale *= 0.94;
+    root.setProperty('--no-allergen-scale', scale.toFixed(3));
   }
 }
 
-// Resetear timer (por ejemplo, al pasar el ratón)
-function resetRotationTimer() {
-  stopRotation();
-  startRotation();
-}
-
-// Marcar que el ratón está sobre el área de platos (pausar rotación)
-function pauseRotation() {
-  dishPagination.isPaused = true;
-}
-function resumeRotation() {
-  dishPagination.isPaused = false;
-  resetRotationTimer();
-}
-
-// ── RENDERER DE FILA DE PLATO (extraído para usar en paginación) ──
-function createDishRow(plato) {
-  const contiene = plato.contiene || [];
-  const trazas = plato.trazas || [];
-
-  const containIcons = [];
-  contiene.forEach(id => {
-    const a = ALLERGENS.find(x => x.id === id);
-    if (a) containIcons.push(`<div class="alg-icon-wrap" style="--alg-color:${a.color}" title="${a.es}"><div class="alg-bg" style="background:${a.color}"></div><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"><span class="alg-code">${a.id.substring(0,2).toUpperCase()}</span></div>`);
-  });
-
-  const traceIcons = [];
-  trazas.forEach(id => {
-    const a = ALLERGENS.find(x => x.id === id);
-    if (a) traceIcons.push(`<div class="alg-icon-wrap trace-icon" style="--alg-color:${a.color}" title="${a.es}"><div class="alg-bg" style="background:${a.color};opacity:0.15"></div><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"><span class="alg-code" style="opacity:0.75">${a.id.substring(0,2).toUpperCase()}</span></div>`);
-  });
-
-  let allergensHtml = '';
-  if (contiene.length === 0 && trazas.length === 0) {
-    allergensHtml = `<div class="no-allergen">
-      <span class="shield-ok" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M12 2 L20 5 V11 C20 16.2 16.4 19.8 12 22 C7.6 19.8 4 16.2 4 11 V5 Z" fill="#16a34a"/><path d="M7.5 12.3 l3 3 l5.5 -6.5" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <span class="no-allergen-txt"><span class="es">Libre de alérgenos</span><span class="en">Allergen-free</span></span>
-    </div>`;
-  } else {
-    if (containIcons.length > 0) {
-      allergensHtml += `<div class="allergen-section contain"><span class="section-label contain-label">CONTIENE</span><div class="allergen-grid">${containIcons.join('')}</div></div>`;
-    }
-    if (traceIcons.length > 0) {
-      allergensHtml += `<div class="allergen-section traces"><span class="section-label trace-label">⚠ TRAZAS</span><div class="allergen-grid traces-grid">${traceIcons.join('')}</div></div>`;
-    }
-  }
-
-  const noGlutenSvg = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#16a34a"/><path d="M8 12.5l2.5 2.5 5.5-6.5" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  const sinGlutenHtml = plato.sinGluten
-    ? `<div class="sin-gluten-note"><span class="sin-gluten-icon"><img src="./img/alergenos_gluten.svg" alt="" aria-hidden="true">${noGlutenSvg}</span><span class="sin-gluten-text"><span class="sin-gluten-es">Opción sin gluten disponible, pregunte al personal</span><span class="sin-gluten-en">Gluten-free option available, please ask staff</span></span></div>`
-    : '';
-
-  return `
-    <article class="dish-row" role="listitem" aria-label="${plato.nombreEs || 'Plato sin nombre'}">
-      <div class="dish-content">
-        <h3 class="dish-name-es">${plato.nombreEs || 'PLATO SIN NOMBRE'}</h3>
-        ${plato.nombreEn ? `<p class="dish-name-en">${plato.nombreEn}</p>` : ''}
-        ${sinGlutenHtml}
-      </div>
-      <div class="dish-allergens">${allergensHtml}</div>
-    </article>`;
-}
-
-// ── INICIALIZACIÓN Y AJUSTE ──
-function initDishPagination(platos) {
-  const calc = calculatePages(platos);
-  dishPagination.pages = calc.pages;
-  dishPagination.current = 0;
-  dishPagination.totalPages = calc.totalPages;
-  dishPagination.rotationEnabled = calc.rotationEnabled;
-  dishPagination.dwellMs = calc.dwellMs;
-
-  if (dishPagination.pages.length > 0) {
-    renderDishPage(0);
-  }
-
-  if (dishPagination.rotationEnabled && dishPagination.pages.length > 1) {
-    setDishPageDotsHTML();
-    startRotation();
-  } else {
-    const container = document.getElementById('dish-pagination');
-    if (container) container.style.display = 'none';
-  }
-
-  // Eventos de ratón sobre la columna principal
+// Punto de entrada único: calcula un tamaño de letra generoso como punto
+// de partida (adjustSizes) y luego lo reduce en pasos pequeños SOLO si
+// detecta un corte real, hasta que todo quepa sin perder texto ni platos.
+function fitDishRows() {
   const mainCol = document.getElementById('main-col');
-  if (mainCol) {
-    mainCol.addEventListener('mouseenter', pauseRotation);
-    mainCol.addEventListener('mouseleave', resumeRotation);
+  if (!mainCol) return;
+  const rows = [...mainCol.querySelectorAll('.dish-row')];
+  if (!rows.length) return;
+
+  adjustSizes(rows.length, rows[0].getBoundingClientRect().height);
+  if (manualDishSize) {
+    const root = document.documentElement.style;
+    if (manualDishSize.name) root.setProperty('--dish-name-size', manualDishSize.name);
+    if (manualDishSize.en) root.setProperty('--dish-en-size', manualDishSize.en);
+  }
+  fitAllergenIcons();
+  fitNoAllergenBadges();
+
+  // Phase 1: Shrink icons and badges (and gap) to try to fix overflow
+  let guard1 = 0;
+  while (dishContentOverflows(mainCol, rows) && guard1++ < 16) {
+    const root = document.documentElement.style;
+    const iconSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-size')) || 30;
+    const newIconSize = Math.max(18, iconSize * 0.96);
+    root.setProperty('--icon-size', newIconSize + 'px');
+    // Update gap to be proportional to the new icon size
+    root.setProperty('--icon-gap', Math.max(4, newIconSize * 0.12) + 'px');
+    fitNoAllergenBadges();
   }
 
-  // Tras el primer pintado hay filas reales que medir: recalculamos la
-  // paginación para ajustar el número de filas por página con precisión.
-  if (!dishPagination._measured) {
-    requestAnimationFrame(() => {
-      dishPagination._measured = true;
-      recomputeDishPagination();
-    });
+  // Phase 2: If still overflow, shrink dish name and English size
+  let guard2 = 0;
+  while (dishContentOverflows(mainCol, rows) && guard2++ < 16) {
+    const root = document.documentElement.style;
+    const nameFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size')) || 20;
+    const enFs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size')) || 12;
+    root.setProperty('--dish-name-size', Math.max(13, nameFs * 0.94) + 'px');
+    root.setProperty('--dish-en-size', Math.max(10, enFs * 0.94) + 'px');
   }
-}
 
-// ── RE-CALCULAR al cambiar ventana ──
-function recomputeDishPagination() {
-  if (!latestComedorData) return;
-  initDishPagination((latestComedorData.platos || []).filter(p => !p.oculto));
-}
-
-// ── Integración con renderMenu ──
-function renderMenu(data) {
-  const platos = (data.platos || []).filter(p => !p.oculto);
-  buildLegend([]); // siempre los 14 alérgenos de referencia
-
-  latestComedorData = data;
-  initDishPagination(platos);
-
-  // Fecha y footer
-  document.getElementById('header-date').textContent = formatDateEs(data.fecha);
-  const now = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  document.getElementById('footer-updated').textContent = `Actualizado a las ${now}`;
-
-  // Asegurar que la rotación y paginación se reactiven al redimensionar
-  // (el listener global de resize llama a recomputeDishPagination)
+  fitLegend();
 }
 
 // ══════════════════════════════════════════════
@@ -1242,24 +1025,163 @@ function buildLegend(usedIds) {
   const toShow = usedIds.length ? ALLERGENS.filter(a => usedIds.includes(a.id)) : ALLERGENS;
   list.innerHTML = toShow.map(a => `
     <div class="legend-item">
-      <div class="legend-circle" style="background:${a.color}20">
+      <div class="legend-circle">
         <img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'">
       </div>
       <div class="legend-text-wrap">
         <span class="legend-es">${a.es}</span>
         <span class="legend-en">${a.en}</span>
       </div>
-      <span class="legend-code" style="color:${a.color}">${a.id.substring(0,2).toUpperCase()}</span>
     </div>`).join('');
 }
 
+// ══════════════════════════════════════════════
+//  RENDER MENU
+// ══════════════════════════════════════════════
+function renderMenu(data) {
+  // Se muestran solo los platos NO ocultos (el resto se gestionan pero no salen en TV)
+  const platos = (data.platos || []).filter(p => !p.oculto);
+  startSizeAutoAdjust();
+  // La leyenda muestra SIEMPRE los 14 alérgenos oficiales (referencia completa para el cliente)
+  buildLegend([]);
 
+  const col = document.getElementById('main-col');
+  col.innerHTML = '';
+  if (!platos.length) {
+    col.innerHTML = '<div class="no-data"><span class="icon">🍽️</span><p>Menú no disponible</p><small>Menu not available yet</small></div>';
+    return;
+  }
+
+  platos.forEach(p => {
+    const contiene = p.contiene||[], trazas = p.trazas||[];
+    let algHtml = '';
+    if (!contiene.length && !trazas.length) {
+      algHtml = `<div class="no-allergen">
+        <span class="shield-ok" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2 L20 5 V11 C20 16.2 16.4 19.8 12 22 C7.6 19.8 4 16.2 4 11 V5 Z" fill="#16a34a"/>
+            <path d="M8.3 12.1 l2.6 2.6 l4.8 -5.4" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="no-allergen-txt"><span class="es">Libre de alérgenos</span><span class="en">Allergen-free</span></span>
+      </div>`;
+    } else {
+      if (contiene.length) algHtml += `<div class="allergen-row">${contiene.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
+      if (trazas.length)   algHtml += `<div class="allergen-row"><span class="trace-label">⚠ TRAZAS</span>${trazas.map(id=>{const a=ALLERGENS.find(x=>x.id===id);if(!a)return'';return`<div class="alg-icon-wrap trace-icon" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"></div>`;}).join('')}</div>`;
+    }
+    const glutenNote = p.sinGluten ? `
+      <div class="dish-gluten-note">
+        <div class="dish-gluten-es">Hay opción sin gluten disponible. Pregunte al personal.</div>
+        <div class="dish-gluten-en">Gluten-free option available. Please ask staff.</div>
+      </div>` : '';
+    const row = document.createElement('div');
+    row.className = 'dish-row';
+    row.innerHTML = `
+      <div class="dish-info">
+        <div class="dish-name-es">${escHtml(p.nombreEs||'PLATO SIN NOMBRE')}</div>
+        <div class="dish-name-en">${escHtml(p.nombreEn||'')}</div>
+        ${glutenNote}
+      </div>
+      <div class="dish-allergens">${algHtml}</div>`;
+    col.appendChild(row);
+  });
+
+  const now = new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  document.getElementById('footer-updated').textContent = `Actualizado a las ${now}`;
+  document.getElementById('header-date').textContent = formatDateEs(data.fecha);
+
+  // Ajuste fino: dimensiona texto, iconos y leyenda tras el layout, comprobando
+  // de verdad que nada se corte (fitDishRows), no solo por una fórmula fija.
+  requestAnimationFrame(fitDishRows);
+}
+
+// ══════════════════════════════════════════════
+//  AJUSTE DINÁMICO — evita que los iconos/leyenda se corten
+// ══════════════════════════════════════════════
+function fitAllergenIcons() {
+  const rows = [...document.querySelectorAll('.dish-row')];
+  if (!rows.length) return;
+  const rowH = rows[0].getBoundingClientRect().height;
+  const rowW = rows[0].getBoundingClientRect().width;
+  if (!rowH || !rowW) return;
+  const gap = Math.max(4, Math.round(rowW * 0.006));
+
+  // Máx. de iconos en una misma fila y máx. de filas de alérgenos por plato
+  let maxIcons = 1, maxRows = 1;
+
+  // Check if any dish has traces
+  let hasTraces = false;
+  rows.forEach(r => {
+    if (r.querySelector('.trace-label')) {
+      hasTraces = true;
+    }
+  });
+  rows.forEach(r => {
+    const ars = r.querySelectorAll('.allergen-row');
+    if (ars.length > maxRows) maxRows = ars.length;
+    ars.forEach(ar => {
+      let cnt = ar.querySelectorAll('.alg-icon-wrap').length;
+      if (ar.querySelector('.trace-label')) cnt += 2; // la etiqueta "TRAZAS" ocupa espacio
+      if (cnt > maxIcons) maxIcons = cnt;
+    });
+  });
+
+  // Ancho disponible para la columna de alérgenos (≈42% del ancho de la fila)
+  const allergenW = rowW * (hasTraces ? 0.40 : 0.50);
+  const byWidth  = (allergenW - gap * (maxIcons - 1)) / maxIcons;
+  // Altura disponible para las filas de alérgenos
+  // Si no hay trazas, usar más altura (hasta 90% de la altura de la fila)
+  // Si hay trazas, ser más conservador (75% de la altura de la fila)
+  const availableHeight = rowH * (hasTraces ? 0.75 : 0.90);
+  const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
+  let icon = Math.min(byWidth, byHeight);
+  icon = Math.max(24, Math.min(icon, 120));
+  document.documentElement.style.setProperty('--icon-size', icon + 'px');
+  document.documentElement.style.setProperty('--icon-gap', gap + 'px');
+}
+
+function fitLegend() {
+  const list = document.getElementById('legend-list');
+  if (!list) return;
+  const items = list.querySelectorAll('.legend-item');
+  if (!items.length) return;
+
+  const containerW = list.getBoundingClientRect().width;
+  const containerH = list.getBoundingClientRect().height;
+  if (!containerW || !containerH) return;
+
+  const per = containerH / items.length;
+  let ic = Math.min(per * 0.50, 46); ic = Math.max(14, ic);
+  document.documentElement.style.setProperty('--legend-icon', ic + 'px');
+
+  let txt = Math.min(per * 0.28, 18); txt = Math.max(10, txt);
+
+  items.forEach(item => {
+    const wrap = item.querySelector('.legend-text-wrap');
+    if (!wrap) return;
+    const esEl = wrap.querySelector('.legend-es');
+    if (!esEl) return;
+    let fs = txt;
+    esEl.style.fontSize = fs + 'px';
+    const enEl = wrap.querySelector('.legend-en');
+    if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
+    let guard = 0;
+    while (wrap.scrollWidth > containerW - 20 && fs > 9 && guard++ < 24) {
+      fs *= 0.90;
+      esEl.style.fontSize = fs + 'px';
+      if (enEl) enEl.style.fontSize = Math.max(8, fs * 0.85) + 'px';
+    }
+  });
+  document.documentElement.style.setProperty('--legend-text', txt + 'px');
+}
 window.addEventListener('resize', () => {
-  requestAnimationFrame(recomputeDishPagination);
+  requestAnimationFrame(fitDishRows);
   if (document.getElementById('turno-overlay')?.classList.contains('visible')) {
     requestAnimationFrame(fitTurnoOverlay);
   }
 });
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ══════════════════════════════════════════════
 //  FIREBASE
@@ -1323,16 +1245,21 @@ function initFirebase() {
         localStorage.setItem('tvSettings', JSON.stringify(settings));
       }
     }, err => console.warn('tvSettings:', err));
+
+    // Periodic refresh as fallback to ensure TV updates without button press
+    setInterval(() => {
+      db.ref('menu/comedor').once('value').then(snap => {
+        latestComedorData = snap.val();
+        refreshMenuDisplay();
+      });
+    }, 30000);
+
   } catch(e) { console.error(e); showOfflineState(); }
 }
 
-// startSizeAutoAdjust ya no existe - se usa paginación automática
 function showNoData() {
-  const mainCol = document.getElementById('main-col');
-  const dots = mainCol.querySelector('#dish-pagination');
-  mainCol.innerHTML =
+  document.getElementById('main-col').innerHTML =
     '<div class="no-data"><span class="icon">🍽️</span><p>Menú del día no publicado</p><small>Today\'s menu has not been published yet</small></div>';
-  if (dots) mainCol.appendChild(dots);
   document.getElementById('header-date').textContent = formatDateEs(null);
 }
 function showOfflineState() {
@@ -1348,22 +1275,7 @@ window.addEventListener('DOMContentLoaded', () => {
   buildLegend([]);
   initFirebase();
   updateClock();
-});
-
-window.addEventListener('beforeunload', () => {
-  try {
-    if (typeof firebase !== 'undefined' && firebase.apps?.length) {
-      const db = firebase.database();
-      db.ref('menu/comedor').off();
-      db.ref('turnos').off();
-      db.ref('recordatorios').off();
-      db.ref('cierreComedor').off();
-      db.ref('tvSettings').off();
-    }
-  } catch(e) {}
-  if (dishPagination.timer) clearInterval(dishPagination.timer);
-  if (turnoCountdown) clearInterval(turnoCountdown);
-  if (carouselTimer) clearInterval(carouselTimer);
+  startSizeAutoAdjust();
 });
 
 // ══════════════════════════════════════════════
@@ -1372,52 +1284,10 @@ window.addEventListener('beforeunload', () => {
 function applyTVSettings(settings) {
   if (!settings) return;
   const root = document.documentElement.style;
-  
-  // Helper: Escala todos los valores de un clamp() por un factor de escala
-  function applyScaleToClamp(clampStr, scale) {
-    const match = clampStr.match(/clamp\(([^)]+)\)/);
-    if (!match) return clampStr;
-    const parts = match[1].split(',').map(s => s.trim());
-    
-    const scaleValue = (val) => {
-      const m = val.match(/([\d.]+)(vmin|vw|px|px,)/);
-      if (!m) return val;
-      const num = parseFloat(m[1]);
-      const unit = m[2];
-      // Skip if unit is empty or invalid
-      if (!unit.replace(',','').trim()) return val;
-      // For px values, scale directly. For viewport units, scale the multiplier.
-      if (unit === 'px') return (num * scale) + unit;
-      return (num * scale) + unit;
-    };
-    
-    const newMin = scaleValue(parts[0]);
-    const newPref = scaleValue(parts[1]);
-    const newMax = scaleValue(parts[2]);
-    return `clamp(${newMin}, ${newPref}, ${newMax})`;
-  }
-  
-  // Aplicar scale de texto si viene de gestión
-  if (settings.textScale !== undefined) {
-    const scale = Math.max(0.5, Math.min(2.0, parseFloat(settings.textScale)));
-    root.setProperty('--text-scale', scale + '');
-    // Ajustar los tamaños de plato aplicando el scale al "preferido" dentro de clamp()
-    if (settings.dishNameSize) {
-      const newName = applyScaleToClamp(settings.dishNameSize, scale);
-      root.setProperty('--dish-name-size', newName);
-    }
-    if (settings.dishEnSize) {
-      const newEn = applyScaleToClamp(settings.dishEnSize, scale);
-      root.setProperty('--dish-en-size', newEn);
-    }
-  }
-  
-  // Aplicar valores antiguos para compatibilidad (pero ya no son la fuente principal)
-  if (settings.dishNameSize && !settings.textScale) {
-    root.setProperty('--dish-name-size', settings.dishNameSize);
-  }
-  if (settings.dishEnSize && !settings.textScale) {
-    root.setProperty('--dish-en-size', settings.dishEnSize);
+  if (settings.dishNameSize) root.setProperty('--dish-name-size', settings.dishNameSize);
+  if (settings.dishEnSize) root.setProperty('--dish-en-size', settings.dishEnSize);
+  if (settings.dishNameSize || settings.dishEnSize) {
+    manualDishSize = { name: settings.dishNameSize || null, en: settings.dishEnSize || null };
   }
   if (settings.turnoTitleSize) root.setProperty('--turno-title-size', settings.turnoTitleSize);
   if (settings.turnoMsgEsSize) root.setProperty('--turno-msg-es-size', settings.turnoMsgEsSize);
@@ -1425,10 +1295,8 @@ function applyTVSettings(settings) {
   if (settings.turnoCountdownSize) root.setProperty('--turno-countdown-size', settings.turnoCountdownSize);
   if (settings.carouselEsSize) root.setProperty('--carousel-es-size', settings.carouselEsSize);
   if (settings.carouselEnSize) root.setProperty('--carousel-en-size', settings.carouselEnSize);
-  
-  // Ya no forzar fitDishRows que sobrescribía los valores manuales
-  // El layout ahora usa paginación automática en su lugar
-  // requestAnimationFrame(fitDishRows);  // Comentado
+
+  requestAnimationFrame(fitDishRows);
 }
 // Aplicación inmediata al cargar la página (por si Firebase tarda un
 // instante en conectar, o como único origen si no está configurado).
