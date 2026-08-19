@@ -10,7 +10,7 @@ window.ALLERGENS = [
   { id:'cacahuetes', es:'CACAHUETES', en:'Peanuts',     color:'#d35400', icon:'./img/alergenos_cacahuetes.svg',    pattern:'grid' },
   { id:'soja',       es:'SOJA',       en:'Soy',         color:'#27ae60', icon:'./img/alergenos_soja.svg',          pattern:'diagonal' },
   { id:'lacteos',    es:'LÁCTEOS',    en:'Dairy',       color:'#5d4037', icon:'./img/alergenos_lacteos.svg',       pattern:'dots' },
-  { id:'cascara',    es:'F.CÁSCORA',  en:'Tree nuts',   color:'#c0392b', icon:'./img/alergenos_cascara.svg',       pattern:'horizontal' },
+  { id:'cascara',    es:'F.CÁSCARA',  en:'Tree nuts',   color:'#c0392b', icon:'./img/alergenos_cascara.svg',       pattern:'horizontal' },
   { id:'apio',       es:'APIO',       en:'Celery',      color:'#8bc34a', icon:'./img/alergenos_apio.svg',          pattern:'vertical' },
   { id:'mostaza',    es:'MOSTAZA',    en:'Mustard',     color:'#b8860b', icon:'./img/alergenos_mostaza.svg',        pattern:'grid' },
   { id:'sesamo',     es:'SÉSAMO',     en:'Sesame',      color:'#7f8c8d', icon:'./img/alergenos_sesamo.svg',       pattern:'diagonal' },
