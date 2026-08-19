@@ -41,7 +41,7 @@
       --space-5:    calc(var(--text-base) * 1.5);    /* 48–72px               */
 
       /* ── HEADER ── */
-      --header-h: 14vh;
+      --header-h: 16vh;
 
       /* ── DISH (pueden ser sobrescritos por la calibración de gestión) ── */
       --dish-name-size:   var(--text-base);
@@ -84,12 +84,12 @@
     }
     .header-logo { height: 75%; max-height: 80px; object-fit: contain; filter: brightness(1.15) drop-shadow(0 0 10px rgba(96,165,250,0.3)); }
     .header-divider { width: 3px; height: 55%; background: rgba(255,255,255,0.2); border-radius: 2px; }
-    .header-title .es { font-size: clamp(16px, 2.5vmin, 24px); font-weight: 900; letter-spacing: 3px; color: #ffffff; text-transform: uppercase; }
-    .header-title .en { font-size: clamp(12px, 1.8vmin, 18px); color: #93c5fd; letter-spacing: 4px; text-transform: uppercase; font-style: italic; }
+    .header-title .es { font-size: clamp(18px, 3vmin, 28px); font-weight: 900; letter-spacing: 3px; color: #ffffff; text-transform: uppercase; }
+    .header-title .en { font-size: clamp(14px, 2vmin, 22px); color: #93c5fd; letter-spacing: 4px; text-transform: uppercase; font-style: italic; }
     .header-spacer { flex: 1; }
     .header-datetime { text-align: right; color: white; line-height: 1.2; }
-    .header-date { font-size: clamp(14px, 1.6vmin, 20px); font-weight: 700; color: #e0f2fe; text-transform: none; }
-    .header-time { font-size: clamp(24px, 3.5vmin, 36px); font-weight: 900; color: #7dd3fc; letter-spacing: 2px; }
+    .header-date { font-size: clamp(16px, 2vmin, 24px); font-weight: 700; color: #e0f2fe; text-transform: none; }
+    .header-time { font-size: clamp(28px, 4vmin, 42px); font-weight: 900; color: #7dd3fc; letter-spacing: 2px; }
 
     /* ─── BODY ─── */
     .body { display: flex; flex: 1; min-height: 0; padding: 1.2vw; gap: 1.2vw; }
@@ -160,12 +160,8 @@
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; position: relative;
     }
-    .alg-bg {
-      position: absolute; inset: 0; border-radius: 50%;
-      width: 100%; height: 100%; z-index: 1;
-    }
     .alg-icon-wrap img {
-      width: 80%; height: 80%; object-fit: contain;
+      width: 100%; height: 100%; object-fit: contain;
       position: relative; z-index: 2;
     }
     .alg-code {
@@ -1128,13 +1124,13 @@ function createDishRow(plato) {
   const containIcons = [];
   contiene.forEach(id => {
     const a = ALLERGENS.find(x => x.id === id);
-    if (a) containIcons.push(`<div class="alg-icon-wrap" style="--alg-color:${a.color}" title="${a.es}"><div class="alg-bg" style="background:${a.color}"></div><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"><span class="alg-code">${a.id.substring(0,2).toUpperCase()}</span></div>`);
+    if (a) containIcons.push(`<div class="alg-icon-wrap" style="--alg-color:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"><span class="alg-code">${a.id.substring(0,2).toUpperCase()}</span></div>`);
   });
 
   const traceIcons = [];
   trazas.forEach(id => {
     const a = ALLERGENS.find(x => x.id === id);
-    if (a) traceIcons.push(`<div class="alg-icon-wrap trace-icon" style="--alg-color:${a.color}" title="${a.es}"><div class="alg-bg" style="background:${a.color};opacity:0.15"></div><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"><span class="alg-code" style="opacity:0.75">${a.id.substring(0,2).toUpperCase()}</span></div>`);
+    if (a) traceIcons.push(`<div class="alg-icon-wrap trace-icon" style="--alg-color:${a.color}" title="${a.es}"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"><span class="alg-code" style="opacity:0.75">${a.id.substring(0,2).toUpperCase()}</span></div>`);
   });
 
   let allergensHtml = '';
