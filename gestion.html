@@ -1056,9 +1056,8 @@ function renderCurrentTab() {
 function renderDish(plato, idx, total) {
   const container = document.getElementById('dish-list');
   const div = document.createElement('div');
-  div.className = `dish-card${plato.oculto ? ' dish-hidden' : ''}`;
+   div.className = `dish-card${plato.oculto ? ' dish-hidden' : ''}`;
   div.dataset.dishId = plato.id;
-  div.draggable = true;
   div.id = `dish-card-${plato.id}`;
   div.innerHTML = `
     <div class="dish-header">
@@ -1209,7 +1208,8 @@ function handleDrop(e) {
 
 function handleDragEnd(e) {
   dragSrcEl = null;
-  this.classList.remove('dragging', 'drag-over', 'drag-over-bottom');
+  const card = e.target.closest('.dish-card');
+  if (card) card.classList.remove('dragging', 'drag-over', 'drag-over-bottom');
   document.querySelectorAll('.dish-card').forEach(card => {
     card.classList.remove('drag-over', 'drag-over-bottom');
   });
@@ -1218,13 +1218,16 @@ function handleDragEnd(e) {
 // Función para añadir eventos de drag & drop a las tarjetas renderizadas
 function attachDragEvents() {
   document.querySelectorAll('.dish-card').forEach(card => {
-    card.setAttribute('draggable', 'true');
-    card.addEventListener('dragstart', handleDragStart);
-    card.addEventListener('dragend', handleDragEnd);
-    card.addEventListener('dragover', handleDragOver);
-    card.addEventListener('dragenter', handleDragEnter);
-    card.addEventListener('dragleave', handleDragLeave);
-    card.addEventListener('drop', handleDrop);
+    const handle = card.querySelector('.drag-handle');
+    if (handle) {
+      handle.setAttribute('draggable', 'true');
+      handle.addEventListener('dragstart', handleDragStart);
+      handle.addEventListener('dragend', handleDragEnd);
+      card.addEventListener('dragover', handleDragOver);
+      card.addEventListener('dragenter', handleDragEnter);
+      card.addEventListener('dragleave', handleDragLeave);
+      card.addEventListener('drop', handleDrop);
+    }
   });
 }
 function renumberDishes() { document.querySelectorAll('.dish-num').forEach((el,i) => el.textContent=i+1); }
