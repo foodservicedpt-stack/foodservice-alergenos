@@ -334,7 +334,7 @@
       transition: width 1s linear;
     }
 
-    /* TURNO CAROUSEL (integrado: despedida + recordatorios) */
+    /* TURNO CAROUSEL (integrado: despedida + recordatorios) — multi-item responsive */
     .turno-carousel {
       position: relative;
       margin: 2vw 0;
@@ -347,16 +347,22 @@
     }
     .carousel-track {
       display: flex;
+      gap: 1.5vw;
       transition: transform 0.8s cubic-bezier(0.4,0,0.2,1);
       will-change: transform;
+      padding: 0.5vw 0;
     }
     .carousel-slide {
-      flex: 0 0 100%;
+      flex: 0 0 auto;
+      width: clamp(280px, 45vw, 520px);
+      min-width: 280px;
+      max-width: 520px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 1.2vw;
       padding: 2vw;
+      box-sizing: border-box;
     }
     .carousel-slide.farewell {
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
@@ -581,6 +587,8 @@ let lastRenderedMenuKey = '';
 // Carousel state
 let carouselTimer = null;
 let currentSlideIndex = 0;
+let slidesPerView = 1;
+let totalPages = 1;
 
 // Muestra el menú solo si su fecha es HOY (reinicio automático diario)
 // y solo re-renderiza si los datos han cambiado realmente
@@ -807,8 +815,52 @@ function hexToRgbaLight(hex) {
 }
 
 // ══════════════════════════════════════════════
-//  TURNO CAROUSEL (despedida + recordatorios)
+//  TURNO CAROUSEL (despedida + recordatorios) — multi-item responsive
 // ══════════════════════════════════════════════
+function calculateSlidesPerView() {
+  const carousel = document.getElementById('turno-carousel');
+  const track = document.getElementById('carousel-track');
+  if (!carousel || !track) return 1;
+  
+  const carouselWidth = carousel.clientWidth;
+  const firstSlide = track.querySelector('.carousel-slide');
+  if (!firstSlide) return 1;
+  
+  const slideStyle = getComputedStyle(firstSlide);
+  const slideWidth = firstSlide.offsetWidth + parseFloat(slideStyle.marginRight || 0) + parseFloat(slideStyle.marginLeft || 0);
+  const gap = parseFloat(getComputedStyle(track).gap || 0);
+  
+  const slidesPerView = Math.max(1, Math.floor((carouselWidth + gap) / (slideWidth + gap)));
+  return slidesPerView;
+}
+
+function updateCarouselPagination() {
+  const track = document.getElementById('carousel-track');
+  const dots = document.getElementById('carousel-dots');
+  if (!track || !dots) return;
+  
+  const totalSlides = track.children.length;
+  slidesPerView = calculateSlidesPerView();
+  totalPages = Math.ceil(totalSlides / slidesPerView);
+  
+  // Rebuild dots for pages
+  dots.innerHTML = '';
+  for (let i = 0; i < totalPages; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goToPage(i);
+    dots.appendChild(dot);
+  }
+  
+  // Clamp current page
+  const currentPage = Math.floor(currentSlideIndex / slidesPerView);
+  if (currentPage >= totalPages) {
+    goToPage(totalPages - 1);
+  } else {
+    goToPage(currentPage);
+  }
+}
+
 function buildTurnoCarousel(t) {
   const track = document.getElementById('carousel-track');
   const dots = document.getElementById('carousel-dots');
@@ -849,9 +901,6 @@ function buildTurnoCarousel(t) {
 
   track.innerHTML = '';
   dots.innerHTML = '';
-  // Reinicia el estado real del carrusel (antes tenía un typo que creaba
-  // una variable global sin usar y dejaba el track desplazado del turno
-  // anterior hasta el primer auto-avance).
   currentSlideIndex = 0;
   track.style.transform = 'translateX(0)';
 
@@ -880,27 +929,36 @@ function buildTurnoCarousel(t) {
     div.appendChild(enDiv);
 
     track.appendChild(div);
-
-    // Dot
-    const dot = document.createElement('div');
-    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
-    dot.onclick = () => goToSlide(i);
-    dots.appendChild(dot);
   });
+
+  // Initial pagination setup
+  updateCarouselPagination();
+  
+  // Recalculate on resize
+  window.addEventListener('resize', debounceCarouselResize);
+}
+
+function debounceCarouselResize() {
+  clearTimeout(window.carouselResizeTimer);
+  window.carouselResizeTimer = setTimeout(() => {
+    updateCarouselPagination();
+  }, 150);
 }
 
 function startCarousel() {
   stopCarousel();
   
-  // Contar total slides: 1 despedida + recordatorios
   const totalSlides = 1 + remindersConfig.length;
   if (totalSlides <= 1) return;
+  
+  // Calculate initial pagination
+  updateCarouselPagination();
   
   // Usar el intervalo configurado (en milisegundos)
   const intervalMs = carouselInterval * 1000;
   carouselTimer = setInterval(() => {
-    currentSlideIndex = (currentSlideIndex + 1) % (1 + remindersConfig.length);
-    goToSlide(currentSlideIndex);
+    const nextPage = (Math.floor(currentSlideIndex / slidesPerView) + 1) % totalPages;
+    goToPage(nextPage);
   }, intervalMs);
 }
 
@@ -909,22 +967,34 @@ function stopCarousel() {
     clearInterval(carouselTimer);
     carouselTimer = null;
   }
+  if (window.carouselResizeTimer) {
+    clearTimeout(window.carouselResizeTimer);
+  }
+  window.removeEventListener('resize', debounceCarouselResize);
 }
 
-function goToSlide(index) {
+function goToPage(pageIndex) {
   const track = document.getElementById('carousel-track');
   const dots = document.querySelectorAll('.carousel-dot');
   
   if (!track) return;
   
-  const totalSlides = 1 + remindersConfig.length;
-  index = ((index % totalSlides) + totalSlides) % totalSlides;
-  currentSlideIndex = index;
+  pageIndex = ((pageIndex % totalPages) + totalPages) % totalPages;
+  currentSlideIndex = pageIndex * slidesPerView;
   
-  track.style.transform = `translateX(-${index * 100}%)`;
+  // Calculate actual translateX based on slide widths
+  const firstSlide = track.querySelector('.carousel-slide');
+  if (!firstSlide) return;
+  
+  const slideStyle = getComputedStyle(firstSlide);
+  const slideWidth = firstSlide.offsetWidth + parseFloat(slideStyle.marginRight || 0) + parseFloat(slideStyle.marginLeft || 0);
+  const gap = parseFloat(getComputedStyle(track).gap || 0);
+  
+  const translateX = -(currentSlideIndex * (slideWidth + gap));
+  track.style.transform = `translateX(${translateX}px)`;
   
   dots.forEach((dot, i) => {
-    dot.classList.toggle('active', i === index);
+    dot.classList.toggle('active', i === pageIndex);
   });
 }
 
