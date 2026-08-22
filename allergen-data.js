@@ -19,6 +19,9 @@ window.ALLERGENS = [
   { id:'altramuces', es:'ALTRAMUCES', en:'Lupins',      color:'#f1c40f', icon:'./img/alergenos_altramuces.svg',    pattern:'vertical' }
 ];
 
+// Índice por id para evitar llamadas a .find() en bucles (14 alérgenos x plato).
+window.ALLERGEN_BY_ID = Object.fromEntries(window.ALLERGENS.map(a => [a.id, a]));
+
 window.CORRECTOR_PLATOS = {
   'berlina': 'doughnut',
   'tortilla española': 'Spanish omelette',

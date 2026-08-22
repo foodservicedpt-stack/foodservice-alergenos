@@ -160,7 +160,9 @@ El panel de gestión (`gestion.html`) **no tiene contraseña** — cualquiera co
 
 - ✅ **Traducción automática** (IA) de nombres de platos español → inglés
 - ✅ **Actualización en tiempo real** — cambios visibles en TV al instante
-- ✅ **Auto-sizing inteligente** — texto e iconos se ajustan según el número de platos (4 a 12+)
+- ✅ **Auto-sizing inteligente** — texto e iconos escalan con la pantalla y los platos se reparten en páginas rotativas según su tamaño real, sin recortes
+- ✅ **Optimizado para pantallas grandes (70"+)**: los tamaños crecen con la resolución de la TV (incluido 4K) en vez de quedarse congelados en un máximo fijo en píxeles
+- ✅ **Alérgenos con nombre visible**: cada icono muestra su nombre en español e inglés debajo del dibujo, además de la leyenda lateral
 - ✅ **Bilingüe** — todos los textos en español e inglés
 - ✅ **Impresión A4** optimizada para el cartel de desayuno
 - ✅ **14 alérgenos** oficiales UE con iconos
