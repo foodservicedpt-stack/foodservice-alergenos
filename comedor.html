@@ -14,44 +14,29 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      /* ── Unidades base ── */
-      --vp-min: 1vmin;                    /* 1% of smaller viewport dimension */
-      
       /* ── ESCALA DE TEXTO (calibración desde gestión) ── */
-      --text-scale: 1;                     /* 1 = 100% normal; ajustado desde gestión */
-      
-      /* ── TEXT SIZES (main: dish names, countdown; secondary: EN, legend) ──
+      --text-scale: 1;
+
+      /* ── TEXT SIZES ──
          Los topes (max) están en vmin y no en px para que en pantallas
          grandes (>70") el texto siga creciendo en vez de quedarse "congelado".
-         vmin escala con la altura de la pantalla, de modo que todo crece a la
-         vez y siempre cabe. El mínimo en px garantiza legibilidad en pantallas
-         pequeñas y el control --text-scale (0.5–2.0) sigue funcionando. */
-      --text-xs:    clamp(14px, calc(1.8vmin * var(--text-scale)), 3vmin);    /* timestamps, tiny UI      */
-      --text-sm:    clamp(24px, calc(3.5vmin * var(--text-scale)), 5.5vmin);  /* EN names, legend, labels */
-      --text-base:  clamp(32px, calc(4.5vmin * var(--text-scale)), 8vmin);    /* Dish ES name (primary)   */
-      --text-lg:    clamp(40px, calc(5.5vmin * var(--text-scale)), 9vmin);    /* Turno titles, countdown  */
-      --text-xl:    clamp(56px, calc(7.5vmin * var(--text-scale)), 12vmin);   /* Hero numbers, clock      */
+         vmin escala con la altura de la pantalla: todo crece a la vez y siempre
+         cabe. El mínimo en px mantiene la legibilidad y --text-scale (0.5–2.0)
+         sigue controlando el tamaño desde el panel de gestión. */
+      --text-sm:    clamp(24px, calc(3.5vmin * var(--text-scale)), 5.5vmin);
+      --text-base:  clamp(32px, calc(4.5vmin * var(--text-scale)), 8vmin);
+      --text-lg:    clamp(40px, calc(5.5vmin * var(--text-scale)), 9vmin);
+      --text-xl:    clamp(56px, calc(7.5vmin * var(--text-scale)), 12vmin);
 
       /* ── ICON SIZES ── */
-      --icon-xs:    clamp(24px, calc(2.8vmin * var(--text-scale)), 4.5vmin);  /* tiny UI icons            */
-      --icon-sm:    clamp(32px, calc(4.0vmin * var(--text-scale)), 6vmin);    /* legend, meta             */
-      --icon-base:  clamp(48px, calc(6.0vmin * var(--text-scale)), 10vmin);   /* Dish allergens (standard) */
-      --icon-lg:    clamp(64px, calc(8.0vmin * var(--text-scale)), 13vmin);   /* Hero: bell, escudo        */
-
-      /* ── SPACING (all derived from --text-base) ── */
-      --space-1:    calc(var(--text-base) * 0.125);  /* 4–6px                 */
-      --space-2:    calc(var(--text-base) * 0.25);   /* 8–12px                */
-      --space-3:    calc(var(--text-base) * 0.5);    /* 16–24px               */
-      --space-4:    calc(var(--text-base) * 1);      /* 32–48px               */
-      --space-5:    calc(var(--text-base) * 1.5);    /* 48–72px               */
+      --icon-base:  clamp(48px, calc(6.0vmin * var(--text-scale)), 10vmin);
 
       /* ── HEADER ── */
       --header-h: 18vh;
 
-      /* ── DISH (pueden ser sobrescritos por la calibración de gestión) ── */
+      /* ── DISH ── */
       --dish-name-size:   var(--text-base);
       --dish-en-size:     var(--text-sm);
-      --dish-pad:         var(--space-2);
 
       /* ── TURNO OVERLAY ── */
       --turno-title-size:        var(--text-lg);
@@ -62,13 +47,6 @@
       --carousel-en-size:        var(--text-sm);
       --carousel-farewell-es-size: var(--text-xl);
       --carousel-farewell-en-size: var(--text-lg);
-
-      /* ── LEGEND ── */
-      --legend-icon:   var(--icon-sm);
-      --legend-text:   var(--text-sm);
-
-      /* ── FOOTER ── */
-      --footer-h: 6vh;
     }
 
     html, body {
@@ -87,14 +65,14 @@
       display: flex; align-items: center; padding: 0 2.5vw; gap: 2vw;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex-shrink: 0;
     }
-    .header-logo { height: 75%; max-height: 80px; object-fit: contain; filter: brightness(1.15) drop-shadow(0 0 10px rgba(96,165,250,0.3)); }
+    .header-logo { height: 75%; max-height: 12vh; object-fit: contain; filter: brightness(1.15) drop-shadow(0 0 10px rgba(96,165,250,0.3)); }
     .header-divider { width: 3px; height: 55%; background: rgba(255,255,255,0.2); border-radius: 2px; }
-    .header-title .es { font-size: clamp(28px, 5vmin, 42px); font-weight: 900; letter-spacing: 3px; color: #ffffff; text-transform: uppercase; }
-    .header-title .en { font-size: clamp(20px, 3.5vmin, 32px); color: #93c5fd; letter-spacing: 4px; text-transform: uppercase; font-style: italic; }
+    .header-title .es { font-size: clamp(28px, 5vmin, 7vmin); font-weight: 900; letter-spacing: 3px; color: #ffffff; text-transform: uppercase; }
+    .header-title .en { font-size: clamp(20px, 3.5vmin, 5vmin); color: #93c5fd; letter-spacing: 4px; text-transform: uppercase; font-style: italic; }
     .header-spacer { flex: 1; }
     .header-datetime { text-align: right; color: white; line-height: 1.2; }
-    .header-date { font-size: clamp(22px, 4vmin, 34px); font-weight: 700; color: #e0f2fe; text-transform: none; }
-    .header-time { font-size: clamp(40px, 7vmin, 60px); font-weight: 900; color: #7dd3fc; letter-spacing: 2px; }
+    .header-date { font-size: clamp(22px, 4vmin, 6vmin); font-weight: 700; color: #e0f2fe; text-transform: none; }
+    .header-time { font-size: clamp(40px, 7vmin, 9vmin); font-weight: 900; color: #7dd3fc; letter-spacing: 2px; }
 
     /* ─── BODY ─── */
     .body { display: flex; flex: 1; min-height: 0; padding: 1.2vw; gap: 1.2vw; }
@@ -115,7 +93,6 @@
     }
     .dish-row:nth-child(odd)  { border-left-color: #3b82f6; }
     .dish-row:nth-child(even) { border-left-color: #10b981; }
-    @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
 
     .dish-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.3vw; }
     .dish-name-es {
@@ -129,21 +106,6 @@
       white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
       display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
     }
-    .dish-gluten-note {
-      display: flex; flex-direction: column; gap: 0.16vw;
-      padding: 0.45vw 0.6vw; border-radius: 0.7vw;
-      border: 1px solid #bbf7d0; background: #f0fdf4;
-      max-width: 100%; align-self: flex-start;
-    }
-    .dish-gluten-es {
-      font-size: clamp(13px, 1.05vw, 20px); font-weight: 800; color: #166534;
-      line-height: 1.16; overflow-wrap: anywhere;
-    }
-    .dish-gluten-en {
-      font-size: clamp(11px, 0.9vw, 16px); font-style: italic; color: #4d7c4d;
-      line-height: 1.15; overflow-wrap: anywhere;
-    }
-
     /* ─── ALLERGEN ICONS ── */
     .dish-allergens {
       display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
@@ -151,23 +113,15 @@
     }
     .allergen-section { display: flex; flex-direction: row; align-items: center; gap: 0.25vw; }
     .section-label {
-      font-size: clamp(12px, 1.3vmin, 2.4vmin); font-weight: 800; text-transform: uppercase;
+      font-size: clamp(20px, calc(2.4vmin * var(--text-scale)), 4.5vmin); font-weight: 800; text-transform: uppercase;
       letter-spacing: 0.5px; padding: 0.3vmin 0.6vmin; border-radius: 0.4vmin; line-height: 1.1;
       white-space: nowrap;
     }
     .contain-label { color: #1e40af; background: #dbeafe; }
     .trace-label { color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; }
     .allergen-grid {
-      display: flex; flex-wrap: wrap; gap: 0.5vmin; justify-content: flex-end;
+      display: flex; flex-wrap: wrap; gap: 0.7vmin; justify-content: flex-end;
     }
-    /* Chip de alérgeno: icono + nombre ES + nombre EN, legible de lejos */
-    .alg-chip {
-      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-      gap: 0.25vmin; padding: 0.5vmin 0.6vmin; border-radius: 1vmin;
-      background: #f8fafc; border: 1px solid #e2e8f0;
-      flex: 0 0 auto; min-width: calc(var(--icon-base) * 1.35);
-    }
-    .alg-chip.trace-chip { opacity: 0.85; border-style: dashed; }
     .alg-icon-wrap {
       width: var(--icon-base); height: var(--icon-base);
       display: flex; align-items: center; justify-content: center;
@@ -177,47 +131,36 @@
       width: 100%; height: 100%; object-fit: contain;
       position: relative; z-index: 2;
     }
-    .alg-es {
-      font-size: clamp(12px, 1.5vmin, 2.6vmin); font-weight: 800; color: #0f172a;
-      text-transform: uppercase; line-height: 1.05; text-align: center; white-space: nowrap;
-    }
-    .alg-en {
-      font-size: clamp(11px, 1.2vmin, 2.2vmin); font-style: italic; color: #64748b;
-      line-height: 1.05; text-align: center; white-space: nowrap;
-    }
-    .alg-code {
-      display: none;
-    }
+    .alg-icon-wrap.trace-icon { opacity: 0.8; }
     .no-allergen {
       background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 8px;
-      padding: 0.4vmin 0.7vmin; color: #065f46; font-weight: 800;
-      display: inline-flex; align-items: center; gap: 0.5vmin;
-      white-space: nowrap; font-size: clamp(12px, 1.2vmin, 2.2vmin);
+      padding: 0.5vmin 0.9vmin; color: #065f46; font-weight: 800;
+      display: inline-flex; align-items: center; gap: 0.6vmin;
+      white-space: nowrap; font-size: clamp(16px, calc(1.9vmin * var(--text-scale)), 3.4vmin);
     }
     .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
     .no-allergen .shield-ok svg {
-      width: clamp(20px, 2.2vmin, 4vmin); height: clamp(20px, 2.2vmin, 4vmin);
+      width: clamp(26px, 3vmin, 5vmin); height: clamp(26px, 3vmin, 5vmin);
       filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
     }
-    .no-allergen .shield-ok svg path { stroke: var(--success); }
     .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.15; }
-    .no-allergen-txt .es { font-size: clamp(13px, 1.5vmin, 2.6vmin); white-space: nowrap; }
-    .no-allergen-txt .en { font-style: italic; font-size: clamp(11px, 1.1vmin, 2.1vmin); opacity: 0.8; font-weight: 600; white-space: nowrap; }
+    .no-allergen-txt .es { font-size: clamp(18px, calc(2.1vmin * var(--text-scale)), 3.8vmin); white-space: nowrap; }
+    .no-allergen-txt .en { font-style: italic; font-size: clamp(14px, calc(1.6vmin * var(--text-scale)), 3vmin); opacity: 0.8; font-weight: 600; white-space: nowrap; }
     .sin-gluten-note {
-      background: #f0fdf4; border: 1px solid #86efac; border-radius: 5px;
-      padding: 0.25vmin 0.5vmin; font-size: clamp(11px, 1.1vmin, 2.1vmin); color: #166534;
-      line-height: 1.1; align-self: flex-start; margin-top: 0.15vw;
-      display: flex; align-items: center; gap: 0.4vmin;
+      background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;
+      padding: 0.45vmin 0.7vmin; font-size: clamp(14px, calc(1.6vmin * var(--text-scale)), 3vmin); color: #166534;
+      line-height: 1.15; align-self: flex-start; margin-top: 0.3vw;
+      display: flex; align-items: center; gap: 0.5vmin;
     }
     .sin-gluten-icon {
-      position: relative; width: clamp(18px, 1.8vmin, 3.2vmin); height: clamp(18px, 1.8vmin, 3.2vmin);
+      position: relative; width: clamp(22px, 2.2vmin, 4vmin); height: clamp(22px, 2.2vmin, 4vmin);
       flex-shrink: 0; display: inline-flex;
     }
     .sin-gluten-icon img { width: 100%; height: 100%; object-fit: contain; }
     .sin-gluten-icon svg { position: absolute; inset: 0; width: 100%; height: 100%; }
     .sin-gluten-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
-    .sin-gluten-text .sin-gluten-es { font-weight: 800; color: #166534; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sin-gluten-text .sin-gluten-en { font-style: italic; color: #4d7c4d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sin-gluten-text .sin-gluten-es { font-weight: 800; color: #166534; white-space: normal; }
+    .sin-gluten-text .sin-gluten-en { font-style: italic; color: #4d7c4d; white-space: normal; }
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
@@ -226,21 +169,20 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       flex-shrink: 0; max-height: 100%; overflow: hidden;
     }
-    .legend-title { font-size: clamp(15px, 1.7vmin, 3.2vmin); font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4vmin; margin-bottom: 0.4vmin; flex-shrink: 0; }
+    .legend-title { font-size: clamp(14px, calc(1.7vmin * var(--text-scale)), 3.2vmin); font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4vmin; margin-bottom: 0.4vmin; flex-shrink: 0; }
     .legend-title .en { display: block; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; }
     .legend-list { display: flex; flex-direction: column; justify-content: space-between; align-content: stretch; flex: 1; min-height: 0; }
     .legend-item { display: flex; align-items: center; gap: 0.5vmin; flex: 0 0 auto; }
-    .legend-circle { width: clamp(30px, 3vmin, 5vmin); height: clamp(30px, 3vmin, 5vmin); flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .legend-circle { width: clamp(22px, calc(3vmin * var(--text-scale)), 5vmin); height: clamp(22px, calc(3vmin * var(--text-scale)), 5vmin); flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
     .legend-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
     .legend-text-wrap { line-height: 1.1; min-width: 0; overflow: hidden; }
-    .legend-code { display: none; }
-    .legend-es { font-size: clamp(12px, 1.4vmin, 2.6vmin); font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .legend-en { font-size: clamp(10px, 1.1vmin, 2.1vmin); color: #64748b; font-style: italic; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .legend-es { font-size: clamp(11px, calc(1.3vmin * var(--text-scale)), 2.6vmin); font-weight: 700; color: #1e293b; text-transform: uppercase; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .legend-en { font-size: clamp(10px, calc(1.1vmin * var(--text-scale)), 2.1vmin); color: #475569; font-style: italic; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ─── FOOTER ─── */
     .footer { background: #0b1f3a; padding: 0.5vw 2.5vw; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .footer-brand { color: #94a3b8; font-size: clamp(10px,1vw,14px); letter-spacing: 1px; }
-    .footer-updated { color: #94a3b8; font-size: clamp(9px,0.9vw,13px); }
+    .footer-brand { color: #94a3b8; font-size: clamp(13px, calc(1.2vmin * var(--text-scale)), 2.2vmin); letter-spacing: 1px; }
+    .footer-updated { color: #94a3b8; font-size: clamp(12px, calc(1.1vmin * var(--text-scale)), 2vmin); }
     .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 6px; animation: blink 2s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
     /* ── PAGINACIÓN DE PLATOS ── */
@@ -252,8 +194,6 @@
     .no-data .icon { font-size: 5vw; }
     .no-data p { font-size: 2vw; font-weight: 600; }
     .no-data small { font-size: 1.2vw; opacity: 0.7; }
-    .fade-update { animation: none; }
-    @keyframes fadeUpdate { 0%{opacity:1;transform:scale(1)} 100%{opacity:1;transform:scale(1)} }
 
     /* ═══════════════════════════════════════════════════
        TURNO OVERLAY — Pantalla completa espectacular
@@ -310,14 +250,14 @@
     }
 
     .turno-title {
-      font-size: clamp(16px, var(--turno-title-size), 36px);
+      font-size: var(--turno-title-size);
       font-weight: 900; letter-spacing: 4px;
       text-transform: uppercase; opacity: 0.75;
       margin-bottom: 1vw;
     }
 
     .turno-msg-es {
-      font-size: clamp(20px, var(--turno-msg-es-size), 52px);
+      font-size: var(--turno-msg-es-size);
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.03em;
@@ -328,7 +268,7 @@
     }
 
     .turno-msg-en {
-      font-size: clamp(14px, var(--turno-msg-en-size), 30px);
+      font-size: var(--turno-msg-en-size);
       font-style: italic;
       opacity: 0.78;
       margin-bottom: 1.5vw;
@@ -340,7 +280,7 @@
       display: flex; flex-direction: column; align-items: center; gap: 0.6vw;
     }
     .turno-countdown-label {
-      font-size: clamp(13px, var(--turno-countdown-size), 30px); font-weight: 900;
+      font-size: var(--turno-countdown-size); font-weight: 900;
       opacity: 0.85; letter-spacing: 2px; text-transform: uppercase;
       text-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
@@ -354,86 +294,94 @@
       transition: width 1s linear;
     }
 
-    /* TURNO CAROUSEL (integrado: despedida + recordatorios) — multi-item responsive */
+    /* TURNO CAROUSEL (integrado: despedida + recordatorios) — 1 slide por vista */
     .turno-carousel {
       position: relative;
       margin: 2vw 0;
-      padding: 1.5vw;
+      padding: 1vw 1.5vw;
       border-radius: 1.5vw;
       background: rgba(0,0,0,0.15);
       backdrop-filter: blur(10px);
       overflow: hidden;
-      min-height: 22vh;
+      height: 26vh;
+      box-sizing: border-box;
     }
     .carousel-track {
       display: flex;
-      gap: 1.5vw;
-      transition: transform 0.8s cubic-bezier(0.4,0,0.2,1);
+      height: 100%;
+      transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
       will-change: transform;
-      padding: 0.5vw 0;
     }
     .carousel-slide {
-      flex: 0 0 auto;
-      width: clamp(280px, 45vw, 520px);
-      min-width: 280px;
-      max-width: 520px;
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      gap: 1.2vw;
-      padding: 2vw;
+      justify-content: center;
+      gap: 2.5vw;
+      padding: 1vw 1.5vw;
       box-sizing: border-box;
     }
+    /* Despedida: sin imagen, mensaje centrado en todo el ancho */
     .carousel-slide.farewell {
-      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-      border-radius: 1vw;
-      /* Sin imagen: centra el mensaje en todo el alto del carrusel en vez de
-         dejarlo arriba con el hueco vacío que reservaban los slides con foto. */
+      flex-direction: column;
       justify-content: center;
+      text-align: center;
     }
-    .carousel-slide.farewell .slide-text-es {
-      font-size: var(--carousel-farewell-es-size);
+    .carousel-slide .slide-media {
+      flex: 0 0 auto;
+      width: min(32vmin, 40vw);
+      height: min(20vmin, 22vh);
+      display: flex; align-items: center; justify-content: center;
     }
-    .carousel-slide.farewell .slide-text-en {
-      font-size: var(--carousel-farewell-en-size);
-    }
-    .carousel-slide img {
-      max-width: 100%;
-      max-height: 30vh;
-      width: auto;
-      height: auto;
+    .carousel-slide .slide-media img {
+      max-width: 100%; max-height: 100%;
+      width: auto; height: auto;
       border-radius: 1vw;
       box-shadow: 0 4px 25px rgba(0,0,0,0.3);
       object-fit: contain;
     }
-.slide-text-es {
-      font-size: var(--carousel-es-size);
-      font-weight: 900;
-      text-transform: uppercase;
-      text-align: center;
-      text-shadow: 0 3px 15px rgba(0,0,0,0.6);
-      line-height: 1.1;
-      word-break: break-word;
-      max-width: 95%;
-      color: inherit;
+    .carousel-slide.farewell .slide-media { display: none; }
+    .slide-text-col {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column; gap: 0.8vmin;
+      text-align: left;
     }
-.slide-text-en {
-      font-size: var(--carousel-en-size);
-      font-style: italic;
-      opacity: 0.85;
-      text-align: center;
-      line-height: 1.2;
-      max-width: 95%;
-      color: inherit;
+    .carousel-slide.farewell .slide-text-col {
+      align-items: center; text-align: center; gap: 1vmin;
     }
     .slide-label {
-      font-size: clamp(12px, 1.8vw, 24px);
+      font-size: clamp(12px, 1.6vmin, 3vmin);
       font-weight: 700;
       opacity: 0.7;
       text-transform: uppercase;
       letter-spacing: 2px;
-      margin-bottom: 0.5vw;
+      margin-bottom: 0.4vmin;
     }
+    .slide-text-es {
+      font-size: var(--carousel-es-size);
+      font-weight: 900;
+      text-transform: uppercase;
+      text-align: inherit;
+      text-shadow: 0 3px 15px rgba(0,0,0,0.6);
+      line-height: 1.08;
+      word-break: break-word;
+      max-width: 100%;
+      color: inherit;
+    }
+    .slide-text-en {
+      font-size: var(--carousel-en-size);
+      font-style: italic;
+      opacity: 0.85;
+      text-align: inherit;
+      line-height: 1.2;
+      max-width: 100%;
+      color: inherit;
+    }
+    .carousel-slide.farewell .slide-text-es { font-size: var(--carousel-farewell-es-size); }
+    .carousel-slide.farewell .slide-text-en { font-size: var(--carousel-farewell-en-size); }
     .carousel-dots {
       display: flex;
       justify-content: center;
@@ -441,7 +389,7 @@
       margin-top: 1vw;
     }
     .carousel-dot {
-      width: 12px; height: 12px;
+      width: clamp(10px, 1.2vmin, 16px); height: clamp(10px, 1.2vmin, 16px);
       border-radius: 50%;
       background: rgba(255,255,255,0.25);
       cursor: pointer;
@@ -490,19 +438,34 @@
     .turno-particles::after  { width: 30vw; height: 30vw; right: -5vw; bottom: -5vw; animation-delay: -4s; }
     @keyframes floatCircle { 0%,100%{transform:translate(0,0)} 50%{transform:translate(2vw,2vw)} }
 
-    /* ─── CIERRE DE COMEDOR ─── */
-    #cierre-overlay { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; padding:4vw; opacity:0; visibility:hidden; transition:opacity .45s ease, visibility .45s; background:radial-gradient(circle at 50% 0%, #263f67 0%, #101d34 46%, #070d19 100%); color:#fff; }
-    #cierre-overlay.visible { opacity:1; visibility:visible; }
-    .cierre-card { width:min(90vw,1500px); text-align:center; padding:6vw 7vw; border:1px solid rgba(255,255,255,.22); border-radius:3vw; background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.035)); box-shadow:0 3vw 8vw rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.18); position:relative; overflow:hidden; }
-    .cierre-card::before { content:''; position:absolute; inset:auto -10% -70% -10%; height:55%; background:radial-gradient(ellipse,rgba(56,189,248,.24),transparent 65%); pointer-events:none; }
-    .cierre-logo { position:relative; height:clamp(60px,8vw,130px); object-fit:contain; filter:brightness(1.2) drop-shadow(0 10px 16px rgba(0,0,0,.35)); margin-bottom:2vw; }
-    .cierre-kicker { position:relative; color:#7dd3fc; font-size:clamp(15px,1.7vw,28px); font-weight:800; letter-spacing:.25em; text-transform:uppercase; }
-    .cierre-title { position:relative; font-size:clamp(48px,8vw,132px); font-weight:950; letter-spacing:.035em; text-transform:uppercase; line-height:1; margin:1.3vw 0; text-shadow:0 5px 24px rgba(0,0,0,.3); }
-    .cierre-message-es { position:relative; font-size:clamp(23px,3.3vw,56px); font-weight:750; line-height:1.12; margin:0 auto 1vw; max-width:1000px; }
-    .cierre-message-en { position:relative; color:#cbd5e1; font-size:clamp(17px,2.1vw,34px); font-style:italic; line-height:1.2; }
-    .cierre-clock-wrap { position:relative; display:inline-flex; flex-direction:column; gap:.5vw; margin-top:3.5vw; padding:1.4vw 4vw 1.8vw; border-top:1px solid rgba(125,211,252,.42); border-bottom:1px solid rgba(125,211,252,.42); }
-    .cierre-clock-label { color:#bae6fd; font-size:clamp(14px,1.5vw,24px); font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
-    .cierre-clock { color:#fff; font-size:clamp(52px,9vw,150px); font-weight:950; line-height:.95; letter-spacing:.06em; font-variant-numeric: tabular-nums; }
+    /* ─── CIERRE DE COMEDOR — pantalla completa, sin recuadro ─── */
+    #cierre-overlay {
+      position: fixed; inset: 0; z-index: 10000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 3vw;
+      opacity: 0; visibility: hidden;
+      transition: opacity .45s ease, visibility .45s;
+      background: radial-gradient(circle at 50% 0%, #263f67 0%, #101d34 46%, #070d19 100%);
+      color: #fff; overflow: hidden;
+    }
+    #cierre-overlay.visible { opacity: 1; visibility: visible; }
+    .cierre-card {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      position: relative;
+    }
+    .cierre-card::before { content:''; position:absolute; inset:auto -10% -70% -10%; height:55%; background:radial-gradient(ellipse,rgba(56,189,248,.22),transparent 65%); pointer-events:none; }
+    .cierre-logo { position:relative; height:clamp(60px,8vmin,150px); object-fit:contain; filter:brightness(1.2) drop-shadow(0 10px 16px rgba(0,0,0,.35)); margin-bottom:1.6vmin; }
+    .cierre-kicker { position:relative; color:#7dd3fc; font-size:clamp(14px,calc(2vmin * var(--text-scale)),30px); font-weight:800; letter-spacing:.22em; text-transform:uppercase; }
+    .cierre-title { position:relative; font-size:clamp(40px,12vmin,150px); font-weight:950; letter-spacing:.02em; text-transform:uppercase; line-height:1; margin:1.2vmin 0; text-shadow:0 5px 24px rgba(0,0,0,.3); white-space:nowrap; }
+    .cierre-sub-en { position:relative; color:#cbd5e1; font-size:clamp(18px,calc(3.2vmin * var(--text-scale)),44px); font-style:italic; font-weight:600; letter-spacing:.12em; text-transform:uppercase; }
+    .cierre-message-es { position:relative; font-size:clamp(22px,calc(4.6vmin * var(--text-scale)),58px); font-weight:700; line-height:1.1; margin:1.6vmin auto .5vmin; max-width:1100px; }
+    .cierre-message-en { position:relative; color:#cbd5e1; font-size:clamp(16px,calc(3vmin * var(--text-scale)),40px); font-style:italic; line-height:1.15; }
+    .cierre-clock-wrap { position:relative; display:inline-flex; flex-direction:column; gap:.4vmin; margin-top:2.4vmin; padding:1vmin 4vw 1.4vmin; border-top:1px solid rgba(125,211,252,.42); border-bottom:1px solid rgba(125,211,252,.42); }
+    .cierre-clock-label { color:#bae6fd; font-size:clamp(12px,calc(1.6vmin * var(--text-scale)),24px); font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
+    .cierre-clock { color:#fff; font-size:clamp(44px,12vmin,150px); font-weight:950; line-height:.95; letter-spacing:.06em; font-variant-numeric: tabular-nums; }
+    .cierre-reapertura { position:relative; margin-top:1.4vmin; color:#bae6fd; font-size:clamp(16px,calc(2.2vmin * var(--text-scale)),34px); font-weight:700; letter-spacing:.04em; }
   </style>
 </head>
 <body>
@@ -552,10 +515,14 @@
     <img src="./img/Encabezado.png" alt="Food Service DPT" class="cierre-logo" onerror="this.style.display='none'">
     <div class="cierre-kicker">Food Service DPT</div>
     <div class="cierre-title">COMEDOR CERRADO</div>
-    <div class="cierre-message-en">DINING ROOM CLOSED</div>
+    <div class="cierre-sub-en">DINING ROOM CLOSED</div>
+    <div class="cierre-message-es" id="cierre-message-es">El comedor está cerrado</div>
+    <div class="cierre-message-en" id="cierre-message-en">The dining room is closed</div>
     <div class="cierre-clock-wrap">
+      <div class="cierre-clock-label">HORA ACTUAL · CURRENT TIME</div>
       <div class="cierre-clock" id="cierre-clock">--:--</div>
     </div>
+    <div class="cierre-reapertura" id="cierre-reapertura"></div>
   </div>
 </div>
 
@@ -607,7 +574,6 @@ let lastRenderedMenuKey = '';
 // Carousel state
 let carouselTimer = null;
 let currentSlideIndex = 0;
-let slidesPerView = 1;
 let totalPages = 1;
 
 // Muestra el menú solo si su fecha es HOY (reinicio automático diario)
@@ -646,6 +612,20 @@ function refreshCierre() {
   const active = cierreActivo();
   overlay.classList.toggle('visible', active);
   if (!active) return;
+
+  // Mensajes configurables desde el panel de gestión
+  const msgEs = document.getElementById('cierre-message-es');
+  const msgEn = document.getElementById('cierre-message-en');
+  if (msgEs) msgEs.textContent = cierreConfig?.mensajeEs || 'El comedor está cerrado';
+  if (msgEn) msgEn.textContent = cierreConfig?.mensajeEn || 'The dining room is closed';
+
+  // Hora de reapertura (si está programada)
+  const reapertura = document.getElementById('cierre-reapertura');
+  if (reapertura) {
+    const h = horaReapertura();
+    reapertura.textContent = (h && h !== '--:--') ? `Abrimos a las ${h} · We reopen at ${h}` : '';
+  }
+
   updateCierreClock();
   // El cierre tiene prioridad sobre los avisos temporales de turno.
   dismissTurno();
@@ -696,11 +676,7 @@ function getMinutosAntes(t) {
   return 5;
 }
 function hhmmToMin(hhmm) { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; }
-function minToHHMM(total) {
-  total = ((total % 1440) + 1440) % 1440;
-  const h = Math.floor(total / 60), m = total % 60;
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-}
+// minToHHMM viene de utils.js (compartido con el resto de la app).
 function fmtMMSS(sec) {
   sec = Math.max(0, sec);
   const m = Math.floor(sec / 60), s = sec % 60;
@@ -733,7 +709,7 @@ function showTurno(t) {
   ['turno-title','turno-countdown-label'].forEach(id => {
     document.getElementById(id).style.color = textColor;
   });
-  document.getElementById('turno-progress-bar').style.background = hexToRgbaLight(textColor);
+  document.getElementById('turno-progress-bar').style.background = 'rgba(255,255,255,0.7)';
 
   // Cuenta atrás HASTA la hora del cambio de turno
   const hora     = t.hora;
@@ -765,52 +741,20 @@ function showTurno(t) {
   }, 1000);
 }
 
-// Garantiza que el overlay de turno respete siempre los suelos de legibilidad
-// definidos en :root mediante clamp(). Sólo ajusta espacios y rellenos, NUNCA
-// reduce el tamaño de fuente por debajo de los mínimos establecidos.
+// Ajusta el overlay de turno sin tocar los tamaños de fuente (que ya vienen de
+// variables CSS escaladas). Sólo encoge el alto del carrusel si la tarjeta no
+// cabe en el viewport.
 function fitTurnoOverlay() {
   const card = document.getElementById('turno-card-tv');
-  if (!card || !card.classList) return;
+  const carousel = document.getElementById('turno-carousel');
+  if (!card || !carousel) return;
 
-  const root = document.documentElement.style;
-  const availableH = window.innerHeight * 0.92;
-  const availableW = Math.min(1600, window.innerWidth * 0.92);
-  const cardH = card.scrollHeight;
-
-  // 1) Si la card es más alta que el viewport, reducimos padding/gaps FIRST
-  if (cardH > availableH) {
-    const scale = Math.max(0.5, availableH / cardH); // nunca bajamos de 50%
-    const newPad = Math.max(16, 48 * scale);
-    card.style.padding = `${newPad}px ${Math.max(24, 80 * scale)}px`;
-    // Reducir min-height del carousel si existe
-    const carousel = document.getElementById('turno-carousel');
-    if (carousel) {
-      carousel.style.minHeight = Math.max(20, 36 * scale) + 'vh';
-    }
+  const maxH = window.innerHeight * 0.94;
+  const overflow = card.scrollHeight - maxH;
+  if (overflow > 0) {
+    const h = carousel.clientHeight || 0;
+    carousel.style.height = Math.max(14, h - overflow) + 'px';
   }
-
-  // 2) Asegurar que las variables CSS no se hayan ido por debajo de sus floors.
-  //    clamp() ya hace esto, pero forzamos lectura/escritura para "traer" el valor
-  //    calculado a style resolvido en caso de que alguien lo haya modificado.
-  const safeTitle = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--turno-title-size')) || 24, 24);
-  const safeMsgEs = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--turno-msg-es-size')) || 36, 36);
-  const safeMsgEn = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--turno-msg-en-size')) || 22, 22);
-  const safeCountdown = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--turno-countdown-size')) || 24, 24);
-  const safeCarouselEs = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-es-size')) || 32, 32);
-  const safeCarouselEn = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-en-size')) || 20, 20);
-  const safeFarewellEs = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-farewell-es-size')) || 44, 44);
-  const safeFarewellEn = Math.max(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-farewell-en-size')) || 26, 26);
-
-  // Aplicar los seguros (esto es prácticamente un no-op si clamp() funciona,
-  // pero asegura que el DOM tenga el valor correcto resuelto)
-  root.setProperty('--turno-title-size', safeTitle + 'px');
-  root.setProperty('--turno-msg-es-size', safeMsgEs + 'px');
-  root.setProperty('--turno-msg-en-size', safeMsgEn + 'px');
-  root.setProperty('--turno-countdown-size', safeCountdown + 'px');
-  root.setProperty('--carousel-es-size', safeCarouselEs + 'px');
-  root.setProperty('--carousel-en-size', safeCarouselEn + 'px');
-  root.setProperty('--carousel-farewell-es-size', safeFarewellEs + 'px');
-  root.setProperty('--carousel-farewell-en-size', safeFarewellEn + 'px');
 }
 
 function updateCountdownUI(hora) {
@@ -829,41 +773,16 @@ function dismissTurno() {
   stopCarousel();
 }
 
-function hexToRgbaLight(hex) {
-  // returns a lighter version for the progress bar
-  return hex === '#ffffff' ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)';
-}
-
 // ══════════════════════════════════════════════
-//  TURNO CAROUSEL (despedida + recordatorios) — multi-item responsive
+//  TURNO CAROUSEL (despedida + recordatorios) — 1 slide por vista
 // ══════════════════════════════════════════════
-function calculateSlidesPerView() {
-  const carousel = document.getElementById('turno-carousel');
-  const track = document.getElementById('carousel-track');
-  if (!carousel || !track) return 1;
-  
-  const carouselWidth = carousel.clientWidth;
-  const firstSlide = track.querySelector('.carousel-slide');
-  if (!firstSlide) return 1;
-  
-  const slideStyle = getComputedStyle(firstSlide);
-  const slideWidth = firstSlide.offsetWidth + parseFloat(slideStyle.marginRight || 0) + parseFloat(slideStyle.marginLeft || 0);
-  const gap = parseFloat(getComputedStyle(track).gap || 0);
-  
-  const slidesPerView = Math.max(1, Math.floor((carouselWidth + gap) / (slideWidth + gap)));
-  return slidesPerView;
-}
-
 function updateCarouselPagination() {
   const track = document.getElementById('carousel-track');
   const dots = document.getElementById('carousel-dots');
   if (!track || !dots) return;
-  
-  const totalSlides = track.children.length;
-  slidesPerView = calculateSlidesPerView();
-  totalPages = Math.ceil(totalSlides / slidesPerView);
-  
-  // Rebuild dots for pages
+
+  totalPages = Math.max(1, track.children.length);
+
   dots.innerHTML = '';
   for (let i = 0; i < totalPages; i++) {
     const dot = document.createElement('div');
@@ -871,14 +790,7 @@ function updateCarouselPagination() {
     dot.onclick = () => goToPage(i);
     dots.appendChild(dot);
   }
-  
-  // Clamp current page
-  const currentPage = Math.floor(currentSlideIndex / slidesPerView);
-  if (currentPage >= totalPages) {
-    goToPage(totalPages - 1);
-  } else {
-    goToPage(currentPage);
-  }
+  goToPage(Math.min(currentSlideIndex, totalPages - 1));
 }
 
 function buildTurnoCarousel(t) {
@@ -886,102 +798,86 @@ function buildTurnoCarousel(t) {
   const dots = document.getElementById('carousel-dots');
   const carousel = document.getElementById('turno-carousel');
 
-  if (!carousel) return;
+  if (!carousel || !track || !dots) return;
 
-  // Construir slides: primero el mensaje de despedida, luego cada recordatorio
   const slides = [];
-
-  // Slide 1: Mensaje de despedida (del turno) — sin imagen, así que puede
-  // usar todo el ancho/alto del carrusel (ver .carousel-slide.farewell).
+  // Slide 1: mensaje de despedida (sin imagen)
   slides.push({
     type: 'farewell',
     image: null,
     textEs: t.mensajeEs || '¡Gracias! Por favor, libera tu mesa.',
     textEn: t.mensajeEn || 'Thank you! Please clear your table.',
-    label: 'CAMBIO DE TURNO'
+    label: ''
   });
-
-  // Slides siguientes: cada recordatorio
+  // Slides siguientes: recordatorios (imagen lateral + mensaje grande)
   remindersConfig.forEach((r, i) => {
     slides.push({
       type: 'reminder',
       image: r.image,
       textEs: r.mensajeEs,
       textEn: r.mensajeEn || '',
-      label: `RECORDATORIO ${i + 1}`
+      label: `Recordatorio ${i + 1} · Reminder ${i + 1}`
     });
   });
 
-  if (slides.length === 0) {
-    carousel.style.display = 'none';
-    return;
-  }
-
   carousel.style.display = 'block';
-
   track.innerHTML = '';
   dots.innerHTML = '';
   currentSlideIndex = 0;
   track.style.transform = 'translateX(0)';
 
-  slides.forEach((slide, i) => {
+  slides.forEach(slide => {
     const div = document.createElement('div');
     div.className = 'carousel-slide' + (slide.type === 'farewell' ? ' farewell' : '');
 
-    // Se construye con DOM/textContent (no innerHTML) para que los mensajes
+    // Construido con DOM/textContent (no innerHTML) para que los mensajes
     // introducidos en el panel de gestión no puedan inyectar HTML.
     if (slide.image) {
+      const media = document.createElement('div');
+      media.className = 'slide-media';
       const img = document.createElement('img');
       img.src = slide.image;
       img.alt = slide.label;
       img.onerror = () => { img.style.display = 'none'; };
-      div.appendChild(img);
+      media.appendChild(img);
+      div.appendChild(media);
+    }
+
+    const textCol = document.createElement('div');
+    textCol.className = 'slide-text-col';
+
+    if (slide.label) {
+      const label = document.createElement('div');
+      label.className = 'slide-label';
+      label.textContent = slide.label;
+      textCol.appendChild(label);
     }
 
     const esDiv = document.createElement('div');
     esDiv.className = 'slide-text-es';
     esDiv.textContent = slide.textEs;
-    div.appendChild(esDiv);
+    textCol.appendChild(esDiv);
 
     const enDiv = document.createElement('div');
     enDiv.className = 'slide-text-en';
     enDiv.textContent = slide.textEn || '';
-    div.appendChild(enDiv);
+    textCol.appendChild(enDiv);
 
+    div.appendChild(textCol);
     track.appendChild(div);
   });
 
-  // Initial pagination setup
   updateCarouselPagination();
-  
-  // Recalculate on resize (se retira antes de añadir para no acumular
-  // listeners si se muestran varios turnos sin recargar la página).
-  window.removeEventListener('resize', debounceCarouselResize);
-  window.addEventListener('resize', debounceCarouselResize);
-}
-
-function debounceCarouselResize() {
-  clearTimeout(window.carouselResizeTimer);
-  window.carouselResizeTimer = setTimeout(() => {
-    updateCarouselPagination();
-  }, 150);
 }
 
 function startCarousel() {
   stopCarousel();
-  
-  const totalSlides = 1 + remindersConfig.length;
+  const totalSlides = document.getElementById('carousel-track')?.children.length || 0;
   if (totalSlides <= 1) return;
-  
-  // Calculate initial pagination
   updateCarouselPagination();
-  
-  // Usar el intervalo configurado (en milisegundos)
-  const intervalMs = carouselInterval * 1000;
   carouselTimer = setInterval(() => {
-    const nextPage = (Math.floor(currentSlideIndex / slidesPerView) + 1) % totalPages;
-    goToPage(nextPage);
-  }, intervalMs);
+    goToPage((currentSlideIndex + 1) % totalPages);
+  }, carouselInterval * 1000);
 }
 
 function stopCarousel() {
@@ -989,35 +885,18 @@ function stopCarousel() {
     clearInterval(carouselTimer);
     carouselTimer = null;
   }
-  if (window.carouselResizeTimer) {
-    clearTimeout(window.carouselResizeTimer);
-  }
-  window.removeEventListener('resize', debounceCarouselResize);
 }
 
 function goToPage(pageIndex) {
   const track = document.getElementById('carousel-track');
   const dots = document.querySelectorAll('.carousel-dot');
-  
-  if (!track) return;
-  
+  if (!track || totalPages === 0) return;
+
   pageIndex = ((pageIndex % totalPages) + totalPages) % totalPages;
-  currentSlideIndex = pageIndex * slidesPerView;
-  
-  // Calculate actual translateX based on slide widths
-  const firstSlide = track.querySelector('.carousel-slide');
-  if (!firstSlide) return;
-  
-  const slideStyle = getComputedStyle(firstSlide);
-  const slideWidth = firstSlide.offsetWidth + parseFloat(slideStyle.marginRight || 0) + parseFloat(slideStyle.marginLeft || 0);
-  const gap = parseFloat(getComputedStyle(track).gap || 0);
-  
-  const translateX = -(currentSlideIndex * (slideWidth + gap));
-  track.style.transform = `translateX(${translateX}px)`;
-  
-  dots.forEach((dot, i) => {
-    dot.classList.toggle('active', i === pageIndex);
-  });
+  currentSlideIndex = pageIndex;
+  track.style.transform = `translateX(${-100 * pageIndex}%)`;
+
+  dots.forEach((dot, i) => dot.classList.toggle('active', i === pageIndex));
 }
 
 // ══════════════════════════════════════════════
@@ -1044,35 +923,42 @@ let dishPagination = {
   pages: [],           // Array de arrays: cada sub-array es una página de platos
   current: 0,        // Índice de página actual
   timer: null,       // setInterval timer
-  interval: 8000,    /* ms entre cambios de página (mínimo para leer con comodidad) */
+  interval: 20000,   /* ms entre cambios de página (20 s para leer con comodidad) */
   isPaused: false,   /* true mientras el ratón esté sobre el área de platos */
-  totalDwellMs: 8000,
-  minDwellMs: 5000
+  totalDwellMs: 20000,
+  minDwellMs: 10000
 };
 
-// Altura NATURAL que necesita una fila (contenido real, no la altura que el
-// flexbox le asigna al repartir el alto disponible). Con esto la paginación
-// nunca comprime ni recorta platos o iconos en pantallas grandes.
-function dishRowHeight() {
-  const rows = document.querySelectorAll('.dish-row');
-  if (!rows.length) return 0;
+// Mide la altura NATURAL máxima de TODOS los platos renderizándolos en un
+// contenedor oculto del mismo ancho que la columna. Así una página posterior
+// con un plato más alto (nombre de 2 líneas + opción sin gluten + alérgenos en
+// dos filas) no queda recortada por el overflow:hidden de la fila.
+function measureAllDishHeights(platos) {
+  const mainCol = document.getElementById('main-col');
+  if (!mainCol || !platos.length) return 0;
+
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:absolute;left:-10000px;top:0;width:' + mainCol.clientWidth + 'px;visibility:hidden;pointer-events:none;';
+  platos.forEach(p => { probe.insertAdjacentHTML('beforeend', createDishRow(p)); });
+  document.body.appendChild(probe);
+
   let maxH = 0;
-  rows.forEach(row => {
+  probe.querySelectorAll('.dish-row').forEach(row => {
     const cs = getComputedStyle(row);
     const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
     const content = row.querySelector('.dish-content');
     const allergens = row.querySelector('.dish-allergens');
-    const contentH = content ? content.scrollHeight : 0;
-    const allergensH = allergens ? allergens.scrollHeight : 0;
-    const rowH = Math.max(contentH, allergensH) + padY;
+    const rowH = Math.max(content ? content.scrollHeight : 0, allergens ? allergens.scrollHeight : 0) + padY;
     if (rowH > maxH) maxH = rowH;
   });
+
+  document.body.removeChild(probe);
   return maxH;
 }
 
 function calculatePages(platos) {
   const mainCol = document.getElementById('main-col');
-  if (!mainCol) return { pages: [], totalPages: 0, dwellMs: 8000, rotationEnabled: false };
+  if (!mainCol) return { pages: [], totalPages: 0, dwellMs: 20000, rotationEnabled: false };
 
   const availableH = mainCol.clientHeight;
   if (availableH === 0) {
@@ -1081,25 +967,26 @@ function calculatePages(platos) {
     return {
       pages: platos.map(p => [p]),
       totalPages: platos.length,
-      dwellMs: 8000,
+      dwellMs: 20000,
       rotationEnabled: false
     };
   }
 
-  // Descontar el alto de la barra de puntos (si está visible) y el gap entre filas.
+  // Descontar la barra de puntos, el padding superior y el gap entre filas.
   const pagEl = document.getElementById('dish-pagination');
   const pagH = (pagEl && pagEl.offsetParent !== null) ? pagEl.getBoundingClientRect().height : 0;
-  const gap = parseFloat(getComputedStyle(mainCol).gap || '0') || 0;
-  const usableH = Math.max(0, availableH - pagH);
+  const cs = getComputedStyle(mainCol);
+  const gap = parseFloat(cs.gap || '0') || 0;
+  const padTop = parseFloat(cs.paddingTop || '0') || 0;
+  const usableH = Math.max(0, availableH - pagH - padTop);
 
-  let rowH = dishRowHeight();
+  let rowH = measureAllDishHeights(platos);
   if (rowH === 0) {
-    // Primer render (aún no hay filas que medir): estimación conservadora.
-    // Luego recomputeDishPagination() lo recalcula con la altura real.
+    // Fallback si aún no se puede medir (sin layout): estimación conservadora.
     rowH = usableH > 0 ? usableH / 4 : 120;
   }
 
-  const maxRows = Math.max(1, Math.floor((usableH + gap) / (rowH + gap)));
+  const maxRows = Math.max(1, Math.floor(usableH / (rowH + gap)));
   const pages = [];
   for (let i = 0; i < platos.length; i += maxRows) {
     pages.push(platos.slice(i, i + maxRows));
@@ -1112,7 +999,7 @@ function calculatePages(platos) {
     dishPagination.pages = pages;
     dishPagination.current = 0;
     dishPagination.timer = null;
-    dishPagination.interval = 8000;
+    dishPagination.interval = 20000;
     dishPagination.isPaused = false;
     return { pages, totalPages: total, dwellMs, rotationEnabled: false };
   }
@@ -1120,7 +1007,7 @@ function calculatePages(platos) {
   dishPagination.pages = pages;
   dishPagination.current = 0;
   dishPagination.totalDwellMs = dwellMs;
-  dishPagination.minDwellMs = 5000;
+  dishPagination.minDwellMs = 10000;
   dishPagination.dwellMs = dwellMs;
   dishPagination.rotationEnabled = true;
   return { pages, totalPages: total, dwellMs, rotationEnabled: true };
@@ -1235,22 +1122,19 @@ function createDishRow(plato) {
   const nameEs = escHtml(plato.nombreEs || 'PLATO SIN NOMBRE');
   const nameEn = plato.nombreEn ? escHtml(plato.nombreEn) : '';
 
-  // Un chip por alérgeno: icono + nombre en español + nombre en inglés.
+  // Icono de alérgeno (el nombre ES/EN vive en la leyenda lateral).
   // Los datos vienen de allergen-data.js (ALLERGEN_BY_ID); los nombres de
   // plato se escapan con escHtml() para no inyectar HTML accidentalmente.
-  const chip = (id, trace) => {
+  const icon = (id, trace) => {
     const a = ALLERGEN_BY_ID[id];
     if (!a) return '';
-    const code = a.id.substring(0, 2).toUpperCase();
-    return `<div class="alg-chip${trace ? ' trace-chip' : ''}" style="--alg-color:${a.color}" title="${a.es} · ${a.en}">
-      <div class="alg-icon-wrap"><img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'"><span class="alg-code">${code}</span></div>
-      <span class="alg-es">${a.es}</span>
-      <span class="alg-en">${a.en}</span>
+    return `<div class="alg-icon-wrap${trace ? ' trace-icon' : ''}" title="${a.es} · ${a.en}">
+      <img src="${a.icon}" alt="${a.es}" onerror="this.style.display='none'">
     </div>`;
   };
 
-  const containIcons = contiene.map(id => chip(id, false)).join('');
-  const traceIcons = trazas.map(id => chip(id, true)).join('');
+  const containIcons = contiene.map(id => icon(id, false)).join('');
+  const traceIcons = trazas.map(id => icon(id, true)).join('');
 
   let allergensHtml = '';
   if (contiene.length === 0 && trazas.length === 0) {
@@ -1327,7 +1211,8 @@ function initDishPagination(platos) {
 
 // ── RE-CALCULAR al cambiar ventana ──
 function recomputeDishPagination() {
-  if (!latestComedorData) return;
+  // Igual que refreshMenuDisplay: solo repaginamos si el menú sigue siendo de hoy.
+  if (!latestComedorData || latestComedorData.fecha !== todayStr()) return;
   initDishPagination((latestComedorData.platos || []).filter(p => !p.oculto));
 }
 
@@ -1335,17 +1220,19 @@ function recomputeDishPagination() {
 function renderMenu(data) {
   const platos = (data.platos || []).filter(p => !p.oculto);
   buildLegend([]); // siempre los 14 alérgenos de referencia
-
   latestComedorData = data;
+  document.getElementById('header-date').textContent = formatDateEs(data.fecha);
+
+  // Menú publicado pero sin platos: estado vacío (no el spinner de carga).
+  if (platos.length === 0) {
+    showNoData(true);
+    return;
+  }
+
   initDishPagination(platos);
 
-  // Fecha y footer
-  document.getElementById('header-date').textContent = formatDateEs(data.fecha);
   const now = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   document.getElementById('footer-updated').textContent = `Actualizado a las ${now}`;
-
-  // Asegurar que la rotación y paginación se reactiven al redimensionar
-  // (el listener global de resize llama a recomputeDishPagination)
 }
 
 // ══════════════════════════════════════════════
@@ -1363,7 +1250,6 @@ function buildLegend(usedIds) {
         <span class="legend-es">${a.es}</span>
         <span class="legend-en">${a.en}</span>
       </div>
-      <span class="legend-code" style="color:${a.color}">${a.id.substring(0,2).toUpperCase()}</span>
     </div>`).join('');
 }
 
@@ -1440,18 +1326,33 @@ function initFirebase() {
   } catch(e) { console.error(e); showOfflineState(); }
 }
 
-// startSizeAutoAdjust ya no existe - se usa paginación automática
-function showNoData() {
+// Muestra el estado "sin datos". empty=true = menú publicado pero sin platos.
+// Detiene la rotación y limpia la paginación para que un timer viejo no
+// re-inserte el menú anterior (p. ej. tras el cambio de día).
+function showNoData(empty = false) {
+  stopRotation();
+  dishPagination.pages = [];
+  dishPagination.rotationEnabled = false;
+
   const mainCol = document.getElementById('main-col');
   const dots = mainCol.querySelector('#dish-pagination');
-  mainCol.innerHTML =
-    '<div class="no-data"><span class="icon">🍽️</span><p>Menú del día no publicado</p><small>Today\'s menu has not been published yet</small></div>';
+  const msg = empty
+    ? '<div class="no-data"><span class="icon">🍽️</span><p>Menú publicado sin platos</p><small>No dishes have been added yet</small></div>'
+    : '<div class="no-data"><span class="icon">🍽️</span><p>Menú del día no publicado</p><small>Today\'s menu has not been published yet</small></div>';
+  mainCol.innerHTML = msg;
   if (dots) mainCol.appendChild(dots);
   document.getElementById('header-date').textContent = formatDateEs(null);
 }
 function showOfflineState() {
-  document.getElementById('main-col').innerHTML =
+  stopRotation();
+  dishPagination.pages = [];
+  dishPagination.rotationEnabled = false;
+
+  const mainCol = document.getElementById('main-col');
+  const dots = mainCol.querySelector('#dish-pagination');
+  mainCol.innerHTML =
     '<div class="no-data"><span class="icon">⚠️</span><p>Firebase no configurado</p><small>Edita firebase-config.js</small></div>';
+  if (dots) mainCol.appendChild(dots);
 }
 
 // ══════════════════════════════════════════════
@@ -1486,63 +1387,13 @@ window.addEventListener('beforeunload', () => {
 function applyTVSettings(settings) {
   if (!settings) return;
   const root = document.documentElement.style;
-  
-  // Helper: Escala todos los valores de un clamp() por un factor de escala
-  function applyScaleToClamp(clampStr, scale) {
-    const match = clampStr.match(/clamp\(([^)]+)\)/);
-    if (!match) return clampStr;
-    const parts = match[1].split(',').map(s => s.trim());
-    
-    const scaleValue = (val) => {
-      const m = val.match(/([\d.]+)(vmin|vw|px|px,)/);
-      if (!m) return val;
-      const num = parseFloat(m[1]);
-      const unit = m[2];
-      // Skip if unit is empty or invalid
-      if (!unit.replace(',','').trim()) return val;
-      // For px values, scale directly. For viewport units, scale the multiplier.
-      if (unit === 'px') return (num * scale) + unit;
-      return (num * scale) + unit;
-    };
-    
-    const newMin = scaleValue(parts[0]);
-    const newPref = scaleValue(parts[1]);
-    const newMax = scaleValue(parts[2]);
-    return `clamp(${newMin}, ${newPref}, ${newMax})`;
-  }
-  
-  // Aplicar scale de texto si viene de gestión
+
+  // Única fuente de calibración: el factor --text-scale. Los tamaños de plato,
+  // iconos, turno y carrusel se derivan de él a través de las variables CSS.
   if (settings.textScale !== undefined) {
-    const scale = Math.max(0.5, Math.min(2.0, parseFloat(settings.textScale)));
+    const scale = Math.max(0.5, Math.min(2.0, parseFloat(settings.textScale) || 1));
     root.setProperty('--text-scale', scale + '');
-    // Ajustar los tamaños de plato aplicando el scale al "preferido" dentro de clamp()
-    if (settings.dishNameSize) {
-      const newName = applyScaleToClamp(settings.dishNameSize, scale);
-      root.setProperty('--dish-name-size', newName);
-    }
-    if (settings.dishEnSize) {
-      const newEn = applyScaleToClamp(settings.dishEnSize, scale);
-      root.setProperty('--dish-en-size', newEn);
-    }
   }
-  
-  // Aplicar valores antiguos para compatibilidad (pero ya no son la fuente principal)
-  if (settings.dishNameSize && !settings.textScale) {
-    root.setProperty('--dish-name-size', settings.dishNameSize);
-  }
-  if (settings.dishEnSize && !settings.textScale) {
-    root.setProperty('--dish-en-size', settings.dishEnSize);
-  }
-  if (settings.turnoTitleSize) root.setProperty('--turno-title-size', settings.turnoTitleSize);
-  if (settings.turnoMsgEsSize) root.setProperty('--turno-msg-es-size', settings.turnoMsgEsSize);
-  if (settings.turnoMsgEnSize) root.setProperty('--turno-msg-en-size', settings.turnoMsgEnSize);
-  if (settings.turnoCountdownSize) root.setProperty('--turno-countdown-size', settings.turnoCountdownSize);
-  if (settings.carouselEsSize) root.setProperty('--carousel-es-size', settings.carouselEsSize);
-  if (settings.carouselEnSize) root.setProperty('--carousel-en-size', settings.carouselEnSize);
-  
-  // Ya no forzar fitDishRows que sobrescribía los valores manuales
-  // El layout ahora usa paginación automática en su lugar
-  // requestAnimationFrame(fitDishRows);  // Comentado
 }
 // Aplicación inmediata al cargar la página (por si Firebase tarda un
 // instante en conectar, o como único origen si no está configurado).

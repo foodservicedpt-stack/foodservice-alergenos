@@ -47,24 +47,3 @@ window.minToHHMM = function (total) {
   const m = total % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 };
-
-window.hexToRgbaLight = function (hex) {
-  let h = hex.replace('#', '');
-  if (h.length === 3) h = h.split('').map(x => x + x).join('');
-  const r = parseInt(h.substr(0, 2), 16) / 255;
-  const g = parseInt(h.substr(2, 2), 16) / 255;
-  const b = parseInt(h.substr(4, 2), 16) / 255;
-  return `rgba(${r * 255},${g * 255},${b * 255},0.4)`;
-};
-
-window.adjustBrightness = function (hex, percent) {
-  let h = hex.replace('#', '');
-  if (h.length === 3) h = h.split('').map(x => x + x).join('');
-  let r = parseInt(h.substr(0, 2), 16);
-  let g = parseInt(h.substr(2, 2), 16);
-  let b = parseInt(h.substr(4, 2), 16);
-  r = Math.min(255, Math.max(0, r + percent));
-  g = Math.min(255, Math.max(0, g + percent));
-  b = Math.min(255, Math.max(0, b + percent));
-  return `rgb(${r},${g},${b})`;
-};
