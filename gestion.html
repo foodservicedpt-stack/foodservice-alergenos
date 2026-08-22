@@ -14,7 +14,6 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --text-scale: 1;
       --primary: #1d4ed8;
       --primary-light: #3b82f6;
       --surface: #ffffff;
@@ -320,6 +319,25 @@
     #tab-content-menu { display: none; }
     #tab-content-menu.active { display: block; }
 
+    /* Secciones del tab de turnos */
+    .turno-section {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 24px 28px;
+      margin-bottom: 28px;
+    }
+    .turno-section:last-child { margin-bottom: 0; }
+    .turno-section-title {
+      font-size: 1.35rem; font-weight: 900; letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 18px; padding-bottom: 12px;
+      border-bottom: 3px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .turno-section-turnos .turno-section-title { color: #7c3aed; border-color: #ede9fe; }
+    .turno-section-reminders .turno-section-title { color: #0891b2; border-color: #cffafe; }
+    .turno-section-cierre .turno-section-title { color: #dc2626; border-color: #fee2e2; }
+
     .turnos-intro {
       background: linear-gradient(135deg, #2e1065, #4c1d95);
       border-radius: var(--radius); padding: 22px 28px;
@@ -468,41 +486,6 @@
     }
     .turnos-info { font-size: 0.85rem; color: var(--muted); }
     .turnos-info strong { color: var(--text); }
-  /* ==================== Ajustes de Tamaños ==================== */
-#ajustes-config {
-  display: none;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  margin: 16px 0;
-}
-.ajuste-item {
-  margin-bottom: 16px;
-}
-.ajuste-item label {
-  display: block;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-.ajuste-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.size-control {
-  flex: 0 0 150px;
-  width: 150px;
-  margin: 0;
-}
-.size-display {
-  width: 60px;
-  text-align: center;
-  font-weight: 600;
-  color: var(--primary);
-}
 </style>
 </head>
 <body>
@@ -524,7 +507,6 @@
 <div class="tab-bar">
   <button class="tab-btn active" id="tab-comedor"  onclick="switchMainTab('comedor')">🍽️&nbsp;&nbsp;Menú del día</button>
   <button class="tab-btn tab-turnos" id="tab-turnos" onclick="switchMainTab('turnos')">⚙️&nbsp;&nbsp;Gestión de Turnos</button>
-  <button class="tab-btn" id="tab-ajustes" onclick="switchMainTab('ajustes')">🔧&nbsp;&nbsp;Ajustes de Tamaños</button>
 </div>
 
   <!-- ─── MENU CONTROL BAR ─── -->
@@ -565,128 +547,108 @@
 
     <!-- TURNOS TAB CONTENT -->
     <div id="tab-content-turnos">
-      <div class="turnos-intro">
-        <div class="turnos-intro-icon">🔔</div>
-        <div>
-          <h3>Avisos de Cambio de Turno</h3>
-          <p>Configura los mensajes que aparecen automáticamente en la pantalla del comedor. Indica la <strong>hora del cambio de turno</strong> y <strong>cuántos minutos antes</strong> quieres que empiece la cuenta atrás (que termina justo a esa hora). Elige el color y el mensaje. La traducción al inglés es automática.</p>
-        </div>
-      </div>
-      <div id="turno-list"></div>
-      <button class="btn-add-turno" onclick="addTurno()">
-        <span class="plus">🔔</span> Añadir aviso de turno
-      </button>
 
-      <!-- RECORDATORIOS DE CUENTA ATRÁS -->
-      <div class="turnos-intro" style="margin-top:24px;">
-        <div class="turnos-intro-icon">📋</div>
-        <div>
-          <h3>Recordatorios durante la Cuenta Atrás</h3>
-          <p>Durante la cuenta atrás del cambio de turno, se mostrarán estos recordatorios con imágenes en la pantalla del comedor (estilo carousel/notificaciones). Añade cuantos quieras: imagen + mensaje. La traducción al inglés es automática.</p>
-        </div>
-      </div>
-      <div class="turnos-control-bar" style="margin-top:16px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
-        <div class="turno-field" style="min-width:180px;">
-          <label>⏱️ Rotación del carousel (segundos)</label>
-          <input type="number" id="carousel-interval" min="5" max="120" step="1" value="15"
-                 onchange="updateCarouselInterval(this.value)"
-                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:100px;">
-        </div>
-        <div class="sep-bar"></div>
-        <span style="color:#64748b; font-size:0.85rem;">Tiempo entre cada slide del carousel (mín 5s, máx 120s)</span>
-      </div>
-      <div id="reminder-list"></div>
-      <button class="btn-add-turno" onclick="addReminder()" style="margin-top:12px;">
-        <span class="plus">📋</span> Añadir recordatorio
-      </button>
-      <button class="btn-publish-turnos" id="btn-publish-reminders" onclick="publishReminders()" style="margin-top:12px; margin-left:8px;">
-        📋 &nbsp;GUARDAR RECORDATORIOS
-      </button>
-
-      <!-- CIERRE DE COMEDOR -->
-      <div class="turnos-intro" style="margin-top:24px;">
-        <div class="turnos-intro-icon">🚪</div>
-        <div>
-          <h3>Cierre de Comedor</h3>
-          <p>Configura el cierre del comedor. Cuando esté activo, la pantalla del comedor mostrará "Comedor cerrado" con la hora de reapertura en lugar de los alérgenos. Elige mensajes editables con traducción automática.</p>
-        </div>
-      </div>
-      <div class="turnos-control-bar" style="margin-top:16px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
-        <div class="turno-field" style="min-width:180px;">
-          <label>🕐 Hora de cierre</label>
-          <input type="time" id="cierre-hora" onchange="updateCierre('hora', this.value)"
-                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:120px;">
-        </div>
-        <div class="turno-field" style="min-width:180px;">
-          <label>🕐 Hora de reapertura</label>
-          <input type="time" id="cierre-reapertura" onchange="updateCierre('reapertura', this.value)"
-                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:120px;">
-        </div>
-        <div class="sep-bar"></div>
-        <label style="display:flex;align-items:center;gap:8px;color:#334155;font-weight:700;font-size:.9rem;cursor:pointer;">
-          <input type="checkbox" id="cierre-programado" onchange="updateCierre('programado', this.checked)">
-          Activar cada día a esta hora
-        </label>
-      </div>
-      <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
-        <div class="turno-field" style="flex:1;min-width:200px;">
-          <label>📝 Mensaje de cierre (español)</label>
-          <div class="msg-input-wrap">
-            <input class="msg-input" type="text" id="cierre-mensaje-es"
-                   placeholder="Ej: El comedor está cerrado. Volvemos a las 14:00"
-                   oninput="updateCierre('mensajeEs', this.value); autoTranslateCierre()">
-            <button class="msg-translate-btn" onclick="manualTranslateCierre()">🌐 Traducir</button>
+      <!-- SECCIÓN 1: TURNOS -->
+      <section class="turno-section turno-section-turnos">
+        <h2 class="turno-section-title">🔔 Turnos</h2>
+        <div class="turnos-intro">
+          <div class="turnos-intro-icon">🔔</div>
+          <div>
+            <h3>Avisos de Cambio de Turno</h3>
+            <p>Configura los mensajes que aparecen automáticamente en la pantalla del comedor. Indica la <strong>hora del cambio de turno</strong> y <strong>cuántos minutos antes</strong> quieres que empiece la cuenta atrás (que termina justo a esa hora). Elige el color y el mensaje. La traducción al inglés es automática.</p>
           </div>
         </div>
-        <div class="msg-field" style="flex:1;min-width:200px;">
-          <label>🇬🇧 English message (auto)</label>
-          <input class="msg-input msg-en" type="text" id="cierre-mensaje-en"
-                 placeholder="Auto-translated"
-                 oninput="updateCierre('mensajeEn', this.value)">
-        </div>
-      </div>
-      <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
-        <div class="turno-field" style="min-width:200px;">
-          <label>⏱️ Duración del cierre (minutos, 0 = manual)</label>
-          <input type="number" id="cierre-duracion" min="0" max="1440" step="1" value="0"
-                 onchange="updateCierre('duracion', this.value)"
-                 style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:100px;">
-        </div>
-        <div class="sep-bar"></div>
-        <span style="color:#64748b; font-size:0.85rem;">0 = cierre manual (hay que pulsar 'Reabrir'), >0 = reapertura automática tras X minutos</span>
-      </div>
-      <div class="turnos-control-bar" style="margin-top:12px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0; justify-content:center;">
-        <button class="btn-publish-turnos" id="btn-toggle-cierre" onclick="toggleCierre()" style="padding:14px 32px; font-size:1.05rem;">
-          🔒 <span id="cierre-btn-text">ACTIVAR CIERRE</span>
+        <div id="turno-list"></div>
+        <button class="btn-add-turno" onclick="addTurno()">
+          <span class="plus">🔔</span> Añadir aviso de turno
         </button>
-        <span id="cierre-status" style="color:#64748b; font-weight:700; font-size:0.9rem;"></span>
-      </div>
-    </div>
+      </section>
 
-    <!-- AJUSTES TAB CONTENT -->
-    <div id="tab-content-ajustes" class="turno-content">
-      <div id="ajustes-config">
-        <h3>Ajustes de Tamaños y Calibración</h3>
-        
-        <p class="muted">Estos controles ajustan la escala de texto que se aplica en la pantalla del comedor. <br>100% = tamaño normal. Ajusta según la distancia de visión.</p>
-        
-        <div class="ajuste-item">
-          <label>Escala de texto general</label>
-          <div class="ajuste-row">
-            <input type="range" class="size-control" data-target="textScale" data-unit="scale" value="1">
-            <input type="number" class="size-display" data-display="textScale" value="1" min="0.5" max="2" step="0.1">
-            <span class="label-pct" id="textScalePct">100%</span>
+      <!-- SECCIÓN 2: RECORDATORIOS -->
+      <section class="turno-section turno-section-reminders">
+        <h2 class="turno-section-title">📋 Recordatorios</h2>
+        <div class="turnos-intro">
+          <div class="turnos-intro-icon">📋</div>
+          <div>
+            <h3>Recordatorios durante la Cuenta Atrás</h3>
+            <p>Durante la cuenta atrás del cambio de turno, se mostrarán estos recordatorios con imágenes en la pantalla del comedor (estilo carousel/notificaciones). Añade cuantos quieras: imagen + mensaje. La traducción al inglés es automática.</p>
           </div>
         </div>
-        
-        <p class="muted small">Arrastra el control o escribe un número: < 100% = texto más pequeño, > 100% = texto más grande.</p>
-        
-        <div class="ajuste-item">
-          <label>Confirmar cambio en la pantalla TV</label>
-          <button class="btn-publish" onclick="applyCalibrationToTV()">Aplicar a TV ahora</button>
-          <small>Guarda la configuración en Firebase; la TV la recibirá en tiempo real.</small>
+        <div class="turnos-control-bar" style="padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+          <div class="turno-field" style="min-width:180px;">
+            <label>⏱️ Rotación del carousel (segundos)</label>
+            <input type="number" id="carousel-interval" min="5" max="120" step="1" value="15"
+                   onchange="updateCarouselInterval(this.value)"
+                   style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:100px;">
+          </div>
+          <div class="sep-bar"></div>
+          <span style="color:#64748b; font-size:0.85rem;">Tiempo entre cada slide del carousel (mín 5s, máx 120s)</span>
         </div>
-      </div>
+        <div id="reminder-list"></div>
+        <button class="btn-add-turno" onclick="addReminder()" style="margin-top:12px;">
+          <span class="plus">📋</span> Añadir recordatorio
+        </button>
+        <button class="btn-publish-turnos" id="btn-publish-reminders" onclick="publishReminders()" style="margin-top:12px; margin-left:8px;">
+          📋 &nbsp;GUARDAR RECORDATORIOS
+        </button>
+      </section>
+
+      <!-- SECCIÓN 3: CIERRE DE COMEDOR -->
+      <section class="turno-section turno-section-cierre">
+        <h2 class="turno-section-title">🚪 Cierre comedor</h2>
+        <div class="turnos-intro">
+          <div class="turnos-intro-icon">🚪</div>
+          <div>
+            <h3>Cierre de Comedor</h3>
+            <p>Configura el cierre del comedor. Cuando esté activo, la pantalla del comedor mostrará "Comedor cerrado" en lugar de los alérgenos. Elige mensajes editables con traducción automática.</p>
+          </div>
+        </div>
+        <div class="turnos-control-bar" style="padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+          <div class="turno-field" style="min-width:220px;">
+            <label>🕐 Hora en la que se mostrará 'Comedor cerrado'</label>
+            <input type="time" id="cierre-hora" onchange="updateCierre('hora', this.value)"
+                   style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:120px;">
+          </div>
+          <div class="sep-bar"></div>
+          <label style="display:flex;align-items:center;gap:8px;color:#334155;font-weight:700;font-size:.9rem;cursor:pointer;">
+            <input type="checkbox" id="cierre-programado" onchange="updateCierre('programado', this.checked)">
+            Activar cada día a esta hora
+          </label>
+        </div>
+        <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+          <div class="turno-field" style="flex:1;min-width:200px;">
+            <label>📝 Mensaje de cierre (español)</label>
+            <div class="msg-input-wrap">
+              <input class="msg-input" type="text" id="cierre-mensaje-es"
+                     placeholder="Ej: El comedor está cerrado. Volvemos a las 14:00"
+                     oninput="updateCierre('mensajeEs', this.value); autoTranslateCierre()">
+              <button class="msg-translate-btn" onclick="manualTranslateCierre()">🌐 Traducir</button>
+            </div>
+          </div>
+          <div class="msg-field" style="flex:1;min-width:200px;">
+            <label>🇬🇧 English message (auto)</label>
+            <input class="msg-input msg-en" type="text" id="cierre-mensaje-en"
+                   placeholder="Auto-translated"
+                   oninput="updateCierre('mensajeEn', this.value)">
+          </div>
+        </div>
+        <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
+          <div class="turno-field" style="min-width:200px;">
+            <label>⏱️ Duración del cierre (minutos, 0 = manual)</label>
+            <input type="number" id="cierre-duracion" min="0" max="1440" step="1" value="0"
+                   onchange="updateCierre('duracion', this.value)"
+                   style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:100px;">
+          </div>
+          <div class="sep-bar"></div>
+          <span style="color:#64748b; font-size:0.85rem;">0 = cierre manual (hay que pulsar 'Reabrir'), >0 = se reabre automáticamente tras X minutos</span>
+        </div>
+        <div class="turnos-control-bar" style="margin-top:12px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0; justify-content:center;">
+          <button class="btn-publish-turnos" id="btn-toggle-cierre" onclick="toggleCierre()" style="padding:14px 32px; font-size:1.05rem;">
+            🔒 <span id="cierre-btn-text">ACTIVAR CIERRE</span>
+          </button>
+          <span id="cierre-status" style="color:#64748b; font-weight:700; font-size:0.9rem;"></span>
+        </div>
+      </section>
     </div>
 
   </div>
@@ -726,7 +688,7 @@ let turnosState = []; // array of turno objects
 let remindersState = []; // array of reminder objects {id, image, mensajeEs, mensajeEn}
 let carouselInterval = 15; // seconds between carousel slides
 let cierreState = {
-  activo: false, programado: false, hora: '', reapertura: '', duracion: 0,
+  activo: false, programado: false, hora: '', duracion: 0,
   mensajeEs: 'El comedor está cerrado', mensajeEn: 'The dining room is closed'
 };
 let dishCounter = 0;
@@ -765,15 +727,13 @@ function hexToRgb(hex) {
 // ══════════════════════════════════════════════
 function switchMainTab(tab) {
   currentMainTab = tab;
-  ['comedor','turnos','ajustes'].forEach(t => {
+  ['comedor','turnos'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
   });
   document.getElementById('tab-content-menu').classList.toggle('active', tab === 'comedor');
   document.getElementById('tab-content-turnos').classList.toggle('active', tab === 'turnos');
-  document.getElementById('tab-content-ajustes').classList.toggle('active', tab === 'ajustes');
   document.getElementById('menu-control-bar').style.display   = tab !== 'turnos' ? 'flex' : 'none';
   document.getElementById('turnos-control-bar').style.display = tab === 'turnos' ? 'flex' : 'none';
-  document.getElementById('ajustes-config').style.display     = tab === 'ajustes' ? 'block' : 'none';
 
   if (tab === 'comedor') {
     currentMenuTab = 'comedor';
@@ -871,35 +831,6 @@ db.ref('recordatorios').on('value', snap => {
     cierreState = normalizeCierre(snap.val());
     syncCierreUI();
   }, err => console.warn(err));
-  // Sólo se lee una vez al abrir el panel (no con .on) para no pelear con
-  // los sliders mientras el usuario los está moviendo en este momento.
-  db.ref('tvSettings').once('value').then(snap => {
-    const settings = snap.val();
-    if (settings) applyLoadedTVSettings(settings);
-  }).catch(e => console.warn('tvSettings:', e));
-}
-
-function applyLoadedTVSettings(settings) {
-  const map = {
-    dishNameSize: '--dish-name-size',
-    dishEnSize: '--dish-en-size',
-    turnoTitleSize: '--turno-title-size',
-    turnoMsgEsSize: '--turno-msg-es-size',
-    turnoMsgEnSize: '--turno-msg-en-size',
-    turnoCountdownSize: '--turno-countdown-size',
-    carouselEsSize: '--carousel-es-size',
-    carouselEnSize: '--carousel-en-size'
-  };
-  Object.entries(map).forEach(([key, cssVar]) => {
-    if (!settings[key]) return;
-    document.documentElement.style.setProperty(cssVar, settings[key]);
-    const numericValue = parseFloat(settings[key]) || 0;
-    const slider = document.querySelector(`.size-control[data-target="${cssVar}"]`);
-    if (slider) slider.value = numericValue;
-    const display = document.querySelector(`.size-display[data-display="${cssVar}"]`);
-    if (display) display.value = numericValue;
-  });
-  localStorage.setItem('tvSettings', JSON.stringify(settings));
 }
 
 // ══════════════════════════════════════════════
@@ -907,7 +838,7 @@ function applyLoadedTVSettings(settings) {
 // ══════════════════════════════════════════════
 function normalizeCierre(data) {
   return Object.assign({
-    activo:false, programado:false, hora:'', reapertura:'', duracion:0,
+    activo:false, programado:false, hora:'', duracion:0,
     mensajeEs:'El comedor está cerrado', mensajeEn:'The dining room is closed'
   }, data || {}, { duracion: Math.max(0, Number((data || {}).duracion) || 0) });
 }
@@ -924,7 +855,6 @@ function cierreEstaActivo() { return !!cierreState.activo || isCierreProgramadoA
 function syncCierreUI() {
   const fields = {
     'cierre-hora': cierreState.hora,
-    'cierre-reapertura': cierreState.reapertura,
     'cierre-mensaje-es': cierreState.mensajeEs,
     'cierre-mensaje-en': cierreState.mensajeEn,
     'cierre-duracion': cierreState.duracion
@@ -936,7 +866,7 @@ function syncCierreUI() {
   const buttonText = document.getElementById('cierre-btn-text');
   if (buttonText) buttonText.textContent = active ? 'REABRIR COMEDOR' : 'ACTIVAR CIERRE AHORA';
   const status = document.getElementById('cierre-status');
-  if (status) status.textContent = active ? `● Cerrado${cierreState.reapertura ? ` · reapertura ${cierreState.reapertura}` : ''}` : (cierreState.programado ? `Programado a las ${cierreState.hora || '--:--'}` : 'Comedor abierto');
+  if (status) status.textContent = active ? '● Cerrado' : (cierreState.programado ? `Programado a las ${cierreState.hora || '--:--'}` : 'Comedor abierto');
   const quickStatus = document.getElementById('cierre-quick-status');
   const quickButton = document.getElementById('btn-cierre-quick');
   if (quickStatus) { quickStatus.textContent = active ? '● Comedor cerrado' : '● Comedor abierto'; quickStatus.style.color = active ? '#dc2626' : '#059669'; }
@@ -949,13 +879,6 @@ async function saveCierre({toast=false}={}) {
 }
 function updateCierre(field, value) {
   cierreState[field] = field === 'duracion' ? Math.max(0, Math.min(1440, Number(value) || 0)) : value;
-  if (field === 'duracion' && cierreState.programado && cierreState.hora && !cierreState.reapertura) {
-    const [h,m] = cierreState.hora.split(':').map(Number);
-    if(Number.isFinite(h) && Number.isFinite(m)) {
-      const total = (h * 60 + m + cierreState.duracion) % 1440;
-      cierreState.reapertura = `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
-    }
-  }
   syncCierreUI();
   saveCierre();
 }
@@ -1769,7 +1692,6 @@ function initApp() {
   const panel = document.getElementById('panel');
   if (panel) panel.classList.add('visible');
   initPanel();
-  initSizeControls();
 }
 
 if (document.readyState === 'loading') {
@@ -1790,118 +1712,8 @@ window.addEventListener('beforeunload', () => {
   } catch(e) {}
 });
 
-function initSizeControls() {
-  // Load current values from document.documentElement
-  document.querySelectorAll('.size-control').forEach(ctrl => {
-    const target = ctrl.dataset.target;
-    const unit = ctrl.dataset.unit || '';
-    // Si es textScale, establecer valor inicial y actualizar display percentage
-    if (target === 'textScale') {
-      const currentStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-scale').trim();
-      const numericValue = parseFloat(currentStyle) || 1;
-      ctrl.value = numericValue;
-      updateScaleDisplay(ctrl);
-    } else {
-      const currentValue = getComputedStyle(document.documentElement).getPropertyValue(target).trim();
-      const numericValue = parseFloat(currentValue) || 0;
-      ctrl.value = numericValue;
-    }
-    // Update display
-    const displayCtrl = document.querySelector(`.size-display[data-display="${target}"]`);
-    if (displayCtrl) displayCtrl.value = ctrl.value;
-  });
-
-  // Handle slider changes
-  document.querySelectorAll('.size-control').forEach(ctrl => {
-    ctrl.addEventListener('input', handleSizeChange);
-  });
-
-  // Handle number input changes
-  document.querySelectorAll('.size-display').forEach(input => {
-    input.addEventListener('input', handleSizeChange);
-  });
-}
-
-function updateScaleDisplay(ctrl) {
-  const pct = Math.round(parseFloat(ctrl.value) * 100);
-  const pctDisplay = document.getElementById('textScalePct');
-  if (pctDisplay) pctDisplay.textContent = `${pct}%`;
-}
-
-function handleSizeChange(e) {
-  const ctrl = e.target;
-  const target = ctrl.dataset.target || ctrl.closest('.ajuste-row').querySelector('.size-control').dataset.target;
-  let value = parseFloat(ctrl.value) || 1;
-  const unit = ctrl.dataset.unit || '';
-  
-  // Ensure valid range for scale
-  if (target === 'textScale') {
-    value = Math.max(0.5, Math.min(2.0, value));
-    ctrl.value = value;
-    updateScaleDisplay(ctrl);
-  } else {
-    value = Math.max(0.1, Math.min(30, value));
-    ctrl.value = value;
-  }
-  
-  // Apply to CSS (vista previa instantánea dentro de este mismo panel)
-  const cssProp = target === 'textScale' ? '--text-scale' : target;
-  const suffix = target === 'textScale' ? '' : unit;
-  document.documentElement.style.setProperty(cssProp, `${value}${suffix}`);
-  
-  // Guardar en localStorage al instante
-  saveTVSettings();
-}
-
-let tvSettingsSaveTimer = null;
-function saveTVSettings() {
-  const textScaleSlider = document.querySelector('.size-control[data-target="textScale"]');
-  const settings = {
-    textScale: textScaleSlider ? textScaleSlider.value : '1',
-    dishNameSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-name-size').trim(),
-    dishEnSize: getComputedStyle(document.documentElement).getPropertyValue('--dish-en-size').trim(),
-    turnoTitleSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-title-size').trim(),
-    turnoMsgEsSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-msg-es-size').trim(),
-    turnoMsgEnSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-msg-en-size').trim(),
-    turnoCountdownSize: getComputedStyle(document.documentElement).getPropertyValue('--turno-countdown-size').trim(),
-    carouselEsSize: getComputedStyle(document.documentElement).getPropertyValue('--carousel-es-size').trim(),
-    carouselEnSize: getComputedStyle(document.documentElement).getPropertyValue('--carousel-en-size').trim()
-  };
-  localStorage.setItem('tvSettings', JSON.stringify(settings));
-
-  // Debounce del guardado en Firebase: los sliders disparan este evento en
-  // cada tick del arrastre, y no queremos escribir en la base de datos
-  // decenas de veces por segundo.
-  clearTimeout(tvSettingsSaveTimer);
-  tvSettingsSaveTimer = setTimeout(() => {
-    if (!fbReady) return;
-    firebase.database().ref('tvSettings').set(settings).catch(e => console.warn(e));
-    showToast('💾 Configuración guardada en Firebase', 'info');
-  }, 400);
-}
 (function ensurePanelVisible() {
   const panel = document.getElementById('panel');
   if (panel && !panel.classList.contains('visible')) panel.classList.add('visible');
 })();
-
-function applyCalibrationToTV() {
-  // Recolectar la configuración actual del control de escala
-  const ctrl = document.querySelector('.size-control[data-target="textScale"]');
-  const textScale = ctrl ? parseFloat(ctrl.value) : 1;
-  if (!ctrl) return;
-  
-  // Construir la configuración a guardar (solo textScale, los demás se derivan en la TV)
-  const settings = { textScale: textScale.toString() };
-  
-  // Guardar en localStorage
-  localStorage.setItem('tvSettings', JSON.stringify(settings));
-  
-  // Guardar en Firebase (si está disponible)
-  if (fbReady) {
-    firebase.database().ref('tvSettings').set(settings).catch(e => console.warn('tvSettings:', e));
-  }
-  
-  // Mostrar feedback al usuario
-  showToast('💾 Configuración calibrada y guardada en Firebase', 'success');
-}
 </script>

@@ -42,12 +42,20 @@ window.autoTranslateDish = async function (dish) {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You are translating Spanish dish names from a restaurant menu to natural English. Rules:
-1. Always choose the culinary/food meaning (e.g. "berlina" = doughnut, not sedan).
-2. Use natural restaurant menu English. "con X" → "in X sauce" or "with X". "de X" → "X". "a la Y" → "Y-style".
-3. Cuisine adjectives BEFORE dish name: "Pansit Filipino" → "Filipino Pansit", "Paella Valenciana" → "Valencian Paella", "Gazpacho Andaluz" → "Andalusian Gazpacho".
-4. Generic names: "Ensalada" → "Garden Salad", "Fruta" → "Fresh Fruit", "Pan" → "Bread", "Helado" → "Ice Cream with [flavor]".
-5. Keep concise (2-5 words). Return ONLY the translation: ${dish.nombreEs.trim()}`
+              text: `You are an expert food translator for a restaurant menu shown to native English speakers.
+
+Step 1 — Identify the dish: understand exactly what the Spanish dish is (its ingredients and how it is cooked/served), ignoring any non-food meaning of the words.
+
+Step 2 — Translate like a native English menu: use the name an English-speaking chef or diner would actually use on a menu. Prefer the well-known English name when one exists, and put culinary adjectives before the noun ("Patatas Bravas" → "Crispy Potatoes with Spicy Tomato Sauce", not "Brave Potatoes").
+
+Step 3 — If there is NO established English name, do not keep the Spanish word alone: give a short, appetizing descriptive translation that tells a native speaker what the dish is. Examples: "Gazpacho" → "Chilled Tomato & Vegetable Soup"; "Salmorejo" → "Thick Chilled Tomato Soup"; "Croquetas de Jamón" → "Ham Croquettes".
+
+Rules:
+- Keep it concise (2–6 words); a short description is only for dishes without a standard English name.
+- Never invent a wrong dish. If unsure, describe it by its main ingredients plus cooking method.
+- Return ONLY the English name/description, with no notes, quotes or explanations.
+
+Dish: ${dish.nombreEs.trim()}`
             }]
           }]
         })

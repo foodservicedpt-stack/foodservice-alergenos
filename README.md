@@ -132,8 +132,8 @@ Sube tus archivos a la carpeta `img/` con exactamente estos nombres:
 ### Pantalla de gestión (tu ordenador)
 1. Abre `gestion.html` (o la URL de GitHub Pages)
 2. Contraseña: **Foodservice1914**
-3. Selecciona pestaña **Comedor** o **Desayuno**
-4. Añade platos → escribe el nombre en español → la IA traduce automáticamente al inglés
+3. Selecciona pestaña **Menú del día** o **Gestión de Turnos**
+4. Añade platos → escribe el nombre en español → la IA investiga el plato y lo traduce automáticamente al inglés
 5. Selecciona los alérgenos (círculo sólido = contiene, borde punteado = trazas)
 6. Pulsa **"PUBLICAR EN PANTALLA TV"** → se actualiza instantáneamente
 
@@ -158,17 +158,16 @@ El panel de gestión (`gestion.html`) **no tiene contraseña** — cualquiera co
 
 ## ✨ Funcionalidades
 
-- ✅ **Traducción automática** (IA) de nombres de platos español → inglés
+- ✅ **Traducción automática** (IA): investiga el plato, lo nombra como lo haría un hablante nativo de inglés y, si no existe un nombre establecido, aporta una breve descripción
 - ✅ **Actualización en tiempo real** — cambios visibles en TV al instante
 - ✅ **Auto-sizing inteligente** — texto e iconos escalan con la pantalla y los platos se reparten en páginas rotativas según su tamaño real, sin recortes
 - ✅ **Optimizado para pantallas grandes (70"+)**: los tamaños crecen con la resolución de la TV (incluido 4K) en vez de quedarse congelados en un máximo fijo en píxeles
-- ✅ **Alérgenos con nombre visible**: cada icono muestra su nombre en español e inglés debajo del dibujo, además de la leyenda lateral
+- ✅ **Leyenda de alérgenos** con el nombre en español e inglés de cada uno, visible junto a los iconos grandes de cada plato
 - ✅ **Bilingüe** — todos los textos en español e inglés
 - ✅ **Impresión A4** optimizada para el cartel de desayuno
 - ✅ **14 alérgenos** oficiales UE con iconos
 - ✅ **Distingue "Contiene" de "Trazas"** visualmente
 - ✅ Sin alérgenos → badge verde "Sin alérgenos declarados"
-- ✅ **Ajustes de tamaño de texto en tiempo real** — se controlan desde `gestión → Ajustes` y se sincronizan por Firebase, así que funcionan aunque el panel y la TV estén en dispositivos distintos
 
 ---
 
