@@ -101,6 +101,10 @@
       white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
       display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
     }
+    .dish-name-en-line {
+      display: flex; align-items: center; gap: 1vmin; min-width: 0;
+    }
+    .dish-name-en-wrap { flex: 0 1 auto; min-width: 0; max-width: 100%; }
     .dish-name-en {
       font-size: calc(var(--dish-en-size)); color: #334155; font-style: italic; line-height: 1.1;
       white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
@@ -147,21 +151,22 @@
     .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.15; }
     .no-allergen-txt .es { font-size: clamp(18px, calc(2.1vmin * var(--text-scale)), 3.8vmin); white-space: nowrap; }
     .no-allergen-txt .en { font-style: italic; font-size: clamp(14px, calc(1.6vmin * var(--text-scale)), 3vmin); opacity: 0.8; font-weight: 600; white-space: nowrap; }
-    .sin-gluten-note {
-      background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;
-      padding: 0.45vmin 0.7vmin; font-size: clamp(14px, calc(1.6vmin * var(--text-scale)), 3vmin); color: #166534;
-      line-height: 1.15; align-self: flex-start; margin-top: 0.3vw;
-      display: flex; align-items: center; gap: 0.5vmin;
+    .sin-gluten-badge {
+      display: inline-flex; align-items: center; gap: 0.4vmin;
+      padding: 0.3vmin 0.6vmin; border-radius: 6px;
+      border: 1px solid #86efac; background: #f0fdf4; color: #166534;
+      font-size: clamp(11px, calc(1.9vmin * var(--text-scale)), 3.2vmin); line-height: 1.05;
+      flex-shrink: 0;
     }
     .sin-gluten-icon {
-      position: relative; width: clamp(22px, 2.2vmin, 4vmin); height: clamp(22px, 2.2vmin, 4vmin);
+      position: relative; width: clamp(24px, calc(3vmin * var(--text-scale)), 5.5vmin); height: clamp(24px, calc(3vmin * var(--text-scale)), 5.5vmin);
       flex-shrink: 0; display: inline-flex;
     }
     .sin-gluten-icon img { width: 100%; height: 100%; object-fit: contain; }
     .sin-gluten-icon svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-    .sin-gluten-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
-    .sin-gluten-text .sin-gluten-es { font-weight: 800; color: #166534; white-space: normal; }
-    .sin-gluten-text .sin-gluten-en { font-style: italic; color: #4d7c4d; white-space: normal; }
+    .sin-gluten-text { display: flex; flex-direction: column; line-height: 1.05; min-width: 0; }
+    .sin-gluten-text .sin-gluten-es { font-weight: 800; color: #166534; white-space: nowrap; }
+    .sin-gluten-text .sin-gluten-en { font-style: italic; color: #14532d; white-space: nowrap; }
 
     /* ─── SIDEBAR LEGEND ─── */
     .sidebar {
@@ -1158,16 +1163,20 @@ function createDishRow(plato) {
   }
 
   const noGlutenSvg = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#16a34a"/><path d="M8 12.5l2.5 2.5 5.5-6.5" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  const sinGlutenHtml = plato.sinGluten
-    ? `<div class="sin-gluten-note"><span class="sin-gluten-icon"><img src="./img/alergenos_gluten.svg" alt="" aria-hidden="true">${noGlutenSvg}</span><span class="sin-gluten-text"><span class="sin-gluten-es">Opción sin gluten disponible, pregunte al personal</span><span class="sin-gluten-en">Gluten-free option available, please ask staff</span></span></div>`
+  const sinGlutenBadge = plato.sinGluten
+    ? `<span class="sin-gluten-badge"><span class="sin-gluten-icon"><img src="./img/alergenos_gluten.svg" alt="" aria-hidden="true">${noGlutenSvg}</span><span class="sin-gluten-text"><span class="sin-gluten-es">Sin gluten · pregunte al personal</span><span class="sin-gluten-en">Gluten-free · ask staff</span></span></span>`
+    : '';
+
+  // Línea horizontal del nombre EN + badge (el badge va al lado, sin añadir alto).
+  const enLine = (nameEn || sinGlutenBadge)
+    ? `<div class="dish-name-en-line">${nameEn ? `<div class="dish-name-en-wrap"><p class="dish-name-en">${nameEn}</p></div>` : ''}${sinGlutenBadge}</div>`
     : '';
 
   return `
     <article class="dish-row" role="listitem" aria-label="${nameEs}">
       <div class="dish-content">
         <h3 class="dish-name-es">${nameEs}</h3>
-        ${nameEn ? `<p class="dish-name-en">${nameEn}</p>` : ''}
-        ${sinGlutenHtml}
+        ${enLine}
       </div>
       <div class="dish-allergens">${allergensHtml}</div>
     </article>`;
