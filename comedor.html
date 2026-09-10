@@ -10,12 +10,14 @@
   <script src="./allergen-data.js"></script>
   <script src="./utils.js"></script>
   <script src="./translation.js"></script>
+  <script src="./layout-engine.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       /* ── ESCALA DE TEXTO (calibración desde gestión) ── */
       --text-scale: 1;
+      --page-scale: 1;
 
       /* ── TEXT SIZES ──
          Los topes (max) están en vmin y no en px para que en pantallas
@@ -86,7 +88,7 @@
       padding: 0.45vw 1vw;
       display: flex; align-items: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      flex: 1 1 0; min-height: 0;
+      flex: 0 0 auto;
       border-left: 5px solid transparent;
       overflow: hidden;
       gap: 1vw;
@@ -96,19 +98,17 @@
 
     .dish-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.3vw; }
     .dish-name-es {
-      font-size: var(--dish-name-size); font-weight: 900; color: #0f172a;
+      font-size: calc(var(--dish-name-size) * var(--page-scale)); font-weight: 900; color: #0f172a;
       text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.08;
-      white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+      white-space: normal; overflow-wrap: break-word; word-break: break-word;
     }
     .dish-name-en-line {
       display: flex; align-items: center; gap: 1vmin; min-width: 0;
     }
     .dish-name-en-wrap { flex: 0 1 auto; min-width: 0; max-width: 100%; }
     .dish-name-en {
-      font-size: calc(var(--dish-en-size)); color: #334155; font-style: italic; line-height: 1.1;
-      white-space: normal; overflow: hidden; overflow-wrap: break-word; word-break: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+      font-size: calc(var(--dish-en-size) * var(--page-scale)); color: #334155; font-style: italic; line-height: 1.1;
+      white-space: normal; overflow-wrap: break-word; word-break: break-word;
     }
     /* ─── ALLERGEN ICONS ── */
     .dish-allergens {
@@ -117,7 +117,7 @@
     }
     .allergen-section { display: flex; flex-direction: row; align-items: center; gap: 0.25vw; }
     .section-label {
-      font-size: clamp(20px, calc(2.4vmin * var(--text-scale)), 4.5vmin); font-weight: 800; text-transform: uppercase;
+      font-size: calc(clamp(20px, calc(2.4vmin * var(--text-scale)), 4.5vmin) * var(--page-scale)); font-weight: 800; text-transform: uppercase;
       letter-spacing: 0.5px; padding: 0.3vmin 0.6vmin; border-radius: 0.4vmin; line-height: 1.1;
       white-space: nowrap;
     }
@@ -127,7 +127,7 @@
       display: flex; flex-wrap: wrap; gap: 0.7vmin; justify-content: flex-end;
     }
     .alg-icon-wrap {
-      width: var(--icon-base); height: var(--icon-base);
+      width: calc(var(--icon-base) * var(--page-scale)); height: calc(var(--icon-base) * var(--page-scale));
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; position: relative;
     }
@@ -141,25 +141,25 @@
       background: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 8px;
       padding: 0.5vmin 0.9vmin; color: #065f46; font-weight: 800;
       display: inline-flex; align-items: center; gap: 0.6vmin;
-      white-space: nowrap; font-size: clamp(16px, calc(1.9vmin * var(--text-scale)), 3.4vmin);
+      white-space: nowrap; font-size: calc(clamp(16px, calc(1.9vmin * var(--text-scale)), 3.4vmin) * var(--page-scale));
     }
     .no-allergen .shield-ok { flex-shrink: 0; display: flex; }
     .no-allergen .shield-ok svg {
-      width: clamp(26px, 3vmin, 5vmin); height: clamp(26px, 3vmin, 5vmin);
+      width: calc(clamp(26px, 3vmin, 5vmin) * var(--page-scale)); height: calc(clamp(26px, 3vmin, 5vmin) * var(--page-scale));
       filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
     }
     .no-allergen-txt { display: flex; flex-direction: column; line-height: 1.15; }
-    .no-allergen-txt .es { font-size: clamp(18px, calc(2.1vmin * var(--text-scale)), 3.8vmin); white-space: nowrap; }
-    .no-allergen-txt .en { font-style: italic; font-size: clamp(14px, calc(1.6vmin * var(--text-scale)), 3vmin); opacity: 0.8; font-weight: 600; white-space: nowrap; }
+    .no-allergen-txt .es { font-size: calc(clamp(18px, calc(2.1vmin * var(--text-scale)), 3.8vmin) * var(--page-scale)); white-space: nowrap; }
+    .no-allergen-txt .en { font-style: italic; font-size: calc(clamp(14px, calc(1.6vmin * var(--text-scale)), 3vmin) * var(--page-scale)); opacity: 0.8; font-weight: 600; white-space: nowrap; }
     .sin-gluten-badge {
       display: inline-flex; align-items: center; gap: 0.4vmin;
       padding: 0.3vmin 0.6vmin; border-radius: 6px;
       border: 1px solid #86efac; background: #f0fdf4; color: #166534;
-      font-size: clamp(11px, calc(1.9vmin * var(--text-scale)), 3.2vmin); line-height: 1.05;
+      font-size: calc(clamp(11px, calc(1.9vmin * var(--text-scale)), 3.2vmin) * var(--page-scale)); line-height: 1.05;
       flex-shrink: 0;
     }
     .sin-gluten-icon {
-      position: relative; width: clamp(24px, calc(3vmin * var(--text-scale)), 5.5vmin); height: clamp(24px, calc(3vmin * var(--text-scale)), 5.5vmin);
+      position: relative; width: calc(clamp(24px, calc(3vmin * var(--text-scale)), 5.5vmin) * var(--page-scale)); height: calc(clamp(24px, calc(3vmin * var(--text-scale)), 5.5vmin) * var(--page-scale));
       flex-shrink: 0; display: inline-flex;
     }
     .sin-gluten-icon img { width: 100%; height: 100%; object-fit: contain; }
@@ -465,7 +465,10 @@
       padding: 3vw;
       opacity: 0; visibility: hidden;
       transition: opacity .45s ease, visibility .45s;
-      background: radial-gradient(circle at 50% 0%, #263f67 0%, #101d34 46%, #070d19 100%);
+      /* Halo inferior como CAPA DE FONDO (no pseudo-elemento): mismo aspecto, sin overflow. */
+      background:
+        radial-gradient(ellipse 75% 42% at 50% 118%, rgba(56,189,248,.22), transparent 65%),
+        radial-gradient(circle at 50% 0%, #263f67 0%, #101d34 46%, #070d19 100%);
       color: #fff; overflow: hidden;
     }
     #cierre-overlay.visible { opacity: 1; visibility: visible; }
@@ -475,15 +478,11 @@
       text-align: center;
       position: relative;
     }
-    .cierre-card::before { content:''; position:absolute; inset:auto -10% -70% -10%; height:55%; background:radial-gradient(ellipse,rgba(56,189,248,.22),transparent 65%); pointer-events:none; }
     .cierre-logo { position:relative; height:clamp(60px,8vmin,150px); object-fit:contain; filter:brightness(1.2) drop-shadow(0 10px 16px rgba(0,0,0,.35)); margin-bottom:1.6vmin; }
     .cierre-kicker { position:relative; color:#7dd3fc; font-size:clamp(14px,calc(2vmin * var(--text-scale)),30px); font-weight:800; letter-spacing:.22em; text-transform:uppercase; }
     .cierre-title { position:relative; font-size:clamp(40px,12vmin,150px); font-weight:950; letter-spacing:.02em; text-transform:uppercase; line-height:1; margin:1.2vmin 0; text-shadow:0 5px 24px rgba(0,0,0,.3); white-space:nowrap; }
     .cierre-sub-en { position:relative; color:#cbd5e1; font-size:clamp(18px,calc(3.2vmin * var(--text-scale)),44px); font-style:italic; font-weight:600; letter-spacing:.12em; text-transform:uppercase; }
-    .cierre-message-es { position:relative; font-size:clamp(22px,calc(4.6vmin * var(--text-scale)),58px); font-weight:700; line-height:1.1; margin:1.6vmin auto .5vmin; max-width:1100px; }
-    .cierre-message-en { position:relative; color:#cbd5e1; font-size:clamp(16px,calc(3vmin * var(--text-scale)),40px); font-style:italic; line-height:1.15; }
     .cierre-clock-wrap { position:relative; display:inline-flex; flex-direction:column; gap:.4vmin; margin-top:2.4vmin; padding:1vmin 4vw 1.4vmin; border-top:1px solid rgba(125,211,252,.42); border-bottom:1px solid rgba(125,211,252,.42); }
-    .cierre-clock-label { color:#bae6fd; font-size:clamp(12px,calc(1.6vmin * var(--text-scale)),24px); font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
     .cierre-clock { color:#fff; font-size:clamp(44px,12vmin,150px); font-weight:950; line-height:.95; letter-spacing:.06em; font-variant-numeric: tabular-nums; }
   </style>
 </head>
@@ -535,10 +534,7 @@
     <div class="cierre-kicker">Food Service DPT</div>
     <div class="cierre-title">COMEDOR CERRADO</div>
     <div class="cierre-sub-en">DINING ROOM CLOSED</div>
-    <div class="cierre-message-es" id="cierre-message-es">El comedor está cerrado</div>
-    <div class="cierre-message-en" id="cierre-message-en">The dining room is closed</div>
     <div class="cierre-clock-wrap">
-      <div class="cierre-clock-label">HORA ACTUAL · CURRENT TIME</div>
       <div class="cierre-clock" id="cierre-clock">--:--</div>
     </div>
   </div>
@@ -638,12 +634,6 @@ function refreshCierre() {
   const active = cierreActivo();
   overlay.classList.toggle('visible', active);
   if (!active) return;
-
-  // Mensajes configurables desde el panel de gestión
-  const msgEs = document.getElementById('cierre-message-es');
-  const msgEn = document.getElementById('cierre-message-en');
-  if (msgEs) msgEs.textContent = cierreConfig?.mensajeEs || 'El comedor está cerrado';
-  if (msgEn) msgEn.textContent = cierreConfig?.mensajeEn || 'The dining room is closed';
 
   updateCierreClock();
   // El cierre tiene prioridad sobre los avisos temporales de turno.
@@ -933,96 +923,6 @@ function formatDateEs(dateStr) {
   return `${weekdayCapitalized}, ${day} de ${month} de ${year}`;
 }
 
-function measureAverageDishHeight(platos) {
-  const mainCol = document.getElementById('main-col');
-  if (!mainCol || !platos.length) return 100;
-
-  const probe = document.createElement('div');
-  probe.style.cssText = 'position:absolute;left:-10000px;top:0;width:' + mainCol.clientWidth + 'px;visibility:hidden;pointer-events:none;';
-  platos.forEach(p => { probe.insertAdjacentHTML('beforeend', createDishRow(p)); });
-  document.body.appendChild(probe);
-
-  const heights = [];
-  probe.querySelectorAll('.dish-row').forEach(row => {
-    const cs = getComputedStyle(row);
-    const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-    const content = row.querySelector('.dish-content');
-    const allergens = row.querySelector('.dish-allergens');
-    const rowH = Math.max(content ? content.scrollHeight : 0, allergens ? allergens.scrollHeight : 0) + padY;
-    heights.push(rowH);
-  });
-
-  document.body.removeChild(probe);
-
-  if (heights.length === 0) return 100;
-  const sum = heights.reduce((a, b) => a + b, 0);
-  return sum / heights.length;
-}
-
-function calculatePages(platos) {
-  const mainCol = document.getElementById('main-col');
-  if (!mainCol) return { pages: [], totalPages: 0, dwellMs: 20000, rotationEnabled: false };
-
-  const availableH = mainCol.clientHeight;
-  if (availableH === 0) {
-    return {
-      pages: platos.map(p => [p]),
-      totalPages: platos.length,
-      dwellMs: 20000,
-      rotationEnabled: false
-    };
-  }
-
-  const minRowsPerPage = 4;
-
-  if (platos.length <= minRowsPerPage) {
-    return {
-      pages: [platos],
-      totalPages: 1,
-      dwellMs: 20000,
-      rotationEnabled: false
-    };
-  }
-
-  const pagEl = document.getElementById('dish-pagination');
-  const pagH = (pagEl && pagEl.offsetParent !== null) ? pagEl.getBoundingClientRect().height : 0;
-  const cs = getComputedStyle(mainCol);
-  const gap = parseFloat(cs.gap || '0') || 0;
-  const padTop = parseFloat(cs.paddingTop || '0') || 0;
-  const usableH = Math.max(0, availableH - pagH - padTop);
-
-  let rowH = measureAverageDishHeight(platos);
-  if (rowH === 0) {
-    rowH = usableH > 0 ? usableH / 4 : 120;
-  }
-
-  const maxRows = Math.max(1, Math.floor(usableH / (rowH + gap)));
-  const pages = [];
-  for (let i = 0; i < platos.length; i += maxRows) {
-    pages.push(platos.slice(i, i + maxRows));
-  }
-
-  const total = pages.length;
-  const dwellMs = dishPagination.totalDwellMs;
-
-  if (total <= 1) {
-    dishPagination.pages = pages;
-    dishPagination.current = 0;
-    dishPagination.timer = null;
-    dishPagination.interval = 20000;
-    dishPagination.isPaused = false;
-    return { pages, totalPages: total, dwellMs, rotationEnabled: false };
-  }
-
-  dishPagination.pages = pages;
-  dishPagination.current = 0;
-  dishPagination.totalDwellMs = dwellMs;
-  dishPagination.minDwellMs = 10000;
-  dishPagination.dwellMs = dwellMs;
-  dishPagination.rotationEnabled = true;
-  return { pages, totalPages: total, dwellMs, rotationEnabled: true };
-}
-
 // Renderizar la página actual de platos
 function renderDishPage(pageIndex) {
   const mainCol = document.getElementById('main-col');
@@ -1182,55 +1082,85 @@ function createDishRow(plato) {
     </article>`;
 }
 
-// ── INICIALIZACIÓN Y AJUSTE ──
-function initDishPagination(platos) {
-  const mainCol = document.getElementById('main-col');
-  if (!mainCol) return;
+// ── MOTOR DE LAYOUT (layout-engine.js) ──
+const LAYOUT_MIN_SCALE = 0.50;
+const LAYOUT_MAX_SCALE = 1.40;
+const LAYOUT_SAFETY_MARGIN = 0.985;
 
-  mainCol.querySelectorAll('.dish-row, .no-data').forEach(el => el.remove());
-  platos.forEach(p => {
-    mainCol.insertAdjacentHTML('beforeend', createDishRow(p));
-  });
-
-  const hasOverflow = mainCol.scrollHeight > mainCol.clientHeight;
-
-  if (!hasOverflow) {
-    dishPagination.pages = [platos];
-    dishPagination.current = 0;
-    dishPagination.totalPages = 1;
-    dishPagination.rotationEnabled = false;
-    const container = document.getElementById('dish-pagination');
-    if (container) container.style.display = 'none';
-    stopRotation();
-    return;
-  }
-
-  const calc = calculatePages(platos);
-  dishPagination.pages = calc.pages;
-  dishPagination.current = 0;
-  dishPagination.totalPages = calc.totalPages;
-  dishPagination.rotationEnabled = calc.rotationEnabled;
-  dishPagination.dwellMs = calc.dwellMs;
-
-  if (dishPagination.pages.length > 0) {
-    renderDishPage(0);
-  }
-
-  if (dishPagination.rotationEnabled && dishPagination.pages.length > 1) {
-    setDishPageDotsHTML();
-    startRotation();
-  } else {
-    const container = document.getElementById('dish-pagination');
-    if (container) container.style.display = 'none';
-  }
-
-  if (mainCol && !dishPagination._eventsBound) {
-    dishPagination._eventsBound = true;
-    mainCol.addEventListener('mouseenter', pauseRotation);
-    mainCol.addEventListener('mouseleave', resumeRotation);
-  }
+function makeDishRowEl(plato) {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = createDishRow(plato).trim();
+  return tpl.content.firstElementChild;
 }
 
+function applyPageScale(scale) {
+  const mainCol = document.getElementById("main-col");
+  if (mainCol) mainCol.style.setProperty("--page-scale", String(scale));
+}
+
+// Reserva de paginación con estructura SIEMPRE idéntica (altura determinista).
+function reservePaginationHeight() {
+  const pagEl = document.getElementById("dish-pagination");
+  if (!pagEl) return 0;
+  pagEl.style.display = "flex";
+  pagEl.innerHTML = '<button class="page-dot"></button>';
+  return pagEl.getBoundingClientRect().height;
+}
+
+// ── INICIALIZACIÓN Y AJUSTE ──
+function initDishPagination(platos) {
+  const mainCol = document.getElementById("main-col");
+  if (!mainCol) return;
+  platos = platos || [];
+  const pagEl = document.getElementById("dish-pagination");
+  const reservedBottom = reservePaginationHeight();
+
+  const engine = new LayoutEngine.Engine({
+    container: mainCol,
+    renderRow: makeDishRowEl,
+    MIN_SCALE: LAYOUT_MIN_SCALE,
+    MAX_SCALE: LAYOUT_MAX_SCALE,
+    SAFETY_MARGIN: LAYOUT_SAFETY_MARGIN,
+    reservedBottom: reservedBottom
+  });
+
+  const result = engine.layout(platos);
+  dishPagination.engine = engine;
+  dishPagination.pages = result.pages;
+  dishPagination.current = 0;
+  dishPagination.totalPages = result.pages.length;
+  dishPagination.scale = result.scale;
+  dishPagination.rotationEnabled = result.pages.length > 1;
+  dishPagination.dwellMs = dishPagination.totalDwellMs;
+  dishPagination.interval = dishPagination.totalDwellMs;
+  applyPageScale(result.scale);
+
+  if (dishPagination.pages.length === 0) {
+    mainCol.querySelectorAll(".dish-row, .no-data").forEach(el => el.remove());
+  }
+  if (dishPagination.pages.length > 0) renderDishPage(0);
+
+  if (dishPagination.rotationEnabled) { setDishPageDotsHTML(); startRotation(); }
+  else { if (pagEl) { pagEl.innerHTML = ""; pagEl.style.display = "none"; } stopRotation(); }
+
+  if (!dishPagination._eventsBound) {
+    dishPagination._eventsBound = true;
+    mainCol.addEventListener("mouseenter", pauseRotation);
+    mainCol.addEventListener("mouseleave", resumeRotation);
+  }
+
+  const report = engine.validate();
+  dishPagination.lastValidation = report;
+  window.__lastLayoutReport = report;
+  if (!report.ok) {
+    mainCol.setAttribute("data-layout-unfit", report.unfit ? "true" : "false");
+    mainCol.setAttribute("data-layout-problems", String(report.problems.length));
+    console.error("[layout] Validación FALLIDA" + (report.unfit ? " (unfit: no cabe ni a MIN_SCALE)" : "") + ":", report.problems.slice(0, 5));
+  } else {
+    mainCol.removeAttribute("data-layout-unfit");
+    mainCol.removeAttribute("data-layout-problems");
+  }
+}
 // ── RE-CALCULAR al cambiar ventana ──
 function recomputeDishPagination() {
   // Igual que refreshMenuDisplay: solo repaginamos si el menú sigue siendo de hoy.
@@ -1276,11 +1206,16 @@ function buildLegend(usedIds) {
 }
 
 
+// Doble rAF + debounce: layout y unidades vmin asentados antes de medir.
+let resizeRaf = 0;
 window.addEventListener('resize', () => {
-  requestAnimationFrame(recomputeDishPagination);
-  if (document.getElementById('turno-overlay')?.classList.contains('visible')) {
-    requestAnimationFrame(fitTurnoOverlay);
-  }
+  cancelAnimationFrame(resizeRaf);
+  resizeRaf = requestAnimationFrame(() => requestAnimationFrame(() => {
+    recomputeDishPagination();
+    if (document.getElementById('turno-overlay')?.classList.contains('visible')) {
+      fitTurnoOverlay();
+    }
+  }));
 });
 
 // ══════════════════════════════════════════════
