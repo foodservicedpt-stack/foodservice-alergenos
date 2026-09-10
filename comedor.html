@@ -289,7 +289,12 @@
       display: flex; flex-direction: column; align-items: center; gap: 0.6vw;
     }
     .turno-countdown-label {
-      font-size: var(--turno-countdown-size); font-weight: 900;
+      /* Cuenta atrás en UNA sola línea: el tope de 94px solo actúa en pantallas
+         muy grandes (donde la base lo supera) y garantiza que el texto quepa en
+         el ancho de la tarjeta sin reducirla de forma perceptible. */
+      font-size: min(var(--turno-countdown-size), 94px);
+      white-space: nowrap;
+      font-weight: 900;
       opacity: 0.85; letter-spacing: 2px; text-transform: uppercase;
       text-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
