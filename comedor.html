@@ -206,6 +206,7 @@
     ═══════════════════════════════════════════════════ */
     #turno-overlay {
       position: fixed; inset: 0; z-index: 9999;
+      --turno-scale: 1;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       opacity: 0; pointer-events: none;
       transition: opacity 0.5s ease;
@@ -222,7 +223,9 @@
     /* Main card */
     .turno-card-tv {
       position: relative; z-index: 1;
-      width: 92vw; max-width: 1600px;
+      /* Ancho adaptable: en TV grandes 1600px dejaba el carrusel pequeño y
+         obligaba a textos largos a envolver de más. */
+      width: 92vw; max-width: min(92vw, 2400px); flex-shrink: 0;
       border-radius: 2.5vw;
       padding: clamp(20px, 3vw, 48px) clamp(24px, 5vw, 80px);
       text-align: center;
@@ -256,7 +259,7 @@
     }
 
     .turno-title {
-      font-size: var(--turno-title-size);
+      font-size: calc(var(--turno-title-size) * var(--turno-scale));
       font-weight: 900; letter-spacing: 4px;
       text-transform: uppercase; opacity: 0.75;
       margin-bottom: 1vw;
@@ -286,7 +289,12 @@
       display: flex; flex-direction: column; align-items: center; gap: 0.6vw;
     }
     .turno-countdown-label {
-      font-size: var(--turno-countdown-size); font-weight: 900;
+      /* Cuenta atrás en UNA sola línea: el tope de 94px solo actúa en pantallas
+         muy grandes (donde la base lo supera) y garantiza que el texto quepa en
+         el ancho de la tarjeta sin reducirla de forma perceptible. */
+      font-size: min(var(--turno-countdown-size), 94px);
+      white-space: nowrap;
+      font-weight: 900;
       opacity: 0.85; letter-spacing: 2px; text-transform: uppercase;
       text-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
@@ -309,7 +317,6 @@
       background: rgba(0,0,0,0.15);
       backdrop-filter: blur(10px);
       overflow: hidden;
-      height: 26vh;
       box-sizing: border-box;
     }
     .carousel-track {
@@ -338,8 +345,8 @@
     }
     .carousel-slide .slide-media {
       flex: 0 0 auto;
-      width: min(32vmin, 40vw);
-      height: min(20vmin, 22vh);
+      width: calc(min(32vmin, 40vw) * var(--turno-scale));
+      height: calc(min(20vmin, 22vh) * var(--turno-scale));
       display: flex; align-items: center; justify-content: center;
     }
     .carousel-slide .slide-media img {
@@ -359,7 +366,7 @@
       align-items: center; text-align: center; gap: 1vmin;
     }
     .slide-label {
-      font-size: clamp(12px, 1.6vmin, 3vmin);
+      font-size: calc(clamp(12px, 1.6vmin, 3vmin) * var(--turno-scale));
       font-weight: 700;
       opacity: 0.7;
       text-transform: uppercase;
@@ -367,7 +374,7 @@
       margin-bottom: 0.4vmin;
     }
     .slide-text-es {
-      font-size: var(--carousel-es-size);
+      font-size: calc(var(--carousel-es-size) * var(--turno-scale));
       font-weight: 900;
       text-transform: uppercase;
       text-align: inherit;
@@ -378,7 +385,7 @@
       color: inherit;
     }
     .slide-text-en {
-      font-size: var(--carousel-en-size);
+      font-size: calc(var(--carousel-en-size) * var(--turno-scale));
       font-style: italic;
       opacity: 0.85;
       text-align: inherit;
@@ -387,20 +394,10 @@
       color: inherit;
     }
     .carousel-slide.farewell .slide-text-es {
-      font-size: var(--carousel-farewell-es-size);
-      max-height: 16vh;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 3;
+      font-size: calc(var(--carousel-farewell-es-size) * var(--turno-scale));
     }
     .carousel-slide.farewell .slide-text-en {
-      font-size: var(--carousel-farewell-en-size);
-      max-height: 10vh;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 3;
+      font-size: calc(var(--carousel-farewell-en-size) * var(--turno-scale));
     }
     .carousel-dots {
       display: flex;
@@ -750,20 +747,117 @@ function showTurno(t) {
   }, 1000);
 }
 
-// Ajusta el overlay de turno sin tocar los tamaños de fuente (que ya vienen de
-// variables CSS escaladas). Sólo encoge el alto del carrusel si la tarjeta no
-// cabe en el viewport.
+// ══════════════════════════════════════════════
+//  TURNO LAYOUT — ajuste determinista del overlay de turno.
+//  Misma filosofía que el Layout Engine de platos:
+//    renderizar (todo) → medir el contenido real → calcular la mayor escala
+//    válida por búsqueda binaria → aplicar → validar TODAS las diapositivas.
+//  Nunca oculta texto: no hay line-clamp ni max-height en las diapositivas.
+// ══════════════════════════════════════════════
+const TURNO_MIN_SCALE = 0.50;
+const TURNO_MAX_SCALE = 1.40;
+const TURNO_SAFETY = 0.94;        // fracción del viewport que puede ocupar la tarjeta
+const TURNO_SCALE_EPS = 0.02;
+
+let turnoFitRaf = 0;
+function scheduleTurnoFit() {
+  cancelAnimationFrame(turnoFitRaf);
+  turnoFitRaf = requestAnimationFrame(() => fitTurnoOverlay());
+}
+
+// Mide a una escala con la altura natural del carrusel. offsetHeight mide el
+// layout (ignora la transform de entrada), por lo que es fiable durante la
+// animación.
+function measureTurnoAt(scale, card, carousel, track, slides) {
+  card.style.setProperty('--turno-scale', String(scale));
+  carousel.style.height = 'auto';
+  track.style.height = 'auto';
+  void card.offsetHeight; // fuerza reflow
+
+  const cardH = card.offsetHeight;
+  let maxSlide = 0, clip = false;
+  slides.forEach((sl) => {
+    if (sl.offsetHeight > maxSlide) maxSlide = sl.offsetHeight;
+    if (sl.scrollHeight > sl.clientHeight + 1 || sl.scrollWidth > sl.clientWidth + 1) clip = true;
+  });
+  return { cardH: cardH, maxSlide: maxSlide, clip: clip };
+}
+
+// Valida el resultado: tarjeta dentro del viewport, sin recortes, sin solapes
+// entre bloques y con TODAS las diapositivas comprobadas.
+function validateTurnoOverlay(scale, availH, unfit) {
+  const card = document.getElementById('turno-card-tv');
+  const carousel = document.getElementById('turno-carousel');
+  const track = document.getElementById('carousel-track');
+  if (!card || !carousel || !track) {
+    return { ok: false, unfit: true, scale: scale, slides: 0, problems: [{ type: 'overlay-ausente' }] };
+  }
+  const slides = Array.prototype.slice.call(track.children);
+  const problems = [];
+
+  if (card.offsetHeight > availH + 1) problems.push({ type: 'tarjeta-mas-alta-que-viewport', cardH: card.offsetHeight, availH: Math.round(availH) });
+  if (card.offsetWidth > window.innerWidth + 1) problems.push({ type: 'tarjeta-mas-ancha-que-viewport' });
+  if (carousel.scrollHeight > carousel.clientHeight + 1) problems.push({ type: 'carrusel-recorta-contenido' });
+
+  // Solape vertical entre bloques de la tarjeta (medidas de layout).
+  const parts = ['turno-bell', 'turno-title', 'turno-carousel', 'turno-countdown-wrap']
+    .map((id) => document.getElementById(id)).filter(Boolean)
+    .map((el) => ({ id: el.id, top: el.offsetTop, h: el.offsetHeight }))
+    .sort((a, b) => a.top - b.top);
+  for (let i = 1; i < parts.length; i++) {
+    if (parts[i - 1].top + parts[i - 1].h > parts[i].top + 1) {
+      problems.push({ type: 'solape', a: parts[i - 1].id, b: parts[i].id });
+    }
+  }
+
+  slides.forEach((sl, i) => {
+    if (sl.scrollHeight > sl.clientHeight + 1) problems.push({ type: 'slide-recorta-contenido', slide: i });
+    if (sl.scrollWidth > sl.clientWidth + 1) problems.push({ type: 'slide-overflow-x', slide: i });
+  });
+
+  return {
+    ok: problems.length === 0 && !unfit, unfit: !!unfit, scale: scale,
+    slides: slides.length, cardH: card.offsetHeight, availH: Math.round(availH),
+    problems: problems
+  };
+}
+
+// Calcula y aplica la mayor escala válida. Si ni a TURNO_MIN_SCALE cabe, se
+// marca unfit (explícito) en vez de recortar en silencio.
 function fitTurnoOverlay() {
   const card = document.getElementById('turno-card-tv');
   const carousel = document.getElementById('turno-carousel');
-  if (!card || !carousel) return;
+  const track = document.getElementById('carousel-track');
+  if (!card || !carousel || !track) return;
+  const slides = Array.prototype.slice.call(track.children);
+  if (!slides.length) return;
 
-  const maxH = window.innerHeight * 0.94;
-  const overflow = card.scrollHeight - maxH;
-  if (overflow > 0) {
-    const h = carousel.clientHeight || 0;
-    carousel.style.height = Math.max(100, h - overflow) + 'px';
+  const availH = window.innerHeight * TURNO_SAFETY;
+
+  let best = null;
+  const top = measureTurnoAt(TURNO_MAX_SCALE, card, carousel, track, slides);
+  if (top.cardH <= availH && !top.clip) best = TURNO_MAX_SCALE;
+  else {
+    let lo = TURNO_MIN_SCALE, hi = TURNO_MAX_SCALE, guard = 0;
+    while (guard++ < 40 && (hi - lo) > TURNO_SCALE_EPS) {
+      const mid = (lo + hi) / 2;
+      const m = measureTurnoAt(mid, card, carousel, track, slides);
+      if (m.cardH <= availH && !m.clip) { best = mid; lo = mid; } else hi = mid;
+    }
   }
+
+  const scale = best !== null ? best : TURNO_MIN_SCALE;
+  const finalM = measureTurnoAt(scale, card, carousel, track, slides);
+
+  // Altura del carrusel = diapositiva más alta (evita saltos al cambiar de slide).
+  track.style.height = finalM.maxSlide + 'px';
+  carousel.style.height = 'auto';
+  card.style.setProperty('--turno-scale', String(scale));
+
+  const report = validateTurnoOverlay(scale, availH, best === null);
+  window.__lastTurnoReport = report;
+  card.setAttribute('data-turno-unfit', report.unfit ? 'true' : 'false');
+  if (!report.ok) console.warn('[turno] Layout con incidencias:', report.problems.slice(0, 5));
 }
 
 function updateCountdownUI(hora) {
@@ -848,6 +942,7 @@ function buildTurnoCarousel(t) {
       img.src = slide.image;
       img.alt = slide.label;
       img.onerror = () => { img.style.display = 'none'; };
+      img.onload = scheduleTurnoFit;
       media.appendChild(img);
       div.appendChild(media);
     }
