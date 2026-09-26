@@ -292,6 +292,51 @@
     .print-traces-info { border-top: 1px dashed #e2e8f0; margin-top: 6px; padding-top: 6px; font-size: 0.65rem; color: #92400e; }
     .print-no-data { flex: 1; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 1rem; flex-direction: column; gap: 10px; }
 
+    /* ─── LOGIN ─── */
+    #login-screen {
+      position: fixed; inset: 0; z-index: 1000;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      padding: 52px 48px;
+      width: 420px;
+      max-width: 90vw;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    }
+    .login-card img { height: 72px; object-fit: contain; margin-bottom: 20px; filter: drop-shadow(0 0 16px rgba(245,158,11,0.4)); }
+    .login-card .brand { font-size: 1.5rem; font-weight: 800; color: #fffbeb; letter-spacing: 2px; }
+    .login-card .sub { font-size: 0.82rem; color: #94a3b8; letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; margin-bottom: 36px; }
+    .pwd-wrap { position: relative; margin-bottom: 16px; }
+    .pwd-wrap input {
+      width: 100%; padding: 16px 50px 16px 20px;
+      border: 2px solid rgba(255,255,255,0.15); border-radius: 12px;
+      background: rgba(255,255,255,0.07); color: white;
+      font-size: 1.05rem; outline: none; transition: border 0.2s;
+    }
+    .pwd-wrap input::placeholder { color: #64748b; }
+    .pwd-wrap input:focus { border-color: #f59e0b; }
+    .pwd-toggle { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1.2rem; }
+    .login-error { color: #fca5a5; font-size: 0.85rem; margin-bottom: 12px; min-height: 20px; }
+    .btn-login {
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, #b45309, #f59e0b);
+      color: white; border: none; border-radius: 12px;
+      font-size: 1rem; font-weight: 700; letter-spacing: 1.5px; cursor: pointer;
+      text-transform: uppercase; transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(245,158,11,0.4);
+    }
+    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,158,11,0.5); }
+    .btn-login:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+    /* Oculta todo el contenido real hasta introducir la contraseña correcta */
+    body:not(.fsdpt-unlocked) > *:not(#login-screen) { display: none !important; }
+
     /* ── PRINT RULES ── */
     @media print {
       @page { size: A4 landscape; margin: 0; }
@@ -309,6 +354,65 @@
   </style>
 </head>
 <body>
+
+<!-- ══════════════════════ LOGIN ══════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <img src="./img/Encabezado.png" alt="Food Service DPT" onerror="this.style.display='none'">
+    <div class="brand">FOOD SERVICE DPT</div>
+    <div class="sub">Acceso restringido · Desayuno</div>
+    <div class="pwd-wrap">
+      <input type="password" id="fsdpt-pwd" placeholder="Contraseña" autocomplete="current-password">
+      <button type="button" class="pwd-toggle" id="fsdpt-pwd-toggle" aria-label="Mostrar contraseña">👁️</button>
+    </div>
+    <div class="login-error" id="fsdpt-login-error">&nbsp;</div>
+    <button type="button" class="btn-login" id="fsdpt-login-btn">Entrar</button>
+  </div>
+</div>
+<script>
+(function () {
+  var STORAGE_KEY = 'fsdpt_auth_ok_v1';
+  var HASH = 'dcdafc186984bd7934ca0519c6c8bf0a93e86ab8cea6f69c24ee0a054cfc92f5'; // SHA-256 de la contraseña
+
+  function unlock() { document.body.classList.add('fsdpt-unlocked'); }
+
+  if (sessionStorage.getItem(STORAGE_KEY) === '1') unlock();
+
+  async function sha256(text) {
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  async function attempt() {
+    var input = document.getElementById('fsdpt-pwd');
+    var err = document.getElementById('fsdpt-login-error');
+    var btn = document.getElementById('fsdpt-login-btn');
+    var val = input.value;
+    if (!val) { err.textContent = 'Introduce la contraseña'; return; }
+    btn.disabled = true;
+    var digest = await sha256(val);
+    btn.disabled = false;
+    if (digest === HASH) {
+      sessionStorage.setItem(STORAGE_KEY, '1');
+      err.innerHTML = '&nbsp;';
+      unlock();
+    } else {
+      err.textContent = 'Contraseña incorrecta';
+      input.value = '';
+      input.focus();
+    }
+  }
+
+  document.getElementById('fsdpt-login-btn').addEventListener('click', attempt);
+  document.getElementById('fsdpt-pwd').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') attempt();
+  });
+  document.getElementById('fsdpt-pwd-toggle').addEventListener('click', function () {
+    var input = document.getElementById('fsdpt-pwd');
+    input.type = input.type === 'password' ? 'text' : 'password';
+  });
+})();
+</script>
 
 <!-- ══════════════════════ CONTROL PANEL ══════════════════════ -->
 <div class="control-panel">

@@ -11,7 +11,7 @@ foodservice-alergenos/
 ├── index.html          ← Página de inicio con accesos directos
 ├── gestion.html        ← Panel de gestión (contraseña: Foodservice1914)
 ├── comedor.html        ← Pantalla TV — abrir en la tele del comedor
-├── desayuno.html       ← Ficha de desayuno para imprimir (A4 horizontal)
+├── desayuno.html       ← Ficha de desayuno para imprimir (A4 horizontal) (contraseña: Foodservice1914)
 ├── firebase-config.js  ← ⚠️  Debes rellenar este archivo con tus datos Firebase
 └── img/
     ├── Encabezado.png              ← Tu logo

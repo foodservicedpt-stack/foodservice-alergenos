@@ -75,6 +75,10 @@
       box-shadow: 0 4px 16px rgba(59,130,246,0.4);
     }
     .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.5); }
+    .btn-login:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+    /* Oculta todo el contenido real hasta introducir la contraseña correcta */
+    body:not(.fsdpt-unlocked) > *:not(#login-screen) { display: none !important; }
 
     /* ─── PANEL ─── */
     #panel { display: none; flex-direction: column; min-height: 100vh; }
@@ -490,6 +494,65 @@
 </head>
 <body>
 
+<!-- ══════════════════════ LOGIN ══════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <img src="./img/Encabezado.png" alt="Food Service DPT" onerror="this.style.display='none'">
+    <div class="brand">FOOD SERVICE DPT</div>
+    <div class="sub">Acceso restringido · Gestión</div>
+    <div class="pwd-wrap">
+      <input type="password" id="fsdpt-pwd" placeholder="Contraseña" autocomplete="current-password">
+      <button type="button" class="pwd-toggle" id="fsdpt-pwd-toggle" aria-label="Mostrar contraseña">👁️</button>
+    </div>
+    <div class="login-error" id="fsdpt-login-error">&nbsp;</div>
+    <button type="button" class="btn-login" id="fsdpt-login-btn">Entrar</button>
+  </div>
+</div>
+<script>
+(function () {
+  var STORAGE_KEY = 'fsdpt_auth_ok_v1';
+  var HASH = 'dcdafc186984bd7934ca0519c6c8bf0a93e86ab8cea6f69c24ee0a054cfc92f5'; // SHA-256 de la contraseña
+
+  function unlock() { document.body.classList.add('fsdpt-unlocked'); }
+
+  if (sessionStorage.getItem(STORAGE_KEY) === '1') unlock();
+
+  async function sha256(text) {
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  async function attempt() {
+    var input = document.getElementById('fsdpt-pwd');
+    var err = document.getElementById('fsdpt-login-error');
+    var btn = document.getElementById('fsdpt-login-btn');
+    var val = input.value;
+    if (!val) { err.textContent = 'Introduce la contraseña'; return; }
+    btn.disabled = true;
+    var digest = await sha256(val);
+    btn.disabled = false;
+    if (digest === HASH) {
+      sessionStorage.setItem(STORAGE_KEY, '1');
+      err.innerHTML = '&nbsp;';
+      unlock();
+    } else {
+      err.textContent = 'Contraseña incorrecta';
+      input.value = '';
+      input.focus();
+    }
+  }
+
+  document.getElementById('fsdpt-login-btn').addEventListener('click', attempt);
+  document.getElementById('fsdpt-pwd').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') attempt();
+  });
+  document.getElementById('fsdpt-pwd-toggle').addEventListener('click', function () {
+    var input = document.getElementById('fsdpt-pwd');
+    input.type = input.type === 'password' ? 'text' : 'password';
+  });
+})();
+</script>
+
 <!-- ══════════════════════ PANEL ══════════════════════ -->
 <div id="panel">
   <div class="topbar">
@@ -678,7 +741,7 @@ const PRESET_COLORS = [
 // ══════════════════════════════════════════════
 //  ESTADO
 // ══════════════════════════════════════════════
-// Acceso libre (sin contraseña). El desayuno se gestiona desde desayuno.html.
+// Acceso protegido por contraseña (ver login al inicio del body). El desayuno se gestiona desde desayuno.html.
 let currentMenuTab = 'comedor';  // solo comedor en esta página
 let currentMainTab = 'comedor';  // comedor | turnos
 let state = {
