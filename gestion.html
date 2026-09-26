@@ -513,7 +513,10 @@
   var STORAGE_KEY = 'fsdpt_auth_ok_v1';
   var HASH = 'dcdafc186984bd7934ca0519c6c8bf0a93e86ab8cea6f69c24ee0a054cfc92f5'; // SHA-256 de la contraseña
 
-  function unlock() { document.body.classList.add('fsdpt-unlocked'); }
+    function unlock() {
+      document.body.classList.add('fsdpt-unlocked');
+      document.getElementById('login-screen').classList.add('hidden');
+    }
 
   if (sessionStorage.getItem(STORAGE_KEY) === '1') unlock();
 
