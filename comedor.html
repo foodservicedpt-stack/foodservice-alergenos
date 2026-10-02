@@ -597,9 +597,9 @@ let dishPagination = {
   pages: [],           // Array de arrays: cada sub-array es una página de platos
   current: 0,        // Índice de página actual
   timer: null,       // setInterval timer
-  interval: 20000,   /* ms entre cambios de página (20 s para leer con comodidad) */
+  interval: 10000,   /* ms entre cambios de página (10 s) */
   isPaused: false,   /* true mientras el ratón esté sobre el área de platos */
-  totalDwellMs: 20000,
+  totalDwellMs: 10000,
   minDwellMs: 10000
 };
 
