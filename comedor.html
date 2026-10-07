@@ -74,6 +74,7 @@
     .header-spacer { flex: 1; }
     .header-datetime { text-align: right; color: white; line-height: 1.2; }
     .header-date { font-size: clamp(22px, 4vmin, 6vmin); font-weight: 700; color: #e0f2fe; text-transform: none; }
+    .header-date-en { font-size: clamp(13px, 1.8vmin, 24px); color:#93c5fd; font-style:italic; margin-top:.18em; }
     .header-time { font-size: clamp(40px, 7vmin, 9vmin); font-weight: 900; color: #7dd3fc; letter-spacing: 2px; }
 
     /* ─── BODY ─── */
@@ -119,8 +120,9 @@
     .section-label {
       font-size: calc(clamp(20px, calc(2.4vmin * var(--text-scale)), 4.5vmin) * var(--page-scale)); font-weight: 800; text-transform: uppercase;
       letter-spacing: 0.5px; padding: 0.3vmin 0.6vmin; border-radius: 0.4vmin; line-height: 1.1;
-      white-space: nowrap;
+      white-space: nowrap; display:flex; flex-direction:column; align-items:center; gap:0.08em;
     }
+    .section-label small { font-size:.6em; font-weight:650; letter-spacing:0; line-height:1; text-transform:none; }
     .contain-label { color: #1e40af; background: #dbeafe; }
     .trace-label { color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; }
     .allergen-grid {
@@ -498,6 +500,7 @@
     <div class="header-spacer"></div>
     <div class="header-datetime">
       <div class="header-date" id="header-date">Cargando...</div>
+      <div class="header-date-en" id="header-date-en" lang="en"></div>
       <div class="header-time" id="header-time">--:--</div>
     </div>
   </div>
@@ -618,14 +621,26 @@ function refreshMenuDisplay() {
 }
 
 function cierreProgramadoActivo(now = new Date()) {
-  if (!cierreConfig?.programado || !cierreConfig.hora || !cierreConfig.duracion) return false;
+  if (!cierreConfig?.hora) return false;
   const [h, m] = cierreConfig.hora.split(':').map(Number);
   if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
+  const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  if (cierreConfig.ultimaFechaProgramada === today) return false;
   const start = new Date(now); start.setHours(h, m, 0, 0);
-  const end = new Date(start.getTime() + Number(cierreConfig.duracion) * 60000);
-  return now >= start && now < end;
+  return now >= start;
 }
-function cierreActivo() { return !!cierreConfig?.activo || cierreProgramadoActivo(); }
+function activarCierreProgramado(now = new Date()) {
+  if (!cierreProgramadoActivo(now)) return;
+  const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  cierreConfig.activo = true;
+  cierreConfig.programado = true;
+  cierreConfig.ultimaFechaProgramada = today;
+  if (typeof firebase !== 'undefined' && firebase.apps?.length) {
+    firebase.database().ref('cierreComedor').update({ activo:true, programado:true, ultimaFechaProgramada:today })
+      .catch(error => console.warn('No se pudo guardar el cierre programado:', error));
+  }
+}
+function cierreActivo() { return !!cierreConfig?.activo; }
 function refreshCierre() {
   const overlay = document.getElementById('cierre-overlay');
   const active = cierreActivo();
@@ -663,6 +678,7 @@ function updateClock() {
   }
 
   // Check turnos only at :00 seconds to avoid double-fire within the minute
+  activarCierreProgramado(now);
   refreshCierre();
   if (cierreActivo()) updateCierreClock();
   if (ss === '00' && !cierreActivo()) checkTurnos(`${hh}:${mm}`);
@@ -1017,6 +1033,16 @@ function formatDateEs(dateStr) {
   const weekdayCapitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
   return `${weekdayCapitalized}, ${day} de ${month} de ${year}`;
 }
+function formatDateEn(dateStr) {
+  if (!dateStr) dateStr = todayStr();
+  const [y,m,d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+function setHeaderDate(dateStr) {
+  document.getElementById('header-date').textContent = formatDateEs(dateStr);
+  const english = document.getElementById('header-date-en');
+  if (english) english.textContent = formatDateEn(dateStr);
+}
 
 // Renderizar la página actual de platos
 function renderDishPage(pageIndex) {
@@ -1150,10 +1176,10 @@ function createDishRow(plato) {
     </div>`;
   } else {
     if (contiene.length > 0) {
-      allergensHtml += `<div class="allergen-section contain"><span class="section-label contain-label">CONTIENE</span><div class="allergen-grid">${containIcons}</div></div>`;
+      allergensHtml += `<div class="allergen-section contain"><span class="section-label contain-label"><span>CONTIENE</span><small>CONTAINS</small></span><div class="allergen-grid">${containIcons}</div></div>`;
     }
     if (trazas.length > 0) {
-      allergensHtml += `<div class="allergen-section traces"><span class="section-label trace-label">⚠ TRAZAS</span><div class="allergen-grid traces-grid">${traceIcons}</div></div>`;
+      allergensHtml += `<div class="allergen-section traces"><span class="section-label trace-label"><span>⚠ TRAZAS</span><small>MAY CONTAIN TRACES</small></span><div class="allergen-grid traces-grid">${traceIcons}</div></div>`;
     }
   }
 
@@ -1268,7 +1294,7 @@ function renderMenu(data) {
   const platos = (data.platos || []).filter(p => !p.oculto);
   buildLegend([]); // siempre los 14 alérgenos de referencia
   latestComedorData = data;
-  document.getElementById('header-date').textContent = formatDateEs(data.fecha);
+  setHeaderDate(data.fecha);
 
   // Menú publicado pero sin platos: estado vacío (no el spinner de carga).
   if (platos.length === 0) {
@@ -1393,7 +1419,7 @@ function showNoData(empty = false) {
     : '<div class="no-data"><span class="icon">🍽️</span><p>Menú del día no publicado</p><small>Today\'s menu has not been published yet</small></div>';
   mainCol.innerHTML = msg;
   if (dots) mainCol.appendChild(dots);
-  document.getElementById('header-date').textContent = formatDateEs(null);
+  setHeaderDate(null);
 }
 function showOfflineState() {
   stopRotation();
@@ -1405,6 +1431,7 @@ function showOfflineState() {
   mainCol.innerHTML =
     '<div class="no-data"><span class="icon">⚠️</span><p>Firebase no configurado</p><small>Edita firebase-config.js</small></div>';
   if (dots) mainCol.appendChild(dots);
+  setHeaderDate(null);
 }
 
 // ══════════════════════════════════════════════

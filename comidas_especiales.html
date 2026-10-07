@@ -110,6 +110,7 @@
       text-transform: none; 
       letter-spacing: 1px;
     }
+    .header-date-en { font-size:clamp(12px,1.15vw,18px); color:#94a3b8; font-style:italic; margin-top:3px; }
     .header-time { 
       font-size: clamp(42px,6.5vw,85px); 
       font-weight: 900; 
@@ -276,6 +277,10 @@
       justify-content: flex-start; 
       max-width: 100%; 
     }
+    .allergen-group { display:flex; flex-direction:column; align-items:flex-start; gap:2px; max-width:100%; }
+    .allergen-type-label { display:flex; flex-direction:column; color:#e2e8f0; font-size:clamp(8px,.55vw,13px); font-weight:850; line-height:1.05; letter-spacing:.35px; }
+    .allergen-group.traces .allergen-type-label { color:#d4a843; }
+    .allergen-type-label small { color:#94a3b8; font-size:.8em; font-weight:600; letter-spacing:0; }
     .alg-icon-wrap {
       width: var(--icon-size); 
       height: var(--icon-size); 
@@ -701,6 +706,7 @@
     <div class="header-spacer"></div>
     <div class="header-datetime">
       <div class="header-date" id="header-date">Cargando...</div>
+      <div class="header-date-en" id="header-date-en" lang="en"></div>
       <div class="header-time" id="header-time">--:--</div>
     </div>
   </div>
@@ -863,8 +869,8 @@ function updateDateTime() {
   };
   let dateStr = now.toLocaleDateString('es-ES', options);
   dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-  
   dateEl.textContent = dateStr;
+  document.getElementById('header-date-en').textContent = now.toLocaleDateString('en-GB', options);
   
   const hours = String(now.getHours()).padStart(2,'0');
   const minutes = String(now.getMinutes()).padStart(2,'0');
@@ -942,9 +948,9 @@ function renderDishes() {
   container.style.setProperty('--grid-cols', gridColsSpecial);
   
   container.innerHTML = currentDishes.map((dish, idx) => {
-    const hasAllergens = dish.contains && dish.contains.length > 0;
     const containsData = dish.contains || [];
     const tracesData = dish.traces || [];
+    const hasAllergens = containsData.length > 0 || tracesData.length > 0;
     
     let allergenHTML = '';
     if (hasAllergens) {
@@ -960,12 +966,16 @@ function renderDishes() {
         return `<div class="alg-icon-wrap trace-icon"><img src="./img/${alg.img}" alt="${alg.es}" title="Trazas: ${alg.es}" onerror="this.style.display='none'"></div>`;
       }).join('');
       
-      const traceLabel = tracesData.length > 0 ? '<div class="trace-label">TRAZAS</div>' : '';
-      
       allergenHTML = `
         <div class="dish-allergens">
-          <div class="allergen-row">${containsIcons}</div>
-          ${tracesIcons || traceLabel ? `<div class="allergen-row">${tracesIcons}${traceLabel}</div>` : ''}
+          ${containsData.length ? `<div class="allergen-group">
+            <div class="allergen-type-label"><span>CONTIENE</span><small>CONTAINS</small></div>
+            <div class="allergen-row">${containsIcons}</div>
+          </div>` : ''}
+          ${tracesData.length ? `<div class="allergen-group traces">
+            <div class="allergen-type-label"><span>TRAZAS</span><small>MAY CONTAIN TRACES</small></div>
+            <div class="allergen-row">${tracesIcons}</div>
+          </div>` : ''}
         </div>
       `;
     } else {
@@ -1293,7 +1303,7 @@ function fitAllergenIcons() {
     if (!rowH || !rowW) return;
     const gap = Math.max(4, Math.round(rowW * 0.006));
 
-    const hasTraces = !!row.querySelector('.trace-label');
+    const hasTraces = !!row.querySelector('.allergen-group.traces');
     let maxIcons = 1, maxRows = 1;
     const ars = row.querySelectorAll('.allergen-row');
     if (ars.length > maxRows) maxRows = ars.length;
@@ -1305,7 +1315,8 @@ function fitAllergenIcons() {
 
     const allergenW = rowW * (hasTraces ? 0.46 : 0.58);
     const byWidth = (allergenW - gap * (maxIcons - 1)) / maxIcons;
-    const availableHeight = rowH * (hasTraces ? 0.85 : 0.95);
+    const labelHeight = row.querySelectorAll('.allergen-type-label').length * Math.max(16, iconCap * 0.35);
+    const availableHeight = rowH * (hasTraces ? 0.85 : 0.95) - labelHeight;
     const byHeight = (availableHeight - gap * (maxRows - 1)) / maxRows;
     let icon = Math.min(byWidth, byHeight, iconCap);
     icon = Math.max(24, icon);

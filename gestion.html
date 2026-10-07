@@ -158,7 +158,7 @@
     .btn-publish-turnos:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
     /* ─── CONTENT ─── */
-    .content { padding: 28px 32px; flex: 1; }
+    .content { padding: 20px 32px 36px; flex: 1; }
 
     /* ─── DISH CARD ─── */
     .dish-card {
@@ -172,9 +172,10 @@
     .dish-header {
       background: linear-gradient(90deg, #1e3a5f, #1d4ed8);
       padding: 14px 20px; display: flex; align-items: center; gap: 14px;
-      cursor: grab;
     }
-    .dish-header:active { cursor: grabbing; }
+    .dish-reorder-bar { display:flex; justify-content:flex-end; margin-bottom:14px; }
+    .btn-reorder-dishes { border:1px solid #bfdbfe; background:#eff6ff; color:#1d4ed8; border-radius:10px; padding:10px 16px; font-weight:800; cursor:pointer; }
+    .btn-reorder-dishes:hover { background:#dbeafe; }
     .drag-handle {
       flex-shrink: 0; color: rgba(255,255,255,0.5); font-size: 1.1rem;
       cursor: grab; padding: 4px 6px; letter-spacing: 2px; user-select: none;
@@ -324,30 +325,27 @@
     #tab-content-menu.active { display: block; }
 
     /* Secciones del tab de turnos */
+    .turnos-sections-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; }
     .turno-section {
       border: 2px solid var(--border);
       border-radius: var(--radius);
       background: var(--surface);
-      padding: 24px 28px;
-      margin-bottom: 28px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
     }
     .turno-section:last-child { margin-bottom: 0; }
     .turno-section-title {
-      font-size: 1.35rem; font-weight: 900; letter-spacing: 1px;
-      text-transform: uppercase; margin-bottom: 18px; padding-bottom: 12px;
-      border-bottom: 3px solid var(--border);
+      font-size: 1.08rem; font-weight: 850;
+      margin-bottom: 6px; padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
       display: flex; align-items: center; gap: 10px;
     }
+    .turno-section-note { color:var(--muted); font-size:.82rem; line-height:1.45; margin:0 0 14px; }
     .turno-section-turnos .turno-section-title { color: #7c3aed; border-color: #ede9fe; }
     .turno-section-reminders .turno-section-title { color: #0891b2; border-color: #cffafe; }
     .turno-section-cierre .turno-section-title { color: #dc2626; border-color: #fee2e2; }
 
-    .turnos-intro {
-      background: linear-gradient(135deg, #2e1065, #4c1d95);
-      border-radius: var(--radius); padding: 22px 28px;
-      margin-bottom: 24px; color: white;
-      display: flex; align-items: center; gap: 18px;
-    }
+    .turnos-intro { display:none; }
     .turnos-intro-icon { font-size: 2.8rem; flex-shrink: 0; }
     .turnos-intro h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; }
     .turnos-intro p  { font-size: 0.85rem; opacity: 0.8; line-height: 1.5; }
@@ -361,7 +359,7 @@
     .turno-card.turno-disabled { opacity: 0.6; }
 
     .turno-header {
-      padding: 14px 20px;
+      padding: 10px 14px;
       display: flex; align-items: center; gap: 16px;
       position: relative;
     }
@@ -405,8 +403,11 @@
     }
     .btn-remove-turno:hover { background: rgba(239,68,68,0.4); }
 
-    .turno-body { padding: 22px 24px; }
-    .turno-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 18px; align-items: flex-start; }
+    .turno-body { display:none; padding: 16px 18px; }
+    .turno-card.is-expanded .turno-body { display:block; }
+    .turno-expand-btn { border:1px solid rgba(255,255,255,.45); background:rgba(255,255,255,.14); color:#fff; border-radius:8px; padding:7px 11px; cursor:pointer; font-size:.82rem; font-weight:750; white-space:nowrap; }
+    .turno-expand-btn:hover { background:rgba(255,255,255,.25); }
+    .turno-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; align-items: flex-start; }
     .turno-row:last-child { margin-bottom: 0; }
     .turno-field { display: flex; flex-direction: column; gap: 7px; }
     .turno-field label { font-size: 0.78rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
@@ -490,6 +491,45 @@
     }
     .turnos-info { font-size: 0.85rem; color: var(--muted); }
     .turnos-info strong { color: var(--text); }
+    .cierre-settings { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:14px; background:#f8fafc; border:1px solid var(--border); border-radius:12px; }
+    .cierre-settings .turno-field { min-width:0; }
+    .cierre-explainer { color:var(--muted); font-size:.84rem; line-height:1.45; flex:1 1 260px; }
+    .cierre-status { color:var(--muted); font-size:.84rem; font-weight:750; }
+    #tab-content-turnos .turno-section-cierre { margin-top:0; }
+    #turno-list, #reminder-list { display:grid; grid-template-columns:1fr; gap:10px; }
+    #turno-list .turno-card, #reminder-list .turno-card { margin:0; }
+    #turno-list .turno-card .turno-row { gap:10px; }
+    .turno-section-cierre .turno-field label { color:var(--text); font-size:.85rem; letter-spacing:0; text-transform:none; }
+    .reorder-modal { position:fixed; inset:0; z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.58); }
+    .reorder-modal.visible { display:flex; }
+    .reorder-dialog { width:min(560px,100%); max-height:min(84vh,760px); display:flex; flex-direction:column; background:#fff; border-radius:16px; box-shadow:0 24px 70px rgba(15,23,42,.32); overflow:hidden; }
+    .reorder-dialog-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px; border-bottom:1px solid var(--border); }
+    .reorder-dialog-head h2 { font-size:1.1rem; }
+    .reorder-dialog-head p { color:var(--muted); font-size:.84rem; margin-top:4px; }
+    .reorder-close { border:0; background:#f1f5f9; color:#334155; border-radius:8px; padding:8px 11px; cursor:pointer; font-size:1.1rem; }
+    .reorder-list { list-style:none; overflow:auto; padding:10px 16px; }
+    .reorder-item { display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #edf2f7; }
+    .reorder-item:last-child { border-bottom:0; }
+    .reorder-item-name { flex:1; min-width:0; font-weight:700; overflow-wrap:anywhere; }
+    .reorder-item-controls { display:flex; gap:5px; }
+    .reorder-item-controls button { width:34px; height:34px; border:1px solid var(--border); background:#f8fafc; color:#334155; border-radius:8px; cursor:pointer; font-size:1rem; }
+    .reorder-item-controls button:disabled { opacity:.35; cursor:default; }
+    .reorder-dialog-actions { display:flex; justify-content:flex-end; gap:10px; padding:14px 18px; border-top:1px solid var(--border); }
+    .reorder-dialog-actions button { border:0; border-radius:9px; padding:10px 15px; font-weight:750; cursor:pointer; }
+    .reorder-cancel { background:#f1f5f9; color:#334155; }
+    .reorder-apply { background:#1d4ed8; color:#fff; }
+    .reorder-dialog button:focus-visible, .btn-reorder-dishes:focus-visible, .turno-expand-btn:focus-visible { outline:3px solid #93c5fd; outline-offset:2px; }
+    @media (max-width: 1000px) { .turnos-sections-grid { grid-template-columns:1fr; } }
+    @media (max-width: 640px) {
+      .content { padding:14px 12px 24px; }
+      .turno-section { padding:14px 12px; }
+      .turno-header { gap:8px; flex-wrap:wrap; }
+      .turno-header-title { min-width:100px; }
+      .turno-toggle-wrap { margin-left:auto; }
+      .btn-remove-turno { padding:6px 9px; }
+      .turno-body { padding:12px; }
+      .reorder-item { padding:8px 4px; }
+    }
 </style>
 </head>
 <body>
@@ -579,6 +619,7 @@
   <div class="control-bar" id="menu-control-bar">
     <span class="date-label">📅 Fecha del menú:</span>
     <input type="date" class="date-input" id="date-input" onchange="markUnsaved()">
+    <button class="btn-reorder-dishes" type="button" onclick="openReorderDialog()">↕ Reorganizar platos</button>
     <div class="status-badge" id="status-badge" style="background:rgba(16,185,129,0.1);color:#059669;">
       <div class="status-dot" id="status-dot" style="background:#10b981;"></div>
       <span id="status-text">Publicado</span>
@@ -593,7 +634,7 @@
 
   <!-- ─── TURNOS CONTROL BAR ─── -->
   <div class="turnos-control-bar" id="turnos-control-bar" style="display:none;">
-    <span class="turnos-info">Los avisos configurados aparecerán <strong>automáticamente</strong> en la pantalla del comedor a la hora indicada.</span>
+    <span class="turnos-info">Edita los avisos y recordatorios y guárdalos para la pantalla del comedor.</span>
     <div class="sep-bar"></div>
     <button class="btn-publish-turnos" onclick="publishTurnos()" id="btn-publish-turnos">
       🔔 &nbsp;GUARDAR AVISOS EN TV
@@ -614,32 +655,19 @@
     <!-- TURNOS TAB CONTENT -->
     <div id="tab-content-turnos">
 
-      <!-- SECCIÓN 1: TURNOS -->
+      <div class="turnos-sections-grid">
       <section class="turno-section turno-section-turnos">
-        <h2 class="turno-section-title">🔔 Turnos</h2>
-        <div class="turnos-intro">
-          <div class="turnos-intro-icon">🔔</div>
-          <div>
-            <h3>Avisos de Cambio de Turno</h3>
-            <p>Configura los mensajes que aparecen automáticamente en la pantalla del comedor. Indica la <strong>hora del cambio de turno</strong> y <strong>cuántos minutos antes</strong> quieres que empiece la cuenta atrás (que termina justo a esa hora). Elige el color y el mensaje. La traducción al inglés es automática.</p>
-          </div>
-        </div>
+        <h2 class="turno-section-title">🔔 Avisos de turno</h2>
+        <p class="turno-section-note">Se muestran antes del cambio de turno. Abre un aviso para editarlo.</p>
         <div id="turno-list"></div>
         <button class="btn-add-turno" onclick="addTurno()">
-          <span class="plus">🔔</span> Añadir aviso de turno
+          <span class="plus">＋</span> Añadir aviso
         </button>
       </section>
 
-      <!-- SECCIÓN 2: RECORDATORIOS -->
       <section class="turno-section turno-section-reminders">
         <h2 class="turno-section-title">📋 Recordatorios</h2>
-        <div class="turnos-intro">
-          <div class="turnos-intro-icon">📋</div>
-          <div>
-            <h3>Recordatorios durante la Cuenta Atrás</h3>
-            <p>Durante la cuenta atrás del cambio de turno, se mostrarán estos recordatorios con imágenes en la pantalla del comedor (estilo carousel/notificaciones). Añade cuantos quieras: imagen + mensaje. La traducción al inglés es automática.</p>
-          </div>
-        </div>
+        <p class="turno-section-note">Aparecen durante la cuenta atrás. Abre cada elemento para editar su imagen y mensajes.</p>
         <div class="turnos-control-bar" style="padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
           <div class="turno-field" style="min-width:180px;">
             <label>⏱️ Rotación del carousel (segundos)</label>
@@ -651,68 +679,26 @@
           <span style="color:#64748b; font-size:0.85rem;">Tiempo entre cada slide del carousel (mín 5s, máx 120s)</span>
         </div>
         <div id="reminder-list"></div>
-        <button class="btn-add-turno" onclick="addReminder()" style="margin-top:12px;">
-          <span class="plus">📋</span> Añadir recordatorio
-        </button>
-        <button class="btn-publish-turnos" id="btn-publish-reminders" onclick="publishReminders()" style="margin-top:12px; margin-left:8px;">
-          📋 &nbsp;GUARDAR RECORDATORIOS
-        </button>
+        <button class="btn-add-turno" onclick="addReminder()" style="margin-top:12px;"><span class="plus">＋</span> Añadir recordatorio</button>
+        <button class="btn-publish-turnos" id="btn-publish-reminders" onclick="publishReminders()" style="margin-top:10px;width:100%;">Guardar recordatorios</button>
       </section>
+      </div>
 
       <!-- SECCIÓN 3: CIERRE DE COMEDOR -->
       <section class="turno-section turno-section-cierre">
-        <h2 class="turno-section-title">🚪 Cierre comedor</h2>
-        <div class="turnos-intro">
-          <div class="turnos-intro-icon">🚪</div>
-          <div>
-            <h3>Cierre de Comedor</h3>
-            <p>Configura el cierre del comedor. Cuando esté activo, la pantalla del comedor mostrará "Comedor cerrado" en lugar de los alérgenos. Elige mensajes editables con traducción automática.</p>
-          </div>
-        </div>
-        <div class="turnos-control-bar" style="padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
-          <div class="turno-field" style="min-width:220px;">
-            <label>🕐 Hora en la que se mostrará 'Comedor cerrado'</label>
+        <h2 class="turno-section-title">🚪 Cierre del comedor</h2>
+        <p class="turno-section-note">Al llegar esta hora, la pantalla se cierra cada día. Permanecerá cerrada hasta que pulses «Mostrar alérgenos».</p>
+        <div class="cierre-settings">
+          <div class="turno-field">
+            <label for="cierre-hora">Hora de cierre diario</label>
             <input type="time" id="cierre-hora" onchange="updateCierre('hora', this.value)"
                    style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:120px;">
           </div>
-          <div class="sep-bar"></div>
-          <label style="display:flex;align-items:center;gap:8px;color:#334155;font-weight:700;font-size:.9rem;cursor:pointer;">
-            <input type="checkbox" id="cierre-programado" onchange="updateCierre('programado', this.checked)">
-            Activar cada día a esta hora
-          </label>
-        </div>
-        <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
-          <div class="turno-field" style="flex:1;min-width:200px;">
-            <label>📝 Mensaje de cierre (español)</label>
-            <div class="msg-input-wrap">
-              <input class="msg-input" type="text" id="cierre-mensaje-es"
-                     placeholder="Ej: El comedor está cerrado. Volvemos a las 14:00"
-                     oninput="updateCierre('mensajeEs', this.value); autoTranslateCierre()">
-              <button class="msg-translate-btn" onclick="manualTranslateCierre()">🌐 Traducir</button>
-            </div>
-          </div>
-          <div class="msg-field" style="flex:1;min-width:200px;">
-            <label>🇬🇧 English message (auto)</label>
-            <input class="msg-input msg-en" type="text" id="cierre-mensaje-en"
-                   placeholder="Auto-translated"
-                   oninput="updateCierre('mensajeEn', this.value)">
-          </div>
-        </div>
-        <div class="turnos-control-bar" style="margin-top:8px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0;">
-          <div class="turno-field" style="min-width:200px;">
-            <label>⏱️ Duración del cierre (minutos, 0 = manual)</label>
-            <input type="number" id="cierre-duracion" min="0" max="1440" step="1" value="0"
-                   onchange="updateCierre('duracion', this.value)"
-                   style="padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:0.95rem; width:100px;">
-          </div>
-          <div class="sep-bar"></div>
-          <span style="color:#64748b; font-size:0.85rem;">0 = cierre manual (hay que pulsar 'Reabrir'), >0 = se reabre automáticamente tras X minutos</span>
-        </div>
-        <div class="turnos-control-bar" style="margin-top:12px; padding:16px 24px; background:white; border-radius:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid #e2e8f0; justify-content:center;">
-          <button class="btn-publish-turnos" id="btn-toggle-cierre" onclick="toggleCierre()" style="padding:14px 32px; font-size:1.05rem;">
-            🔒 <span id="cierre-btn-text">ACTIVAR CIERRE</span>
+          <span class="cierre-explainer">Déjala vacía para desactivar el cierre diario. El comedor seguirá cerrado hasta que pulses mostrar alérgenos.</span>
+          <button class="btn-publish-turnos" id="btn-toggle-cierre" onclick="toggleCierre()" style="padding:12px 20px;">
+            🔒 <span id="cierre-btn-text">CERRAR COMEDOR</span>
           </button>
-          <span id="cierre-status" style="color:#64748b; font-weight:700; font-size:0.9rem;"></span>
+          <span id="cierre-status" class="cierre-status"></span>
         </div>
       </section>
     </div>
@@ -720,6 +706,19 @@
   </div>
 </div>
 
+<div class="reorder-modal" id="reorder-modal" role="dialog" aria-modal="true" aria-labelledby="reorder-title" onclick="if(event.target===this)closeReorderDialog()">
+  <div class="reorder-dialog">
+    <div class="reorder-dialog-head">
+      <div><h2 id="reorder-title">Orden de los platos</h2><p>Usa las flechas para cambiar el orden.</p></div>
+      <button class="reorder-close" type="button" aria-label="Cerrar" onclick="closeReorderDialog()">×</button>
+    </div>
+    <ol class="reorder-list" id="reorder-list"></ol>
+    <div class="reorder-dialog-actions">
+      <button class="reorder-cancel" type="button" onclick="closeReorderDialog()">Cancelar</button>
+      <button class="reorder-apply" type="button" onclick="applyReorder()">Aplicar orden</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -754,8 +753,7 @@ let turnosState = []; // array of turno objects
 let remindersState = []; // array of reminder objects {id, image, mensajeEs, mensajeEn}
 let carouselInterval = 15; // seconds between carousel slides
 let cierreState = {
-  activo: false, programado: false, hora: '', duracion: 0,
-  mensajeEs: 'El comedor está cerrado', mensajeEn: 'The dining room is closed'
+  activo: false, programado: false, hora: '', ultimaFechaProgramada: ''
 };
 let dishCounter = 0;
 let fbReady = false;
@@ -903,36 +901,38 @@ db.ref('recordatorios').on('value', snap => {
 //  CIERRE DE COMEDOR
 // ══════════════════════════════════════════════
 function normalizeCierre(data) {
-  return Object.assign({
-    activo:false, programado:false, hora:'', duracion:0,
-    mensajeEs:'El comedor está cerrado', mensajeEn:'The dining room is closed'
-  }, data || {}, { duracion: Math.max(0, Number((data || {}).duracion) || 0) });
+  const cierre = Object.assign({
+    activo:false, programado:false, hora:'', ultimaFechaProgramada:''
+  }, data || {});
+  cierre.programado = !!cierre.hora;
+  cierre.ultimaFechaProgramada = cierre.ultimaFechaProgramada || '';
+  delete cierre.duracion;
+  delete cierre.mensajeEs;
+  delete cierre.mensajeEn;
+  return cierre;
 }
-function isCierreProgramadoAhora() {
-  if (!cierreState.programado || !cierreState.hora || !cierreState.duracion) return false;
+function isCierreProgramadoAhora(now = new Date()) {
+  if (!cierreState.hora) return false;
   const [h, m] = cierreState.hora.split(':').map(Number);
   if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
-  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  if (cierreState.ultimaFechaProgramada === today) return false;
   const start = new Date(now); start.setHours(h, m, 0, 0);
-  const end = new Date(start.getTime() + cierreState.duracion * 60000);
-  return now >= start && now < end;
+  return now >= start;
 }
-function cierreEstaActivo() { return !!cierreState.activo || isCierreProgramadoAhora(); }
+function cierreEstaActivo() { return !!cierreState.activo; }
 function syncCierreUI() {
-  const fields = {
-    'cierre-hora': cierreState.hora,
-    'cierre-mensaje-es': cierreState.mensajeEs,
-    'cierre-mensaje-en': cierreState.mensajeEn,
-    'cierre-duracion': cierreState.duracion
-  };
-  Object.entries(fields).forEach(([id, value]) => { const el=document.getElementById(id); if(el) el.value=value || ''; });
-  const scheduled = document.getElementById('cierre-programado');
-  if (scheduled) scheduled.checked = !!cierreState.programado;
+  const time = document.getElementById('cierre-hora');
+  if (time && time !== document.activeElement) time.value = cierreState.hora || '';
+  cierreState.programado = !!cierreState.hora;
   const active = cierreEstaActivo();
   const buttonText = document.getElementById('cierre-btn-text');
-  if (buttonText) buttonText.textContent = active ? 'REABRIR COMEDOR' : 'ACTIVAR CIERRE AHORA';
+  if (buttonText) buttonText.textContent = active ? 'MOSTRAR ALÉRGENOS' : 'CERRAR COMEDOR AHORA';
   const status = document.getElementById('cierre-status');
-  if (status) status.textContent = active ? '● Cerrado' : (cierreState.programado ? `Programado a las ${cierreState.hora || '--:--'}` : 'Comedor abierto');
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const nextClose = cierreState.ultimaFechaProgramada === todayKey ? 'mañana' : 'cada día';
+  if (status) status.textContent = active ? '● Comedor cerrado' : (cierreState.hora ? `Abierto · ${nextClose} a las ${cierreState.hora}` : '● Comedor abierto');
   const quickStatus = document.getElementById('cierre-quick-status');
   const quickButton = document.getElementById('btn-cierre-quick');
   if (quickStatus) { quickStatus.textContent = active ? '● Comedor cerrado' : '● Comedor abierto'; quickStatus.style.color = active ? '#dc2626' : '#059669'; }
@@ -944,32 +944,27 @@ async function saveCierre({toast=false}={}) {
   catch(e) { showToast('❌ Error: '+e.message, 'error'); return false; }
 }
 function updateCierre(field, value) {
-  cierreState[field] = field === 'duracion' ? Math.max(0, Math.min(1440, Number(value) || 0)) : value;
+  if (field !== 'hora') return;
+  cierreState.hora = value || '';
+  cierreState.programado = !!cierreState.hora;
   syncCierreUI();
   saveCierre();
 }
-async function toggleCierre() {
-  cierreState.activo = !cierreEstaActivo();
-  // Si se reabre manualmente, también se pausa la programación para evitar que la TV se cierre de nuevo inmediatamente.
-  if (!cierreState.activo) cierreState.programado = false;
-  await saveCierre({toast:true});
+function checkScheduledCierre() {
+  if (!isCierreProgramadoAhora()) return;
+  const now = new Date();
+  if (!cierreState.activo) cierreState.activo = true;
+  cierreState.ultimaFechaProgramada = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  cierreState.programado = true;
+  saveCierre();
   syncCierreUI();
 }
-let cierreTranslateTimer;
-function autoTranslateCierre() { clearTimeout(cierreTranslateTimer); cierreTranslateTimer=setTimeout(manualTranslateCierre, 1400); }
-async function manualTranslateCierre() {
-  if (!cierreState.mensajeEs.trim()) return;
-  const geminiKey = firebaseConfig.geminiApiKey;
-  try {
-    let translated = '';
-    if (geminiKey && geminiKey !== 'TU_GEMINI_API_KEY_AQUI') {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contents:[{parts:[{text:`Translate this Spanish dining-room closure message to natural English. Return ONLY the translation: ${cierreState.mensajeEs.trim()}`}]}]}) });
-      const data = await resp.json();
-      translated = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-    }
-    if (!translated) { const json = await (await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(cierreState.mensajeEs.trim())}&langpair=es|en`)).json(); translated = json.responseStatus===200 ? json.responseData.translatedText : ''; }
-    if (translated) { cierreState.mensajeEn = translated; syncCierreUI(); saveCierre(); }
-  } catch(e) { console.warn('Closure translation:', e); }
+setInterval(checkScheduledCierre, 1000);
+async function toggleCierre() {
+  cierreState.activo = !cierreState.activo;
+  cierreState.programado = !!cierreState.hora;
+  await saveCierre({toast:true});
+  syncCierreUI();
 }
 
 // ══════════════════════════════════════════════
@@ -1040,7 +1035,6 @@ function renderCurrentTab() {
   btn.onclick = addDish;
   btn.innerHTML = '<span class="plus">＋</span> Añadir plato';
   container.appendChild(btn);
-  attachDragEvents();
 }
 function renderDish(plato, idx, total) {
   const container = document.getElementById('dish-list');
@@ -1050,7 +1044,6 @@ function renderDish(plato, idx, total) {
   div.id = `dish-card-${plato.id}`;
   div.innerHTML = `
     <div class="dish-header">
-      <span class="drag-handle" title="Arrastrar para reordenar">⠿</span>
       <div class="dish-num">${idx + 1}</div>
       <div class="dish-names-row">
         <input class="input-es" type="text" placeholder="🇪🇸  Nombre en español"
@@ -1123,6 +1116,58 @@ function moveDish(dishId, direction) {
   renderCurrentTab();
   markUnsaved();
 }
+
+let reorderDraft = [];
+function openReorderDialog() {
+  const dishes = state.comedor.platos || [];
+  if (!dishes.length) { showToast('Añade platos antes de reorganizarlos', 'info'); return; }
+  reorderDraft = dishes.map(dish => dish.id);
+  renderReorderList();
+  const modal = document.getElementById('reorder-modal');
+  modal.classList.add('visible');
+  modal.querySelector('.reorder-close').focus();
+}
+function closeReorderDialog() {
+  document.getElementById('reorder-modal').classList.remove('visible');
+  document.querySelector('.btn-reorder-dishes')?.focus();
+}
+function renderReorderList() {
+  const dishes = state.comedor.platos || [];
+  const byId = new Map(dishes.map(dish => [dish.id, dish]));
+  document.getElementById('reorder-list').innerHTML = reorderDraft.map((id, index) => {
+    const dish = byId.get(id);
+    const name = dish?.nombreEs?.trim() || dish?.nombreEn?.trim() || 'Plato sin nombre';
+    return `<li class="reorder-item">
+      <span class="reorder-item-name">${escHtml(name)}</span>
+      <span class="reorder-item-controls">
+        <button type="button" aria-label="Subir ${escHtml(name)}" ${index===0?'disabled':''} onclick="moveReorderItem(${index},-1)">↑</button>
+        <button type="button" aria-label="Bajar ${escHtml(name)}" ${index===reorderDraft.length-1?'disabled':''} onclick="moveReorderItem(${index},1)">↓</button>
+      </span>
+    </li>`;
+  }).join('');
+}
+function moveReorderItem(index, offset) {
+  const target = index + offset;
+  if (target < 0 || target >= reorderDraft.length) return;
+  [reorderDraft[index], reorderDraft[target]] = [reorderDraft[target], reorderDraft[index]];
+  renderReorderList();
+  const controls = document.querySelectorAll('.reorder-item')[target]?.querySelectorAll('button');
+  (target === 0 ? controls?.[1] : controls?.[0])?.focus();
+}
+function applyReorder() {
+  const current = state.comedor.platos || [];
+  const byId = new Map(current.map(dish => [dish.id, dish]));
+  const ordered = reorderDraft.map(id => byId.get(id)).filter(Boolean);
+  const orderedIds = new Set(ordered.map(dish => dish.id));
+  state.comedor.platos = ordered.concat(current.filter(dish => !orderedIds.has(dish.id)));
+  renderCurrentTab();
+  markUnsaved();
+  closeReorderDialog();
+  showToast('Orden actualizado. Pulsa «Publicar en pantalla TV» para enviarlo.', 'info');
+}
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && document.getElementById('reorder-modal')?.classList.contains('visible')) closeReorderDialog();
+});
 
 // ── DRAG & DROP REORDERING ──
 let dragSrcEl = null;
@@ -1368,6 +1413,7 @@ function renderReminderCard(reminder) {
       <div class="turno-toggle-wrap">
         <span class="turno-toggle-label" style="color:rgba(255,255,255,0.8)"></span>
       </div>
+      <button class="turno-expand-btn" type="button" aria-expanded="false" onclick="toggleEditorCard('reminder-card-${reminder.id}',this)">Editar</button>
       <button class="btn-remove-turno" onclick="removeReminder('${reminder.id}')">🗑 Eliminar</button>
     </div>
     <div class="turno-body">
@@ -1554,6 +1600,14 @@ function renderTurnos() {
   turnosState.forEach(t => renderTurnoCard(t));
 }
 
+function toggleEditorCard(cardId, button) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  const expanded = card.classList.toggle('is-expanded');
+  button.setAttribute('aria-expanded', String(expanded));
+  button.textContent = expanded ? 'Cerrar' : 'Editar';
+}
+
 function renderTurnoCard(turno) {
   const container = document.getElementById('turno-list');
   const idx = turnosState.findIndex(t=>t.id===turno.id);
@@ -1581,6 +1635,7 @@ function renderTurnoCard(turno) {
           <div class="toggle-slider"></div>
         </label>
       </div>
+      <button class="turno-expand-btn" type="button" aria-expanded="false" onclick="toggleEditorCard('turno-card-${turno.id}',this)">Editar</button>
       <button class="btn-remove-turno" onclick="removeTurno('${turno.id}')">🗑 Eliminar</button>
     </div>
 
